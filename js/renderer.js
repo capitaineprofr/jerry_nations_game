@@ -1,7 +1,7 @@
 /**
- * Jerry's Nations: Frontline Realms - 60 FPS Canvas 2D Renderer
- * Rendu haute performance des territoires dynamiques, des frontières vivantes,
- * des mouvements de troupes, des effets d'affrontement et du cycle lumineux solaire.
+ * Jerry's Nations: Frontline Realms - RTS Canvas 2D Renderer
+ * Rendu haute performance 60 FPS des bataillons physiques, projectiles balistiques en cloche,
+ * bâtiments médiévaux, boîte de sélection (Marquee), effets d'impacts et cycle jour/nuit.
  */
 
 import { CONFIG } from "./config.js";
@@ -21,9 +21,16 @@ export class MapRenderer {
     this.dragStartX = 0;
     this.dragStartY = 0;
 
-    // Sélection d'assaut en cours (drag de troupes)
-    this.dragAttackSource = null;
-    this.dragAttackTarget = null;
+    // Box Selection (Rectangle de sélection RTS à la souris)
+    this.isBoxSelecting = false;
+    this.boxStartX = 0;
+    this.boxStartY = 0;
+    this.boxEndX = 0;
+    this.boxEndY = 0;
+
+    // Marqueurs d'ordres visuels (clic vert/rouge)
+    this.orderRipples = [];
+
     this.hoverCell = null;
 
     this.initCanvasSize();
@@ -35,7 +42,7 @@ export class MapRenderer {
     const dpr = window.devicePixelRatio || 1;
     this.canvas.width = this.canvas.parentElement.clientWidth * dpr;
     this.canvas.height = this.canvas.parentElement.clientHeight * dpr;
-    this.ctx.imageSmoothingEnabled = false; // Rendu pixel net
+    this.ctx.imageSmoothingEnabled = false;
   }
 
   centerCameraOnPlayerCapital() {
@@ -52,10 +59,9 @@ export class MapRenderer {
   setupEventListeners() {
     window.addEventListener("resize", () => this.initCanvasSize());
 
-    // Déplacement de caméra (Pan)
+    // Déplacement de caméra (Pan au clic molette ou clic droit avec shift)
     this.canvas.addEventListener("mousedown", (e) => {
-      if (e.button === 2 || (e.button === 0 && e.shiftKey)) {
-        // Clic droit ou Shift + Clic gauche pour pan
+      if (e.button === 1 || (e.button === 2 && e.shiftKey)) {
         this.isDragging = true;
         this.dragStartX = e.clientX - this.offsetX;
         this.dragStartY = e.clientY - this.offsetY;
@@ -80,7 +86,7 @@ export class MapRenderer {
       }
     });
 
-    // Zoom molette centré sur le curseur
+    // Zoom molette centré
     this.canvas.addEventListener("wheel", (e) => {
       e.preventDefault();
       const rect = this.canvas.getBoundingClientRect();
@@ -88,14 +94,13 @@ export class MapRenderer {
       const mouseY = (e.clientY - rect.top) * (this.canvas.height / rect.height);
 
       const zoomFactor = e.deltaY < 0 ? 1.15 : 0.85;
-      const newScale = Math.max(0.4, Math.min(3.5, this.scale * zoomFactor));
+      const newScale = Math.max(0.45, Math.min(3.5, this.scale * zoomFactor));
 
       this.offsetX = mouseX - (mouseX - this.offsetX) * (newScale / this.scale);
       this.offsetY = mouseY - (mouseY - this.offsetY) * (newScale / this.scale);
       this.scale = newScale;
     }, { passive: false });
 
-    // Clic pour attaquer
     this.canvas.addEventListener("contextmenu", (e) => e.preventDefault());
   }
 
@@ -106,21 +111,39 @@ export class MapRenderer {
     return this.map.getCell(worldX, worldY);
   }
 
-  // Rendu de la boucle d'animation
+  worldToScreen(worldX, worldY) {
+    const cellSize = CONFIG.CELL_SIZE * this.scale;
+    return {
+      x: this.offsetX + worldX * cellSize,
+      y: this.offsetY + worldY * cellSize
+    };
+  }
+
+  addOrderRipple(screenX, screenY, isAttack = false) {
+    this.orderRipples.push({
+      x: screenX,
+      y: screenY,
+      radius: 4,
+      maxRadius: 22,
+      isAttack,
+      alpha: 1.0
+    });
+  }
+
   render() {
     const ctx = this.ctx;
     const width = this.canvas.width;
     const height = this.canvas.height;
     const cellSize = CONFIG.CELL_SIZE * this.scale;
 
-    // 1. Fond sombre de base
-    ctx.fillStyle = "#0c1017";
+    // 1. Fond parchemin vieilli
+    ctx.fillStyle = "#dec89b";
     ctx.fillRect(0, 0, width, height);
 
     ctx.save();
     ctx.translate(this.offsetX, this.offsetY);
 
-    // 2. Rendu de la grille et des territoires
+    // 2. Grille de terrain & zones territoriales
     const startX = Math.max(0, Math.floor(-this.offsetX / cellSize));
     const startY = Math.max(0, Math.floor(-this.offsetY / cellSize));
     const endX = Math.min(this.map.width, Math.ceil((width - this.offsetX) / cellSize));
@@ -134,20 +157,19 @@ export class MapRenderer {
         const px = x * cellSize;
         const py = y * cellSize;
 
-        // Terrain de base
+        // Terrain
         ctx.fillStyle = cell.terrain.color;
         ctx.fillRect(px, py, cellSize + 0.5, cellSize + 0.5);
 
-        // Revêtement territorial si possédé par une nation
+        // Teinte territoriale
         if (cell.owner > 0) {
           const faction = this.engine.factions.get(cell.owner);
           if (faction) {
             ctx.fillStyle = faction.color;
-            ctx.globalAlpha = 0.65;
+            ctx.globalAlpha = 0.50;
             ctx.fillRect(px, py, cellSize + 0.5, cellSize + 0.5);
             ctx.globalAlpha = 1.0;
 
-            // Bordure lumineuse pour les frontières
             if (this.map.isBorderCell(x, y, cell.owner)) {
               ctx.strokeStyle = faction.border;
               ctx.lineWidth = Math.max(1, 2 * this.scale);
@@ -156,29 +178,27 @@ export class MapRenderer {
           }
         }
 
-        // Dessin des infrastructures (Fermes, Forteresses, Capitales)
+        // Bâtiments & Infrastructures
         if (cell.isCapital) {
           this.drawCapitalIcon(ctx, px, py, cellSize, cell);
         } else if (cell.infrastructure) {
-          this.drawInfraIcon(ctx, px, py, cellSize, cell.infrastructure);
+          this.drawInfraIcon(ctx, px, py, cellSize, cell);
         }
       }
     }
 
-    // 3. Dessin des vagues d'attaque de troupes
-    this.renderAttackWaves(ctx, cellSize);
+    // 3. Dessin des Unités Physiques RTS
+    this.renderUnits(ctx, cellSize);
 
-    // 4. Dessin des affrontements et étincelles de combat
+    // 4. Dessin des Projectiles Balistiques (flèches en cloche, boulets)
+    this.renderProjectiles(ctx, cellSize);
+
+    // 5. Étincelles & Impacts de combat
     this.renderCombatEvents(ctx, cellSize);
 
-    // 5. Flèche d'assaut tactique en cours de tracé par le joueur
-    if (this.dragAttackSource && this.dragAttackTarget) {
-      this.drawAttackVector(ctx, this.dragAttackSource, this.dragAttackTarget, cellSize);
-    }
-
-    // 6. Surbrillance de la cellule survolée
+    // 6. Cellule survolée
     if (this.hoverCell) {
-      ctx.strokeStyle = "#ffffff";
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.75)";
       ctx.lineWidth = 1.5;
       ctx.strokeRect(
         this.hoverCell.x * cellSize,
@@ -190,202 +210,380 @@ export class MapRenderer {
 
     ctx.restore();
 
-    // 7. Ambiance lumineuse selon le cycle solaire Jour / Nuit
+    // 7. Dessin de la boîte de sélection Marquee (en coordonnées écran)
+    if (this.isBoxSelecting) {
+      this.drawSelectionBox(ctx);
+    }
+
+    // 8. Cercles d'ordres animés (Clic vert / rouge)
+    this.renderOrderRipples(ctx);
+
+    // 9. Ambiance Jour / Nuit
     this.renderDayNightAtmosphere(ctx, width, height);
 
-    // 8. Mini-carte radar tactique
+    // 10. Mini-carte radar
     this.renderMinimap(ctx, width, height);
   }
 
-  drawCapitalIcon(ctx, px, py, cellSize, cell) {
-    const cx = px + cellSize / 2;
-    const cy = py + cellSize / 2;
-    const r = cellSize * 0.45;
+  // Rendu de chaque bataillon d'unité
+  renderUnits(ctx, cellSize) {
+    const units = this.engine.units;
 
-    ctx.fillStyle = "#f59e0b"; // Or impérial
-    ctx.beginPath();
-    ctx.arc(cx, cy, r, 0, Math.PI * 2);
-    ctx.fill();
+    for (let i = 0; i < units.length; i++) {
+      const u = units[i];
+      const px = (u.x + u.offsetX) * cellSize;
+      const py = (u.y + u.offsetY) * cellSize;
+      const radius = Math.max(5, 7 * this.scale);
 
-    ctx.strokeStyle = "#ffffff";
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
+      const faction = this.engine.factions.get(u.factionId);
+      const factionColor = faction ? faction.color : "#999999";
+      const factionBorder = faction ? faction.border : "#ffffff";
 
-    // Symbole couronne / donjon
-    if (cellSize > 16) {
-      ctx.fillStyle = "#1e293b";
-      ctx.fillRect(cx - r * 0.4, cy - r * 0.4, r * 0.8, r * 0.8);
-    }
-  }
-
-  drawInfraIcon(ctx, px, py, cellSize, type) {
-    const cx = px + cellSize / 2;
-    const cy = py + cellSize / 2;
-    const r = cellSize * 0.35;
-
-    if (type === "farm") {
-      ctx.fillStyle = "#eab308"; // Jaune épi de blé
-      ctx.beginPath();
-      ctx.arc(cx, cy, r * 0.7, 0, Math.PI * 2);
-      ctx.fill();
-    } else if (type === "citadel" || type === "watchtower") {
-      ctx.fillStyle = "#64748b"; // Pierre fortifiée
-      ctx.fillRect(cx - r * 0.6, cy - r * 0.6, r * 1.2, r * 1.2);
-      ctx.strokeStyle = "#ffffff";
-      ctx.lineWidth = 1;
-      ctx.strokeRect(cx - r * 0.6, cy - r * 0.6, r * 1.2, r * 1.2);
-    } else if (type === "palisade") {
-      ctx.strokeStyle = "#92400e";
-      ctx.lineWidth = 2;
-      ctx.strokeRect(px + 2, py + 2, cellSize - 4, cellSize - 4);
-    }
-  }
-
-  renderAttackWaves(ctx, cellSize) {
-    this.engine.attackWaves.forEach((wave) => {
-      const faction = this.engine.factions.get(wave.attackerId);
-      const color = faction ? faction.border : "#ffffff";
-
-      const x = (wave.currentX + 0.5) * cellSize;
-      const y = (wave.currentY + 0.5) * cellSize;
-
-      ctx.save();
-      // Sphère d'énergie / troupe en marche
-      ctx.fillStyle = color;
-      ctx.shadowColor = color;
-      ctx.shadowBlur = 8;
-      ctx.beginPath();
-      ctx.arc(x, y, Math.max(3, 5 * this.scale), 0, Math.PI * 2);
-      ctx.fill();
-
-      // Texte de troupe transportée
-      if (this.scale > 0.8) {
-        ctx.fillStyle = "#ffffff";
-        ctx.font = "bold 9px monospace";
-        ctx.textAlign = "center";
-        ctx.shadowBlur = 2;
-        ctx.shadowColor = "#000000";
-        ctx.fillText(wave.currentTroops, x, y - 6);
+      // 1. Cercle de sélection joueur
+      if (u.isSelected) {
+        ctx.strokeStyle = "#55FF55";
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.arc(px, py, radius + 4, 0, Math.PI * 2);
+        ctx.stroke();
       }
-      ctx.restore();
-    });
-  }
 
-  renderCombatEvents(ctx, cellSize) {
-    for (let i = this.engine.combatEvents.length - 1; i >= 0; i--) {
-      const event = this.engine.combatEvents[i];
-      event.life--;
-
-      const cx = (event.x + 0.5) * cellSize;
-      const cy = (event.y + 0.5) * cellSize;
-
-      ctx.save();
-      ctx.strokeStyle = "#ff4444";
-      ctx.fillStyle = "#ffdd44";
-      ctx.lineWidth = 1.5;
-
-      const spread = (25 - event.life) * 0.8 * this.scale;
+      // 2. Socle d'unité de faction
+      ctx.fillStyle = factionColor;
       ctx.beginPath();
-      ctx.arc(cx, cy, spread, 0, Math.PI * 2);
+      ctx.arc(px, py, radius, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = factionBorder;
+      ctx.lineWidth = 1.5;
       ctx.stroke();
 
-      ctx.restore();
+      // 3. Dessin de l'insigne d'unité
+      this.drawUnitInsignia(ctx, px, py, radius, u.type);
 
-      if (event.life <= 0) {
-        this.engine.combatEvents.splice(i, 1);
+      // 4. Barre de vie (HP)
+      if (u.hp < u.maxHp || u.isSelected) {
+        const barW = Math.max(14, 18 * this.scale);
+        const barH = Math.max(2, 3 * this.scale);
+        const barX = px - barW / 2;
+        const barY = py - radius - barH - 3;
+
+        ctx.fillStyle = "#1e1b18";
+        ctx.fillRect(barX, barY, barW, barH);
+
+        const hpRatio = Math.max(0, Math.min(1, u.hp / u.maxHp));
+        ctx.fillStyle = hpRatio > 0.5 ? "#22c55e" : hpRatio > 0.25 ? "#eab308" : "#ef4444";
+        ctx.fillRect(barX, barY, barW * hpRatio, barH);
       }
     }
   }
 
-  drawAttackVector(ctx, source, target, cellSize) {
-    const sx = (source.x + 0.5) * cellSize;
-    const sy = (source.y + 0.5) * cellSize;
-    const tx = (target.x + 0.5) * cellSize;
-    const ty = (target.y + 0.5) * cellSize;
-
+  drawUnitInsignia(ctx, px, py, r, type) {
     ctx.save();
-    ctx.strokeStyle = "#55FF55";
-    ctx.lineWidth = 3;
-    ctx.setLineDash([6, 4]);
+    ctx.strokeStyle = "#ffffff";
+    ctx.fillStyle = "#ffffff";
+    ctx.lineWidth = Math.max(1, 1.4 * this.scale);
 
-    ctx.beginPath();
-    ctx.moveTo(sx, sy);
-    ctx.lineTo(tx, ty);
-    ctx.stroke();
+    const s = r * 0.55;
 
-    // Réticule d'assaut sur la cible
-    ctx.setLineDash([]);
-    ctx.strokeStyle = "#FF5555";
-    ctx.beginPath();
-    ctx.arc(tx, ty, cellSize * 0.6, 0, Math.PI * 2);
-    ctx.stroke();
+    if (type === "militia") {
+      // Épée
+      ctx.beginPath();
+      ctx.moveTo(px - s, py + s);
+      ctx.lineTo(px + s, py - s);
+      ctx.stroke();
+      // Garde de l'épée
+      ctx.beginPath();
+      ctx.moveTo(px - s * 0.3, py + s * 0.9);
+      ctx.lineTo(px - s * 0.9, py + s * 0.3);
+      ctx.stroke();
+    } else if (type === "archer") {
+      // Arc
+      ctx.beginPath();
+      ctx.arc(px, py, s, -Math.PI * 0.4, Math.PI * 0.4);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(px + s * 0.3, py - s * 0.9);
+      ctx.lineTo(px + s * 0.3, py + s * 0.9);
+      ctx.stroke();
+    } else if (type === "cavalry") {
+      // Fer à cheval / Casque
+      ctx.beginPath();
+      ctx.arc(px, py, s * 0.85, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(px, py - s * 0.2, s * 0.4, 0, Math.PI);
+      ctx.fill();
+    } else if (type === "pioneer") {
+      // Marteau de bâtisseur
+      ctx.beginPath();
+      ctx.moveTo(px - s * 0.6, py + s);
+      ctx.lineTo(px + s * 0.4, py - s * 0.2);
+      ctx.stroke();
+      ctx.fillRect(px + s * 0.1, py - s, s * 0.9, s * 0.6);
+    } else if (type === "siege") {
+      // Trébuchet / Baliste
+      ctx.beginPath();
+      ctx.moveTo(px - s, py + s);
+      ctx.lineTo(px + s, py - s);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(px + s * 0.8, py - s * 0.8, s * 0.4, 0, Math.PI * 2);
+      ctx.fill();
+    }
 
     ctx.restore();
   }
 
-  renderDayNightAtmosphere(ctx, width, height) {
-    const dayProgress = this.engine.dayTimeSec / CONFIG.DAY_DURATION_SEC; // 0..1
-    let overlayColor = null;
+  // Rendu des projectiles balistiques en cloche
+  renderProjectiles(ctx, cellSize) {
+    const projs = this.engine.projectiles;
 
-    if (dayProgress > 0.85 || dayProgress < 0.15) {
-      // Nuit profonde bleutée
-      overlayColor = "rgba(10, 20, 45, 0.35)";
-    } else if (dayProgress >= 0.70 && dayProgress <= 0.85) {
-      // Crépuscule orangé (Sunset)
-      overlayColor = "rgba(180, 70, 20, 0.18)";
-    } else if (dayProgress >= 0.15 && dayProgress <= 0.30) {
-      // Aube dorée
-      overlayColor = "rgba(230, 180, 50, 0.12)";
+    for (let i = 0; i < projs.length; i++) {
+      const p = projs[i];
+      const px = p.currentX * cellSize;
+      const py = p.currentY * cellSize;
+
+      // Arc balistique vertical (élévation en cloche)
+      const arcElevation = Math.sin(p.progress * Math.PI) * Math.max(12, 18 * this.scale);
+
+      // Ombre portée au sol
+      ctx.fillStyle = "rgba(40, 30, 20, 0.35)";
+      ctx.beginPath();
+      ctx.ellipse(px, py, 3 * this.scale, 2 * this.scale, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Projectile dans les airs
+      const flyingY = py - arcElevation;
+
+      if (p.isSiege) {
+        // Boulet de trébuchet
+        ctx.fillStyle = "#4a453f";
+        ctx.beginPath();
+        ctx.arc(px, flyingY, 4 * this.scale, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "#1a1612";
+        ctx.stroke();
+      } else {
+        // Flèche d'arc
+        const angle = Math.atan2(p.targetY - p.fromY, p.targetX - p.fromX);
+        const len = 6 * this.scale;
+
+        ctx.strokeStyle = "#5a3a1a";
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(px - Math.cos(angle) * len, flyingY - Math.sin(angle) * len);
+        ctx.lineTo(px, flyingY);
+        ctx.stroke();
+
+        // Pointe métallique blanche
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath();
+        ctx.arc(px, flyingY, 1.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+  }
+
+  renderCombatEvents(ctx, cellSize) {
+    const events = this.engine.combatEvents;
+
+    for (let i = 0; i < events.length; i++) {
+      const ev = events[i];
+      const px = ev.x * cellSize;
+      const py = ev.y * cellSize;
+      const alpha = ev.life / 14;
+
+      ctx.save();
+      ctx.globalAlpha = alpha;
+
+      if (ev.type === "explosion") {
+        ctx.fillStyle = "#f97316";
+        ctx.beginPath();
+        ctx.arc(px, py, (14 - ev.life) * 1.5 * this.scale, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        // Étincelle d'épée
+        ctx.strokeStyle = "#fef08a";
+        ctx.lineWidth = 2;
+        const s = (14 - ev.life) * this.scale;
+        ctx.beginPath();
+        ctx.moveTo(px - s, py - s);
+        ctx.lineTo(px + s, py + s);
+        ctx.moveTo(px + s, py - s);
+        ctx.lineTo(px - s, py + s);
+        ctx.stroke();
+      }
+
+      ctx.restore();
+    }
+  }
+
+  drawCapitalIcon(ctx, px, py, cellSize, cell) {
+    const faction = this.engine.factions.get(cell.owner);
+    const color = faction ? faction.border : "#ffffff";
+
+    ctx.save();
+    // Bâtiment fortifié de capitale
+    ctx.fillStyle = "#334155";
+    ctx.fillRect(px + 1, py + 1, cellSize - 2, cellSize - 2);
+
+    ctx.fillStyle = color;
+    ctx.fillRect(px + 3, py + 2, cellSize - 6, 3);
+
+    // Bannière / Couronne
+    ctx.strokeStyle = "#fbbf24";
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(px + 2, py + 2, cellSize - 4, cellSize - 4);
+    ctx.restore();
+  }
+
+  drawInfraIcon(ctx, px, py, cellSize, cell) {
+    const type = cell.infrastructure;
+    ctx.save();
+
+    if (type === "farm") {
+      ctx.fillStyle = "#854d0e";
+      ctx.fillRect(px + 2, py + 2, cellSize - 4, cellSize - 4);
+      ctx.strokeStyle = "#eab308";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(px + 3, py + 3, cellSize - 6, cellSize - 6);
+    } else if (type === "barracks") {
+      ctx.fillStyle = "#991b1b";
+      ctx.fillRect(px + 1, py + 1, cellSize - 2, cellSize - 2);
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(px + cellSize * 0.4, py + 2, cellSize * 0.2, cellSize - 4);
+    } else if (type === "outpost") {
+      ctx.fillStyle = "#1e3a8a";
+      ctx.fillRect(px + 2, py + 2, cellSize - 4, cellSize - 4);
+      ctx.strokeStyle = "#60a5fa";
+      ctx.strokeRect(px + 2, py + 2, cellSize - 4, cellSize - 4);
+    } else if (type === "watchtower") {
+      ctx.fillStyle = "#475569";
+      ctx.fillRect(px + 3, py + 1, cellSize - 6, cellSize - 2);
+      ctx.fillStyle = "#cbd5e1";
+      ctx.fillRect(px + 4, py + 2, cellSize - 8, 3);
+    } else if (type === "palisade") {
+      ctx.strokeStyle = "#78350f";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(px + 1, py + 1, cellSize - 2, cellSize - 2);
+    } else if (type === "citadel") {
+      ctx.fillStyle = "#1e293b";
+      ctx.fillRect(px + 1, py + 1, cellSize - 2, cellSize - 2);
+      ctx.strokeStyle = "#f59e0b";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(px + 2, py + 2, cellSize - 4, cellSize - 4);
+    } else if (type === "lumber_camp") {
+      ctx.fillStyle = "#273f1d";
+      ctx.fillRect(px + 2, py + 2, cellSize - 4, cellSize - 4);
+    } else if (type === "quarry") {
+      ctx.fillStyle = "#52525b";
+      ctx.fillRect(px + 2, py + 2, cellSize - 4, cellSize - 4);
     }
 
-    if (overlayColor) {
-      ctx.fillStyle = overlayColor;
+    ctx.restore();
+  }
+
+  drawSelectionBox(ctx) {
+    const x = Math.min(this.boxStartX, this.boxEndX);
+    const y = Math.min(this.boxStartY, this.boxEndY);
+    const w = Math.abs(this.boxEndX - this.boxStartX);
+    const h = Math.abs(this.boxEndY - this.boxStartY);
+
+    ctx.save();
+    ctx.strokeStyle = "#22c55e";
+    ctx.fillStyle = "rgba(34, 197, 94, 0.15)";
+    ctx.lineWidth = 1.5;
+    ctx.fillRect(x, y, w, h);
+    ctx.strokeRect(x, y, w, h);
+    ctx.restore();
+  }
+
+  renderOrderRipples(ctx) {
+    for (let i = this.orderRipples.length - 1; i >= 0; i--) {
+      const r = this.orderRipples[i];
+      r.radius += 1.2;
+      r.alpha -= 0.05;
+
+      if (r.alpha <= 0 || r.radius >= r.maxRadius) {
+        this.orderRipples.splice(i, 1);
+        continue;
+      }
+
+      ctx.save();
+      ctx.strokeStyle = r.isAttack ? `rgba(239, 68, 68, ${r.alpha})` : `rgba(34, 197, 94, ${r.alpha})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(r.x, r.y, r.radius, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+
+  renderDayNightAtmosphere(ctx, width, height) {
+    const progress = this.engine.dayTimeSec / CONFIG.DAY_DURATION_SEC;
+    let nightAlpha = 0;
+
+    if (progress > 0.65 && progress <= 0.85) {
+      nightAlpha = ((progress - 0.65) / 0.20) * 0.45; // Crépuscule
+    } else if (progress > 0.85) {
+      nightAlpha = 0.45; // Nuit
+    } else if (progress < 0.15) {
+      nightAlpha = (1 - progress / 0.15) * 0.45; // Aube
+    }
+
+    if (nightAlpha > 0.01) {
+      ctx.fillStyle = `rgba(10, 15, 30, ${nightAlpha})`;
       ctx.fillRect(0, 0, width, height);
     }
   }
 
   renderMinimap(ctx, screenWidth, screenHeight) {
-    const miniW = 160;
+    const miniW = 150;
     const miniH = 100;
-    const miniX = screenWidth - miniW - 16;
-    const miniY = screenHeight - miniH - 16;
+    const pad = 12;
+    const miniX = screenWidth - miniW - pad;
+    const miniY = screenHeight - miniH - 110;
 
-    ctx.save();
-    // Cadre ardoise
-    ctx.fillStyle = "rgba(15, 23, 42, 0.88)";
-    ctx.strokeStyle = "#3b82f6";
-    ctx.lineWidth = 2;
+    // Cadre parchemin minimap
+    ctx.fillStyle = "#dec89b";
     ctx.fillRect(miniX, miniY, miniW, miniH);
+    ctx.strokeStyle = "#78350f";
+    ctx.lineWidth = 2;
     ctx.strokeRect(miniX, miniY, miniW, miniH);
 
-    // Dessiner les pixels des capitales et territoires
     const stepX = miniW / this.map.width;
     const stepY = miniH / this.map.height;
 
+    // Rendu des cellules possédées
     for (let y = 0; y < this.map.height; y += 2) {
       for (let x = 0; x < this.map.width; x += 2) {
         const cell = this.map.getCell(x, y);
         if (cell && cell.owner > 0) {
-          const fac = this.engine.factions.get(cell.owner);
-          if (fac) {
-            ctx.fillStyle = fac.border;
+          const faction = this.engine.factions.get(cell.owner);
+          if (faction) {
+            ctx.fillStyle = faction.color;
             ctx.fillRect(miniX + x * stepX, miniY + y * stepY, stepX * 2, stepY * 2);
           }
         }
       }
     }
 
-    // Rectangle du viewport de la caméra
+    // Positions des unités sur la minimap
+    this.engine.units.forEach((u) => {
+      ctx.fillStyle = u.factionId === 1 ? "#55FF55" : "#FF5555";
+      ctx.fillRect(miniX + u.x * stepX, miniY + u.y * stepY, 2, 2);
+    });
+
+    // Rectangle caméra
     const cellSize = CONFIG.CELL_SIZE * this.scale;
-    const camX = miniX + (-this.offsetX / (this.map.width * cellSize)) * miniW;
-    const camY = miniY + (-this.offsetY / (this.map.height * cellSize)) * miniH;
-    const camW = (screenWidth / (this.map.width * cellSize)) * miniW;
-    const camH = (screenHeight / (this.map.height * cellSize)) * miniH;
+    const camX = miniX + (-this.offsetX / cellSize) * stepX;
+    const camY = miniY + (-this.offsetY / cellSize) * stepY;
+    const camW = (screenWidth / cellSize) * stepX;
+    const camH = (screenHeight / cellSize) * stepY;
 
     ctx.strokeStyle = "#ffffff";
     ctx.lineWidth = 1;
     ctx.strokeRect(camX, camY, camW, camH);
-
-    ctx.restore();
   }
 }

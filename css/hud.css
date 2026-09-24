@@ -185,12 +185,12 @@
   bottom: 8px;
   left: 10px;
   right: 10px;
-  height: 96px;
+  height: 114px;
   z-index: 10;
   display: flex;
   align-items: stretch;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
   pointer-events: none;
   transition: opacity 0.4s ease, transform 0.4s ease;
 }
@@ -201,8 +201,8 @@
 
 /* Volet de gauche : Journal de Combat */
 #combat-log-panel {
-  width: 380px;
-  padding: 6px 12px;
+  width: 270px;
+  padding: 6px 10px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -215,7 +215,7 @@
   color: var(--parchment-title);
   border-bottom: 1px solid rgba(124, 45, 18, 0.3);
   padding-bottom: 2px;
-  margin-bottom: 4px;
+  margin-bottom: 3px;
   letter-spacing: 0.5px;
 }
 
@@ -223,7 +223,7 @@
   flex: 1;
   overflow-y: auto;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 10px;
   line-height: 1.35;
   display: flex;
   flex-direction: column;
@@ -237,94 +237,86 @@
   text-overflow: ellipsis;
 }
 
-/* Centre : Sélecteur d'Engagement de Troupes % */
-#troop-selector-panel {
+/* Centre : Commandement Militaire Tactique RTS */
+#military-command-panel {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  align-items: center;
   justify-content: space-between;
+  padding: 6px 12px;
   gap: 4px;
-  padding: 6px 18px;
-  min-width: 330px;
 }
 
-.selector-header {
+.command-header-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  width: 100%;
+  gap: 8px;
+  border-bottom: 1px solid rgba(124, 45, 18, 0.25);
+  padding-bottom: 3px;
 }
 
-.selector-title {
-  font-family: var(--font-title);
-  font-size: 11px;
-  font-weight: 800;
-  color: var(--parchment-title);
-}
-
-.selector-value {
-  font-family: var(--font-mono);
+#selection-info-text {
+  font-family: var(--font-retro);
   font-size: 12px;
-  font-weight: 700;
-  color: var(--parchment-green);
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.slider-container {
-  width: 100%;
+.recruitment-buttons-row {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 4px;
+  width: 100%;
 }
 
-#troop-slider {
+.btn-recruit-unit {
   flex: 1;
-  -webkit-appearance: none;
-  appearance: none;
-  background: #3e2d1d;
-  height: 8px;
-  border: 1px solid #1a1106;
-  border-radius: 1px;
-  outline: none;
+  padding: 4px 2px;
+  font-size: 10px;
+  font-family: var(--font-title);
+  font-weight: 700;
+  white-space: nowrap;
 }
 
-#troop-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 18px;
-  height: 22px;
-  background: url('../textures/ui/slider_button_default.png') no-repeat center;
-  background-size: contain;
-  cursor: pointer;
-  image-rendering: pixelated;
-  border: none;
-}
-
-#troop-slider::-webkit-slider-thumb:hover {
-  background-image: url('../textures/ui/slider_button_hover.png');
-}
-
-.quick-buttons-row {
+.expeditions-buttons-row {
   display: flex;
+  align-items: center;
   gap: 6px;
   width: 100%;
 }
 
-.btn-quick-pct {
+.btn-expedition {
   flex: 1;
-  padding: 3px 0;
+  padding: 4px 6px;
   font-size: 10px;
-  font-family: var(--font-mono);
+  font-family: var(--font-title);
+  font-weight: 900;
+  letter-spacing: 0.3px;
 }
 
 /* Volet de droite : Actions d'Infrastructures */
 #infrastructure-panel {
+  width: 320px;
   display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 6px 10px;
+}
+
+.infrastructure-buttons-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  width: 100%;
 }
 
 .btn-build-action {
-  font-size: 11px;
-  padding: 6px 8px;
+  font-size: 10px;
+  padding: 5px 3px;
+  white-space: nowrap;
+  text-align: center;
 }
+

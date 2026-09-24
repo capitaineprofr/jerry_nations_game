@@ -1,6 +1,6 @@
 /**
  * Jerry's Nations: Frontline Realms - P2P WebRTC Multiplayer (PeerJS)
- * Multijoueur navigateur à navigateur sans serveur dédié lourd.
+ * Synchronisation des ordres de déplacement, recrutement et construction en P2P.
  */
 
 export class NetworkManager {
@@ -15,7 +15,6 @@ export class NetworkManager {
     this.roomId = null;
   }
 
-  // Héberger un nouveau salon P2P
   createRoom(onSuccess, onError) {
     if (typeof window.Peer === "undefined") {
       if (onError) onError("PeerJS non chargé. Mode Solo actif.");
@@ -49,7 +48,6 @@ export class NetworkManager {
     }
   }
 
-  // Rejoindre un salon existant
   joinRoom(targetRoomId, onSuccess, onError) {
     if (typeof window.Peer === "undefined") {
       if (onError) onError("PeerJS non chargé.");
@@ -68,8 +66,7 @@ export class NetworkManager {
           this.isConnected = true;
           this.roomId = targetRoomId;
 
-          // Assigner le joueur en tant que faction 2 ou 3
-          this.myPlayerId = 3; // Ordre Solaire par défaut pour le joueur 2
+          this.myPlayerId = 3;
           const myFaction = this.engine.factions.get(this.myPlayerId);
           if (myFaction) {
             myFaction.isAI = false;
@@ -83,7 +80,7 @@ export class NetworkManager {
           this.handleHostData(data);
         });
 
-        conn.on("error", (err) => {
+        conn.on("error", () => {
           if (onError) onError("Échec de connexion au salon.");
         });
       });
@@ -98,7 +95,7 @@ export class NetworkManager {
 
   handleIncomingClient(conn) {
     this.connections.push(conn);
-    const assignedFactionId = this.connections.length + 2; // Faction 3, 4, etc.
+    const assignedFactionId = this.connections.length + 2;
 
     const clientFaction = this.engine.factions.get(assignedFactionId);
     if (clientFaction) {
@@ -107,7 +104,6 @@ export class NetworkManager {
     }
 
     conn.on("open", () => {
-      // Envoyer la bienvenue et l'ID de faction au client
       conn.send({
         type: "WELCOME",
         assignedFactionId,
@@ -122,15 +118,15 @@ export class NetworkManager {
   }
 
   handleClientCommand(data) {
-    if (data.type === "ATTACK") {
-      this.engine.launchAttack(
-        data.attackerId,
-        data.fromX,
-        data.fromY,
-        data.targetX,
-        data.targetY,
-        data.percent
-      );
+    if (data.type === "MOVE") {
+      data.unitIds.forEach((uid) => {
+        const unit = this.engine.units.find((u) => u.id === uid);
+        if (unit) unit.moveTo(data.targetX, data.targetY);
+      });
+    } else if (data.type === "RECRUIT") {
+      this.engine.recruitUnit(data.factionId, data.unitType);
+    } else if (data.type === "BUILD") {
+      this.engine.buildInfrastructure(data.factionId, data.x, data.y, data.infraType);
     }
   }
 
@@ -143,36 +139,26 @@ export class NetworkManager {
         f.isPlayer = true;
       }
       this.engine.addLog(`§aConnecté au salon hôte ! Vous dirigez : ${f ? f.name : "Votre faction"}.`);
-    } else if (data.type === "ATTACK_SYNC") {
-      this.engine.launchAttack(
-        data.attackerId,
-        data.fromX,
-        data.fromY,
-        data.targetX,
-        data.targetY,
-        data.percent
-      );
+    } else if (data.type === "MOVE_SYNC") {
+      data.unitIds.forEach((uid) => {
+        const unit = this.engine.units.find((u) => u.id === uid);
+        if (unit) unit.moveTo(data.targetX, data.targetY);
+      });
     }
   }
 
-  // Émission d'un ordre d'attaque
-  sendAttack(fromX, fromY, targetX, targetY, percent) {
+  sendMove(unitIds, targetX, targetY) {
     const payload = {
-      type: "ATTACK",
-      attackerId: this.myPlayerId,
-      fromX,
-      fromY,
+      type: "MOVE",
+      factionId: this.myPlayerId,
+      unitIds,
       targetX,
-      targetY,
-      percent
+      targetY
     };
 
     if (this.isHost) {
-      // Diffuser à tous les pairs connectés
       this.connections.forEach((conn) => {
-        if (conn.open) {
-          conn.send({ ...payload, type: "ATTACK_SYNC" });
-        }
+        if (conn.open) conn.send({ ...payload, type: "MOVE_SYNC" });
       });
     } else if (this.hostConn && this.hostConn.open) {
       this.hostConn.send(payload);

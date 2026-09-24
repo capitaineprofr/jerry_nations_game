@@ -48,6 +48,91 @@ export const CONFIG = {
     MOUNTAIN: { id: 5, name: "Hautes Montagnes", color: "#a49782", traversable: false, moveCost: 999, defenseBonus: 0.80 }
   },
 
+  // Classes de Bataillons et Unités physiques RTS
+  UNITS: {
+    PIONEER: {
+      id: "pioneer",
+      name: "Pionnier",
+      desc: "Fonde des avant-postes et bâtit les infrastructures",
+      foodCost: 30,
+      woodCost: 20,
+      stoneCost: 0,
+      goldCost: 0,
+      hp: 70,
+      speed: 0.08,
+      attack: 0,
+      range: 1.0,
+      defense: 1,
+      canBuild: true,
+      canClaim: true,
+      icon: "hammer"
+    },
+    MILITIA: {
+      id: "militia",
+      name: "Milicien",
+      desc: "Infanterie d'épée robuste pour tenir les lignes",
+      foodCost: 25,
+      woodCost: 0,
+      stoneCost: 15,
+      goldCost: 0,
+      hp: 140,
+      speed: 0.07,
+      attack: 16,
+      range: 1.1,
+      defense: 3,
+      icon: "sword"
+    },
+    ARCHER: {
+      id: "archer",
+      name: "Archer",
+      desc: "Tirs de flèches à distance percutants",
+      foodCost: 30,
+      woodCost: 30,
+      stoneCost: 0,
+      goldCost: 0,
+      hp: 85,
+      speed: 0.075,
+      attack: 18,
+      range: 4.8,
+      defense: 1,
+      isRanged: true,
+      icon: "bow"
+    },
+    CAVALRY: {
+      id: "cavalry",
+      name: "Cavalier",
+      desc: "Cavalerie très rapide pour charger et harceler",
+      foodCost: 50,
+      woodCost: 10,
+      stoneCost: 0,
+      goldCost: 40,
+      hp: 180,
+      speed: 0.125,
+      attack: 26,
+      range: 1.2,
+      defense: 4,
+      chargeBonus: 1.5,
+      icon: "horse"
+    },
+    SIEGE: {
+      id: "siege",
+      name: "Trébuchet",
+      desc: "Engin lourd pour démolir les bastions ennemis",
+      foodCost: 0,
+      woodCost: 80,
+      stoneCost: 60,
+      goldCost: 50,
+      hp: 220,
+      speed: 0.045,
+      attack: 55,
+      range: 6.2,
+      defense: 2,
+      isRanged: true,
+      vsBuildingMultiplier: 3.5,
+      icon: "trebuchet"
+    }
+  },
+
   // Factions prédéfinies
   FACTIONS: [
     { id: 1, name: "Empire d'Émeraude", color: "#249278", border: "#55FF55", textCode: "§a", isPlayer: true, isAI: false },
@@ -59,10 +144,14 @@ export const CONFIG = {
 
   // Bâtiments & Infrastructures de territoire
   INFRASTRUCTURES: {
-    FARM: { id: "farm", name: "Ferme Coloniale", woodCost: 40, stoneCost: 10, foodBonus: 4.0, icon: "farm" },
-    PALISADE: { id: "palisade", name: "Palissade Frontalière", woodCost: 30, stoneCost: 15, defenseBonus: 0.40, icon: "shield" },
-    WATCHTOWER: { id: "watchtower", name: "Tour de Guet", woodCost: 60, stoneCost: 50, defenseBonus: 0.80, range: 4, icon: "tower" },
-    CITADEL: { id: "citadel", name: "Bastion de Forteresse", woodCost: 150, stoneCost: 200, goldCost: 100, defenseBonus: 1.50, troopBonus: 2.0, icon: "fortress" }
+    FARM: { id: "farm", name: "Ferme Coloniale", woodCost: 40, stoneCost: 10, foodBonus: 3.5, hp: 150, icon: "farm" },
+    BARRACKS: { id: "barracks", name: "Caserne d'Armes", woodCost: 60, stoneCost: 35, goldCost: 20, hp: 250, icon: "barracks", desc: "Centre d'entraînement militaire" },
+    OUTPOST: { id: "outpost", name: "Avant-poste", woodCost: 50, stoneCost: 30, goldCost: 15, territoryRadius: 3, defenseBonus: 0.35, hp: 300, icon: "flag", desc: "Revendique et stabilise les terres" },
+    LUMBER_CAMP: { id: "lumber_camp", name: "Scierie", woodCost: 30, stoneCost: 10, woodBonus: 2.2, hp: 120, icon: "axe" },
+    QUARRY: { id: "quarry", name: "Carrière de Pierre", woodCost: 40, stoneCost: 20, stoneBonus: 1.8, hp: 140, icon: "pickaxe" },
+    PALISADE: { id: "palisade", name: "Palissade Frontalière", woodCost: 25, stoneCost: 10, defenseBonus: 0.45, hp: 180, icon: "shield" },
+    WATCHTOWER: { id: "watchtower", name: "Tour de Guet", woodCost: 60, stoneCost: 50, defenseBonus: 0.80, range: 4.5, attackDamage: 12, hp: 220, icon: "tower" },
+    CITADEL: { id: "citadel", name: "Bastion de Forteresse", woodCost: 150, stoneCost: 200, goldCost: 100, defenseBonus: 1.50, range: 6.0, attackDamage: 25, hp: 600, icon: "fortress" }
   },
 
   // Couleurs textuelles Minecraft adaptées au parchemin (dialogue_box.png)

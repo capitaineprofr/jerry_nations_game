@@ -129,6 +129,15 @@ html, body {
   color: #ffffff;
 }
 
+.btn-red {
+  color: #fca5a5;
+  text-shadow: 1px 1px 2px #000, 0 0 6px rgba(239, 68, 68, 0.4);
+}
+
+.btn-red:hover {
+  color: #ffffff;
+}
+
 /* Curseur de défilement personnalisé */
 ::-webkit-scrollbar {
   width: 6px;

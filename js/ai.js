@@ -1,7 +1,10 @@
 /**
- * Jerry's Nations: Frontline Realms - AI Faction Controller
+ * Jerry's Nations: Frontline Realms - RTS AI Controller
  * Intelligence artificielle pour le Clan Maraudeur et les Seigneurs féodaux rivaux.
+ * Recrutement autonome, manœuvres de régiments physiques, raids de pillards et construction d'avant-postes.
  */
+
+import { CONFIG } from "./config.js";
 
 export class AIController {
   constructor(engine, worldMap) {
@@ -12,8 +15,8 @@ export class AIController {
 
   update() {
     this.aiTickCounter++;
-    // Exécuter l'IA toutes les 25 ticks (environ 1.25 seconde)
-    if (this.aiTickCounter % 25 !== 0) return;
+    // Exécuter la réflexion tactique toutes les 30 ticks (environ 1.5 seconde)
+    if (this.aiTickCounter % 30 !== 0) return;
 
     this.engine.factions.forEach((faction) => {
       if (!faction.isAI || faction.isDefeated) return;
@@ -23,84 +26,163 @@ export class AIController {
   }
 
   processFactionTurn(faction) {
-    // Si la réserve de troupes est trop faible, conserver pour la défense
-    if (faction.troops < 25) return;
+    const fid = faction.id;
+    const myUnits = this.engine.units.filter((u) => u.factionId === fid && u.hp > 0);
 
-    const borders = this.map.getBorderCells(faction.id);
+    // 1. DÉCISION DE RECRUTEMENT
+    this.decideRecruitment(faction, myUnits);
+
+    // 2. DÉCISION DE CONSTRUCTION
+    this.decideConstruction(faction, myUnits);
+
+    // 3. COMMANDEMENT MILITAIRE DES UNITÉS INACTIVES
+    this.commandUnits(faction, myUnits);
+  }
+
+  decideRecruitment(faction, myUnits) {
+    const fid = faction.id;
+    if (myUnits.length >= 25) return; // Limite d'armée pour la performance
+
+    const militaryCount = myUnits.filter((u) => u.attack > 0).length;
+    const pioneerCount = myUnits.filter((u) => u.type === "pioneer").length;
+
+    // Avoir au moins 1 ou 2 pionniers pour étendre le territoire
+    if (pioneerCount < 2 && faction.food >= 30 && faction.wood >= 20) {
+      this.engine.recruitUnit(fid, "pioneer");
+      return;
+    }
+
+    // Choix selon la personnalité de la faction
+    if (faction.personality === "aggressive") {
+      // Maraudeurs : Priorité Cavaliers et Archers
+      if (Math.random() < 0.4 && faction.gold >= 40 && faction.food >= 50) {
+        this.engine.recruitUnit(fid, "cavalry");
+      } else if (Math.random() < 0.5 && faction.wood >= 30 && faction.food >= 30) {
+        this.engine.recruitUnit(fid, "archer");
+      } else if (faction.stone >= 15 && faction.food >= 25) {
+        this.engine.recruitUnit(fid, "militia");
+      }
+    } else {
+      // Équilibré / Défensif
+      if (militaryCount < 6 && faction.food >= 25 && faction.stone >= 15) {
+        this.engine.recruitUnit(fid, "militia");
+      } else if (faction.wood >= 30 && faction.food >= 30) {
+        this.engine.recruitUnit(fid, "archer");
+      }
+    }
+  }
+
+  decideConstruction(faction, myUnits) {
+    const fid = faction.id;
+    const borders = this.map.getBorderCells(fid);
     if (borders.length === 0) return;
 
-    // 1. Choix du pourcentage de troupes à engager selon la personnalité
-    let commitPercent = 25;
-    if (faction.personality === "aggressive") {
-      commitPercent = 45;
-    } else if (faction.personality === "expansionist") {
-      commitPercent = 35;
-    } else if (faction.personality === "defensive") {
-      commitPercent = 20;
+    // Ferme si manque de nourriture
+    if (faction.food < 40 && faction.wood >= 40 && faction.stone >= 10) {
+      const plainCell = borders.find((c) => c.terrain === CONFIG.TERRAIN.PLAIN && !c.infrastructure);
+      if (plainCell) {
+        this.engine.buildInfrastructure(fid, plainCell.x, plainCell.y, "farm");
+        return;
+      }
     }
 
-    // 2. Sélection intelligente de la cible
-    let bestSource = null;
-    let bestTarget = null;
-    let bestScore = -999;
+    // Avant-poste pour étendre la frontière
+    if (faction.wood >= 50 && faction.stone >= 30 && faction.gold >= 15 && Math.random() < 0.25) {
+      const targetBorder = borders[Math.floor(Math.random() * borders.length)];
+      if (targetBorder && !targetBorder.infrastructure) {
+        this.engine.buildInfrastructure(fid, targetBorder.x, targetBorder.y, "outpost");
+        return;
+      }
+    }
 
-    // Évaluer un échantillon de cellules frontalières pour la performance
-    const sampleSize = Math.min(borders.length, 12);
-    for (let i = 0; i < sampleSize; i++) {
-      const source = borders[Math.floor(Math.random() * borders.length)];
-      const neighbors = this.map.getNeighbors(source.x, source.y);
+    // Tour de guet pour la défense
+    if (faction.wood >= 60 && faction.stone >= 50 && Math.random() < 0.2) {
+      const targetBorder = borders[Math.floor(Math.random() * borders.length)];
+      if (targetBorder && !targetBorder.infrastructure) {
+        this.engine.buildInfrastructure(fid, targetBorder.x, targetBorder.y, "watchtower");
+      }
+    }
+  }
 
-      for (const target of neighbors) {
-        if (target.owner === faction.id || !target.terrain.traversable) continue;
+  commandUnits(faction, myUnits) {
+    const fid = faction.id;
+    const idleUnits = myUnits.filter((u) => u.state === "idle");
+    if (idleUnits.length === 0) return;
 
-        let score = 0;
+    // A. Pionniers : chercher un secteur neutre fertile pour coloniser
+    const idlePioneers = idleUnits.filter((u) => u.type === "pioneer");
+    idlePioneers.forEach((p) => {
+      const targetCell = this.findExpansionTarget(fid, p.x, p.y);
+      if (targetCell) {
+        p.moveTo(targetCell.x, targetCell.y);
+      }
+    });
 
-        // Terres sauvages faciles à conquérir
-        if (target.owner === 0) {
-          score += 50 - (target.troops || 0);
-          if (target.terrain.foodYield) score += 20; // Privilégier les plaines fertiles
-        } else {
-          // Attaque sur une nation rivale ou le joueur
-          const defender = this.engine.factions.get(target.owner);
-          if (defender) {
-            // Maraudeur attaque agressivement les voisins
-            if (faction.personality === "aggressive") {
-              score += 40;
-            }
-            // Cibler les cellules peu défendues
-            score += Math.max(0, 40 - (target.troops || 0));
-            // Cibler la capitale pour un coup d'éclat
-            if (target.isCapital) score += 80;
+    // B. Troupes militaires : patrouille ou raid offensif
+    const idleMilitary = idleUnits.filter((u) => u.attack > 0);
+    if (idleMilitary.length >= 3) {
+      // Former une escouade d'assaut
+      const targetEnemy = this.findEnemyTarget(fid, idleMilitary[0].x, idleMilitary[0].y, faction.personality === "aggressive");
+      if (targetEnemy) {
+        idleMilitary.slice(0, 5).forEach((u, idx) => {
+          const ox = (idx % 2 - 0.5) * 1.0;
+          const oy = Math.floor(idx / 2) * 1.0;
+          u.moveTo(targetEnemy.x + ox, targetEnemy.y + oy);
+        });
+      }
+    }
+  }
+
+  findExpansionTarget(factionId, fromX, fromY) {
+    let bestCell = null;
+    let minDist = 999;
+
+    for (let dy = -10; dy <= 10; dy += 2) {
+      for (let dx = -10; dx <= 10; dx += 2) {
+        const cx = Math.floor(fromX + dx);
+        const cy = Math.floor(fromY + dy);
+        const cell = this.map.getCell(cx, cy);
+
+        if (cell && cell.terrain.traversable && cell.owner === 0) {
+          const d = Math.hypot(dx, dy);
+          if (d < minDist && d > 2) {
+            minDist = d;
+            bestCell = cell;
           }
         }
+      }
+    }
 
-        if (score > bestScore) {
-          bestScore = score;
-          bestSource = source;
-          bestTarget = target;
+    return bestCell;
+  }
+
+  findEnemyTarget(factionId, fromX, fromY, isAggressive) {
+    // 1. Chercher d'abord des unités ennemies proches
+    for (let i = 0; i < this.engine.units.length; i++) {
+      const other = this.engine.units[i];
+      if (other.factionId !== factionId && other.hp > 0) {
+        const d = Math.hypot(other.x - fromX, other.y - fromY);
+        if (d < 16) {
+          return { x: other.x, y: other.y };
         }
       }
     }
 
-    // 3. Lancer l'assaut
-    if (bestSource && bestTarget && bestScore > 0) {
-      this.engine.launchAttack(
-        faction.id,
-        bestSource.x,
-        bestSource.y,
-        bestTarget.x,
-        bestTarget.y,
-        commitPercent
-      );
-    }
-
-    // 4. Décision de construction d'infrastructure
-    if (faction.wood >= 60 && faction.stone >= 50 && Math.random() < 0.2) {
-      const buildCell = borders[Math.floor(Math.random() * borders.length)];
-      if (buildCell && !buildCell.infrastructure) {
-        const infraType = faction.personality === "defensive" ? "palisade" : "farm";
-        this.engine.buildInfrastructure(faction.id, buildCell.x, buildCell.y, infraType);
+    // 2. Si agressif (ex: Maraudeurs), cibler la capitale du joueur ou une ville ennemie
+    if (isAggressive) {
+      const playerCap = this.map.capitals.find((c) => c.factionId === 1);
+      if (playerCap && Math.random() < 0.6) {
+        return { x: playerCap.x, y: playerCap.y };
       }
     }
+
+    // 3. Cibler un avant-poste ou une frontière ennemie
+    const enemyCapitals = this.map.capitals.filter((c) => c.factionId !== factionId);
+    if (enemyCapitals.length > 0) {
+      const randomCap = enemyCapitals[Math.floor(Math.random() * enemyCapitals.length)];
+      return { x: randomCap.x, y: randomCap.y };
+    }
+
+    return null;
   }
 }
