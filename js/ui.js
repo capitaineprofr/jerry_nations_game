@@ -130,11 +130,22 @@ export class UIManager {
         if (this.selectedBuildMode === type) {
           this.selectedBuildMode = null;
           btn.classList.remove("active");
+          this.updateSelectionDisplay();
         } else {
           this.selectedBuildMode = type;
           document.querySelectorAll(".btn-build-action").forEach((b) => b.classList.remove("active"));
           btn.classList.add("active");
           SOUND.playClick();
+
+          const proto = CONFIG.INFRASTRUCTURES[type.toUpperCase()];
+          if (proto && this.elSelectionInfo) {
+            const req = proto.allowedTerrain
+              ? proto.allowedTerrain.map((tid) => Object.values(CONFIG.TERRAIN).find((v) => v.id === tid)?.name || tid).join(" ou ")
+              : "Tous";
+            this.elSelectionInfo.innerHTML = `
+              <span style="color:var(--parchment-gold)">MODE CONSTRUCTION : Cliquez sur un secteur contrôlé (Biome requis : <strong>${req}</strong>)</span>
+            `;
+          }
         }
       });
     });
@@ -383,7 +394,7 @@ export class UIManager {
     // Compte des troupes actives
     const activeTroops = this.engine.units.filter((u) => u.factionId === myPlayerId).length;
     if (this.elTroops) this.elTroops.textContent = activeTroops;
-    if (this.elTerritory) this.elTerritory.textContent = `${playerFaction.territoryCount} pts`;
+    if (this.elTerritory) this.elTerritory.textContent = `${playerFaction.territoryCount} secteurs`;
 
     if (this.elDayDisplay) {
       this.elDayDisplay.textContent = `JOUR ${this.engine.dayCount}`;
@@ -393,6 +404,17 @@ export class UIManager {
     if (this.selectedUnits.some((u) => u.hp <= 0)) {
       this.selectedUnits = this.selectedUnits.filter((u) => u.hp > 0);
       this.updateSelectionDisplay();
+    }
+
+    // Inspection du secteur survolé si aucun bataillon sélectionné
+    if (this.renderer.hoverCell && this.selectedUnits.length === 0 && !this.selectedBuildMode && this.elSelectionInfo) {
+      const c = this.renderer.hoverCell;
+      const ownerFac = c.owner > 0 ? this.engine.factions.get(c.owner) : null;
+      const ownerStr = ownerFac ? `<strong style="color:${ownerFac.border}">${ownerFac.name}</strong>` : `<span class="mc-gray">Terre Sauvage</span>`;
+      const infraStr = c.infrastructure ? ` | Bâtiment : <strong style="color:#b45309">${CONFIG.INFRASTRUCTURES[c.infrastructure.toUpperCase()]?.name || c.infrastructure}</strong>` : "";
+      this.elSelectionInfo.innerHTML = `
+        <span style="font-size:11px;">Secteur (${c.x}, ${c.y}) : <strong>${c.terrain.name}</strong> | ${c.terrain.desc} | Contrôle : ${ownerStr}${infraStr}</span>
+      `;
     }
 
     this.renderCombatLog();

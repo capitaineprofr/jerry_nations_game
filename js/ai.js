@@ -77,11 +77,29 @@ export class AIController {
     const borders = this.map.getBorderCells(fid);
     if (borders.length === 0) return;
 
-    // Ferme si manque de nourriture
+    // Ferme si manque de nourriture (Plaine obligatoire)
     if (faction.food < 40 && faction.wood >= 40 && faction.stone >= 10) {
-      const plainCell = borders.find((c) => c.terrain === CONFIG.TERRAIN.PLAIN && !c.infrastructure);
+      const plainCell = borders.find((c) => c.terrain.id === "plain" && !c.infrastructure);
       if (plainCell) {
         this.engine.buildInfrastructure(fid, plainCell.x, plainCell.y, "farm");
+        return;
+      }
+    }
+
+    // Scierie si besoin de bois (Forêt obligatoire)
+    if (faction.wood < 60 && faction.wood >= 30 && faction.stone >= 10) {
+      const forestCell = borders.find((c) => c.terrain.id === "forest" && !c.infrastructure);
+      if (forestCell) {
+        this.engine.buildInfrastructure(fid, forestCell.x, forestCell.y, "lumber_camp");
+        return;
+      }
+    }
+
+    // Carrière si besoin de pierre (Collines obligatoires)
+    if (faction.stone < 50 && faction.wood >= 40 && faction.stone >= 20) {
+      const hillsCell = borders.find((c) => c.terrain.id === "hills" && !c.infrastructure);
+      if (hillsCell) {
+        this.engine.buildInfrastructure(fid, hillsCell.x, hillsCell.y, "quarry");
         return;
       }
     }
@@ -89,7 +107,7 @@ export class AIController {
     // Avant-poste pour étendre la frontière
     if (faction.wood >= 50 && faction.stone >= 30 && faction.gold >= 15 && Math.random() < 0.25) {
       const targetBorder = borders[Math.floor(Math.random() * borders.length)];
-      if (targetBorder && !targetBorder.infrastructure) {
+      if (targetBorder && !targetBorder.infrastructure && targetBorder.terrain.traversable) {
         this.engine.buildInfrastructure(fid, targetBorder.x, targetBorder.y, "outpost");
         return;
       }
@@ -98,7 +116,7 @@ export class AIController {
     // Tour de guet pour la défense
     if (faction.wood >= 60 && faction.stone >= 50 && Math.random() < 0.2) {
       const targetBorder = borders[Math.floor(Math.random() * borders.length)];
-      if (targetBorder && !targetBorder.infrastructure) {
+      if (targetBorder && !targetBorder.infrastructure && targetBorder.terrain.traversable) {
         this.engine.buildInfrastructure(fid, targetBorder.x, targetBorder.y, "watchtower");
       }
     }

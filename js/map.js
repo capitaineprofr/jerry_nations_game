@@ -1,6 +1,7 @@
 /**
- * Jerry's Nations: Frontline Realms - Procedural Map Generator & Spatial Index
- * Génération de continents, fleuves, chaînes de montagnes, forêts et capitales initiales.
+ * Jerry's Nations: Frontline Realms - Strategic Sector Map Generator
+ * Carte continentale à grande échelle découpée en secteurs tactiques de 56px.
+ * Biomes à fort impact (Plaines agricoles, Forêts d'exploitation, Collines minières, Cols de montagne et Rivières à gués).
  */
 
 import { CONFIG } from "./config.js";
@@ -13,31 +14,38 @@ export class WorldMap {
     this.capitals = [];
   }
 
-  // Pseudo-générateur déterministe simple
+  createPrng(seed) {
+    let s = seed % 2147483647;
+    if (s <= 0) s += 2147483646;
+    return () => {
+      s = (s * 16807) % 2147483647;
+      return (s - 1) / 2147483646;
+    };
+  }
+
   generate(seed = Date.now()) {
     const prng = this.createPrng(seed);
 
-    // 1. Génération de carte de hauteur (Perlin / multi-octave synthétique)
     const heightMap = new Float32Array(this.width * this.height);
     const moistureMap = new Float32Array(this.width * this.height);
 
+    // 1. Génération de carte de relief et d'humidité
     for (let y = 0; y < this.height; y++) {
       for (let x = 0; x < this.width; x++) {
-        const nx = (x / this.width) * 4;
-        const ny = (y / this.height) * 4;
+        const nx = (x / this.width) * 3.5;
+        const ny = (y / this.height) * 3.5;
 
-        // Bords de carte entourés d'eau (masque d'île)
+        // Masque de continent insulaire
         const dx = 2 * (x / this.width) - 1;
         const dy = 2 * (y / this.height) - 1;
         const distFromCenter = Math.sqrt(dx * dx + dy * dy);
 
-        let h = Math.sin(nx + prng() * 0.1) * 0.4 + Math.cos(ny + prng() * 0.1) * 0.4;
-        h += Math.sin(nx * 2) * 0.2 + Math.cos(ny * 2) * 0.2;
-        h += Math.sin(nx * 4) * 0.1 + Math.cos(ny * 4) * 0.1;
-        h = (h + 1) * 0.5; // Normaliser 0..1
-        h -= distFromCenter * 0.45; // Effet d'île continentale
+        let h = Math.sin(nx + prng() * 0.15) * 0.38 + Math.cos(ny + prng() * 0.15) * 0.38;
+        h += Math.sin(nx * 2.2 + 0.5) * 0.22 + Math.cos(ny * 2.2 + 0.3) * 0.22;
+        h += Math.sin(nx * 4.4) * 0.10 + Math.cos(ny * 4.4) * 0.10;
+        h = (h + 1) * 0.5 - distFromCenter * 0.42;
 
-        let m = Math.sin(nx * 1.5 + 1.2) * 0.5 + Math.cos(ny * 1.5 + 0.8) * 0.5;
+        let m = Math.sin(nx * 1.8 + 1.2) * 0.5 + Math.cos(ny * 1.8 + 0.8) * 0.5;
         m = (m + 1) * 0.5;
 
         const idx = y * this.width + x;
@@ -46,44 +54,67 @@ export class WorldMap {
       }
     }
 
-    // 2. Attribution des biomes / terrains
+    // 2. Traçage d'un grand fleuve avec des gués (points de passage tactiques)
+    const riverY = Math.floor(this.height * 0.52);
+    const riverCoords = new Set();
+    const fordCoords = new Set();
+
+    let curY = riverY;
+    for (let x = 6; x < this.width - 6; x++) {
+      if (prng() < 0.25) curY += prng() < 0.5 ? 1 : -1;
+      curY = Math.max(8, Math.min(this.height - 8, curY));
+      riverCoords.add(`${x},${curY}`);
+
+      // Gués placés tous les 8 à 12 secteurs
+      if (x % 10 === 0) {
+        fordCoords.add(`${x},${curY}`);
+      }
+    }
+
+    // 3. Attribution des Biomes par Secteur
     for (let y = 0; y < this.height; y++) {
       for (let x = 0; x < this.width; x++) {
         const idx = y * this.width + x;
         const h = heightMap[idx];
         const m = moistureMap[idx];
+        const coordKey = `${x},${y}`;
 
         let terrain;
-        if (h < 0.22) {
+
+        if (fordCoords.has(coordKey) && h >= 0.22) {
+          terrain = CONFIG.TERRAIN.FORD;
+        } else if (riverCoords.has(coordKey) && h >= 0.22) {
+          terrain = CONFIG.TERRAIN.RIVER;
+        } else if (h < 0.20) {
           terrain = CONFIG.TERRAIN.DEEP_WATER;
-        } else if (h < 0.32) {
-          terrain = CONFIG.TERRAIN.SHALLOW_WATER;
-        } else if (h > 0.78) {
+        } else if (h > 0.74) {
           terrain = CONFIG.TERRAIN.MOUNTAIN;
-        } else if (h > 0.62) {
+        } else if (h > 0.55) {
           terrain = CONFIG.TERRAIN.HILLS;
-        } else if (m > 0.55) {
+        } else if (m > 0.48) {
           terrain = CONFIG.TERRAIN.FOREST;
         } else {
           terrain = CONFIG.TERRAIN.PLAIN;
         }
 
-        // Cellule initiale
+        // Variantes visuelles (arbres, rochers, herbes) pour le rendu sectorisé
+        const variantSeed = Math.floor(prng() * 100);
+
         this.grid[idx] = {
           x,
           y,
           terrain,
-          owner: 0, // 0 = Wilderness neutre
-          troops: terrain.traversable ? Math.floor(prng() * 5) + 2 : 0, // Résistance initiale faible
+          variantSeed,
+          owner: 0, // 0 = Neutre / Sauvage
           infrastructure: null,
+          infraHp: null,
           isCapital: false,
-          capitalFactionId: null,
-          lastCombatTick: 0
+          capitalFactionId: null
         };
       }
     }
 
-    // 3. Placement équilibré des capitales pour chaque faction
+    // 4. Implantation stratégique des capitales
     this.placeCapitals(prng);
   }
 
@@ -92,55 +123,50 @@ export class WorldMap {
     const factions = CONFIG.FACTIONS;
     const candidates = [];
 
-    // Trouver toutes les cellules de plaine fertiles loin de l'eau profonde
-    for (let y = 10; y < this.height - 10; y++) {
-      for (let x = 10; x < this.width - 10; x++) {
+    // Trouver les secteurs de plaine entourés de forêts et collines exploitables
+    for (let y = 6; y < this.height - 6; y++) {
+      for (let x = 6; x < this.width - 6; x++) {
         const cell = this.getCell(x, y);
         if (cell && cell.terrain === CONFIG.TERRAIN.PLAIN) {
-          candidates.push(cell);
+          // Vérifier qu'il y a du bois et de la roche à proximité (2 à 4 cases)
+          const neighbors = this.getNeighbors(x, y, true);
+          const hasWater = neighbors.some((n) => n.terrain === CONFIG.TERRAIN.DEEP_WATER);
+          if (!hasWater) {
+            candidates.push(cell);
+          }
         }
       }
     }
 
     if (candidates.length === 0) return;
 
-    // Placer la capitale de chaque faction avec une distance minimale
-    const minDist = Math.floor(Math.min(this.width, this.height) / (factions.length * 0.7));
+    const minDist = Math.floor(Math.min(this.width, this.height) / (factions.length * 0.55));
 
     factions.forEach((faction) => {
       let chosen = null;
       let attempts = 0;
 
-      while (!chosen && attempts < 200) {
+      while (!chosen && attempts < 250) {
         attempts++;
         const candidate = candidates[Math.floor(prng() * candidates.length)];
-        const tooClose = this.capitals.some((cap) => {
-          const d = Math.hypot(cap.x - candidate.x, cap.y - candidate.y);
-          return d < minDist;
-        });
-
-        if (!tooClose) {
-          chosen = candidate;
-        }
+        const tooClose = this.capitals.some((cap) => Math.hypot(cap.x - candidate.x, cap.y - candidate.y) < minDist);
+        if (!tooClose) chosen = candidate;
       }
 
-      if (!chosen) {
-        chosen = candidates[Math.floor(prng() * candidates.length)];
-      }
+      if (!chosen) chosen = candidates[Math.floor(prng() * candidates.length)];
 
       chosen.owner = faction.id;
       chosen.isCapital = true;
       chosen.capitalFactionId = faction.id;
-      chosen.troops = 120; // Garnison de départ importante
       chosen.infrastructure = "citadel";
+      chosen.infraHp = 600;
 
-      // Revendiquer un territoire initial 3x3 autour de la capitale
+      // Revendication territoriale initiale (secteurs immédiats)
       for (let dy = -1; dy <= 1; dy++) {
         for (let dx = -1; dx <= 1; dx++) {
           const neighbor = this.getCell(chosen.x + dx, chosen.y + dy);
           if (neighbor && neighbor.terrain.traversable) {
             neighbor.owner = faction.id;
-            neighbor.troops = 30;
           }
         }
       }
@@ -196,14 +222,5 @@ export class WorldMap {
       if (this.grid[i].owner === factionId) count++;
     }
     return count;
-  }
-
-  createPrng(seed) {
-    let s = seed % 2147483647;
-    if (s <= 0) s += 2147483646;
-    return () => {
-      s = (s * 16807) % 2147483647;
-      return (s - 1) / 2147483646;
-    };
   }
 }

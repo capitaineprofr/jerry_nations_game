@@ -316,7 +316,7 @@ export class GameEngine {
     });
   }
 
-  // Économie en continu
+  // Économie en continu liée directement aux biomes des secteurs
   updateEconomy() {
     this.factions.forEach((f) => {
       if (f.isDefeated) return;
@@ -324,21 +324,30 @@ export class GameEngine {
       const moodConfig = this.getMoodState(f.moodScore);
       const moodBuff = moodConfig.speedBuff;
 
-      // Production de base proportionnelle au territoire
-      let foodProd = f.territoryCount * 0.08;
-      let woodProd = 0.4;
+      let foodProd = 0.5;
+      let woodProd = 0.5;
       let stoneProd = 0.3;
-      let goldProd = f.territoryCount * 0.10;
+      let goldProd = 0.2;
 
-      // Bonus des infrastructures spécialisées
+      // Calcul des rendements selon chaque secteur contrôlé
       for (let i = 0; i < this.map.grid.length; i++) {
         const cell = this.map.grid[i];
-        if (cell.owner === f.id && cell.infrastructure) {
-          const infra = CONFIG.INFRASTRUCTURES[cell.infrastructure.toUpperCase()];
-          if (infra) {
-            if (infra.foodBonus) foodProd += infra.foodBonus;
-            if (infra.woodBonus) woodProd += infra.woodBonus;
-            if (infra.stoneBonus) stoneProd += infra.stoneBonus;
+        if (cell.owner === f.id) {
+          // Rendement naturel du biome
+          if (cell.terrain.baseFood) foodProd += cell.terrain.baseFood * 0.15;
+          if (cell.terrain.baseWood) woodProd += cell.terrain.baseWood * 0.15;
+          if (cell.terrain.baseStone) stoneProd += cell.terrain.baseStone * 0.15;
+          if (cell.terrain.baseGold) goldProd += cell.terrain.baseGold * 0.12;
+
+          // Rendement décuplé par l'infrastructure spécialisée
+          if (cell.infrastructure) {
+            const infra = CONFIG.INFRASTRUCTURES[cell.infrastructure.toUpperCase()];
+            if (infra) {
+              if (infra.foodBonus) foodProd += infra.foodBonus * 0.25;
+              if (infra.woodBonus) woodProd += infra.woodBonus * 0.25;
+              if (infra.stoneBonus) stoneProd += infra.stoneBonus * 0.25;
+              if (infra.goldBonus) goldProd += infra.goldBonus * 0.25;
+            }
           }
         }
       }
@@ -361,14 +370,35 @@ export class GameEngine {
     const infra = CONFIG.INFRASTRUCTURES[infraType.toUpperCase()];
     if (!infra) return false;
 
-    // Pour l'avant-poste, on peut coloniser en bordure ou terrain neutre
+    // 1. Vérification stricte du biome autorisé (Impact réel du terrain !)
+    if (infra.allowedTerrain && !infra.allowedTerrain.includes(cell.terrain.id)) {
+      if (factionId === 1) {
+        const allowedNames = infra.allowedTerrain.map((tid) => {
+          const t = Object.values(CONFIG.TERRAIN).find((val) => val.id === tid);
+          return t ? t.name : tid;
+        }).join(" ou ");
+        this.addLog(`§cEmplacement invalide : la ${infra.name} requiert un secteur de type ${allowedNames} !`);
+        SOUND.playClick();
+      }
+      return false;
+    }
+
+    // 2. Vérification de possession
     if (infra.id === "outpost") {
       if (cell.owner !== 0 && cell.owner !== factionId) return false;
     } else {
-      if (cell.owner !== factionId) return false;
+      if (cell.owner !== factionId) {
+        if (factionId === 1) {
+          this.addLog(`§cVous devez contrôler ce secteur pour y bâtir une infrastructure !`);
+        }
+        return false;
+      }
     }
 
-    if (cell.infrastructure) return false;
+    if (cell.infrastructure) {
+      if (factionId === 1) this.addLog("§cUn bâtiment est déjà érigé sur ce secteur.");
+      return false;
+    }
 
     const woodCost = infra.woodCost || 0;
     const stoneCost = infra.stoneCost || 0;
@@ -389,7 +419,7 @@ export class GameEngine {
     cell.infraHp = infra.hp || 200;
     cell.owner = factionId;
 
-    // Si c'est un avant-poste, revendiquer un rayon de 3 cases
+    // Si c'est un avant-poste, revendiquer un rayon de secteurs
     if (infra.territoryRadius) {
       const r = infra.territoryRadius;
       for (let dy = -r; dy <= r; dy++) {
@@ -408,7 +438,7 @@ export class GameEngine {
 
     if (factionId === 1) {
       SOUND.playBuild();
-      this.addLog(`§2${infra.name} érigé en (${x}, ${y}).`);
+      this.addLog(`§2${infra.name} érigé en (${x}, ${y}) sur secteur ${cell.terrain.name}.`);
     }
 
     return true;

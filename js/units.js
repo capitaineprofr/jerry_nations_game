@@ -144,69 +144,69 @@ export class Unit {
       } else {
         const dist = Math.hypot(this.targetUnit.x - this.x, this.targetUnit.y - this.y);
 
-        if (dist <= this.range) {
-          // À portée : attaquer !
-          this.performAttack(this.targetUnit, engine, combatBuff);
-          return true;
-        } else {
-          // Hors de portée : s'approcher de l'ennemi
-          this.stepTowards(this.targetUnit.x, this.targetUnit.y, this.speed * moodBuff, engine);
-          return true;
-        }
-      }
-    }
-
-    // 2. Déplacement vers waypoint
-    if (this.targetX !== null && this.targetY !== null) {
-      const dist = Math.hypot(this.targetX - this.x, this.targetY - this.y);
-
-      if (dist < 0.25) {
-        this.x = this.targetX;
-        this.y = this.targetY;
-        this.targetX = null;
-        this.targetY = null;
-        this.state = "idle";
-        this.onReachedDestination(engine);
+      const effectiveRange = this.getEffectiveRange(engine);
+      if (dist <= effectiveRange) {
+        // À portée : attaquer !
+        this.performAttack(this.targetUnit, engine, combatBuff);
+        return true;
       } else {
-        this.stepTowards(this.targetX, this.targetY, this.speed * moodBuff, engine);
+        // Hors de portée : s'approcher de l'ennemi
+        this.stepTowards(this.targetUnit.x, this.targetUnit.y, this.speed * moodBuff, engine);
+        return true;
       }
-      return true;
     }
+  }
 
-    // 3. Unité inactive (Idle) : auto-détection des cibles ennemies proches (Rayon d'Aggro)
-    if (this.state === "idle" && this.attack > 0) {
-      this.scanForNearbyEnemies(engine);
+  getEffectiveRange(engine) {
+    let r = this.range;
+    const cell = engine.map.getCell(Math.floor(this.x), Math.floor(this.y));
+    if (cell && cell.terrain.archerRangeBonus && this.isRanged) {
+      r += cell.terrain.archerRangeBonus;
     }
+    return r;
+  }
 
-    // 4. Capture territoriale continue si stationnée dans une zone
-    if (this.state === "idle") {
-      this.claimCurrentCell(engine);
+  getEffectiveDefense(engine) {
+    let def = this.defense;
+    const cell = engine.map.getCell(Math.floor(this.x), Math.floor(this.y));
+    if (cell && cell.terrain.defenseBonus) {
+      def += Math.floor(cell.terrain.defenseBonus * 5);
     }
-
-    return true;
+    return def;
   }
 
   stepTowards(tx, ty, moveSpeed, engine) {
-    const angle = Math.atan2(ty - this.y, tx - this.x);
-    const nextX = this.x + Math.cos(angle) * moveSpeed;
-    const nextY = this.y + Math.sin(angle) * moveSpeed;
+    const curCell = engine.map.getCell(Math.floor(this.x), Math.floor(this.y));
+    let adjustedSpeed = moveSpeed;
 
-    // Vérifier franchissement du terrain
+    if (curCell) {
+      if (this.type === "cavalry") {
+        if (curCell.terrain.cavalrySpeedBonus) adjustedSpeed *= curCell.terrain.cavalrySpeedBonus;
+        if (curCell.terrain.cavalrySpeedPenalty) adjustedSpeed *= curCell.terrain.cavalrySpeedPenalty;
+      }
+      if (curCell.terrain.moveCost) {
+        adjustedSpeed /= curCell.terrain.moveCost;
+      }
+    }
+
+    const angle = Math.atan2(ty - this.y, tx - this.x);
+    const nextX = this.x + Math.cos(angle) * adjustedSpeed;
+    const nextY = this.y + Math.sin(angle) * adjustedSpeed;
+
     const cell = engine.map.getCell(Math.floor(nextX), Math.floor(nextY));
     if (cell && cell.terrain.traversable) {
       this.x = nextX;
       this.y = nextY;
     } else {
-      // Contournement léger
-      this.x += Math.cos(angle + Math.PI / 4) * (moveSpeed * 0.5);
-      this.y += Math.sin(angle + Math.PI / 4) * (moveSpeed * 0.5);
+      this.x += Math.cos(angle + Math.PI / 4) * (adjustedSpeed * 0.5);
+      this.y += Math.sin(angle + Math.PI / 4) * (adjustedSpeed * 0.5);
     }
   }
 
   performAttack(target, engine, combatBuff) {
     if (this.attackCooldown > 0) return;
 
-    this.attackCooldown = this.isRanged ? 24 : 16; // Ticks entre attaques (20 ticks = 1 sec)
+    this.attackCooldown = this.isRanged ? 24 : 16;
 
     let dmg = this.attack * combatBuff;
     if (this.chargeBonus > 1.0 && !this.hasCharged) {
@@ -215,7 +215,6 @@ export class Unit {
     }
 
     if (this.isRanged) {
-      // Lancer un projectile balistique
       const isSiege = this.type === "siege";
       const proj = new Projectile(this.factionId, this.x, this.y, target.x, target.y, dmg, target, isSiege);
       engine.projectiles.push(proj);
@@ -224,7 +223,6 @@ export class Unit {
         SOUND.playCharge();
       }
     } else {
-      // Attaque au corps à corps directe
       target.takeDamage(dmg, this.factionId, engine);
       if (this.factionId === 1 || target.factionId === 1) {
         SOUND.playClash();
@@ -233,7 +231,8 @@ export class Unit {
   }
 
   takeDamage(amount, attackerId, engine) {
-    const netDamage = Math.max(2, Math.floor(amount - this.defense));
+    const def = this.getEffectiveDefense(engine);
+    const netDamage = Math.max(2, Math.floor(amount - def));
     this.hp -= netDamage;
 
     // Événement visuel

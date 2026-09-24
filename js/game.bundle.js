@@ -1,8 +1,8 @@
 /**
- * Jerry's Nations: Frontline Realms - Standalone RTS Game Bundle
- * Concaténation autonome 100% compatible file:/// (sans restriction CORS de modules ES6).
- * Modèle RTS : Bataillons physiques, tirs balistiques, sélection directe (Marquee Box & Clic),
- * recrutement, expéditions stratégiques, banquet du crépuscule (jn_food) et Scoreboard Mood.
+ * Jerry's Nations: Frontline Realms - Standalone RTS Game Bundle (Version 2.1.0)
+ * Carte à grande échelle en secteurs tactiques quadrillés de 56px.
+ * Impact réel des biomes (Plaines arables, Forêts d'exploitation, Collines minières, Pics infranchissables, Gués).
+ * Bataillons physiques RTS, balistique en cloche, économie par secteur et expéditions stratégiques.
  */
 
 (function () {
@@ -10,12 +10,12 @@
 
   // ==================== 1. CONFIGURATION & CONSTANTES ====================
   const CONFIG = {
-    VERSION: "2.0.0",
+    VERSION: "2.1.0",
     TICK_RATE: 20,
-    MAP_WIDTH: 140,
-    MAP_HEIGHT: 90,
-    CELL_SIZE: 12,
-    DAY_DURATION_SEC: 45,
+    MAP_WIDTH: 72,
+    MAP_HEIGHT: 48,
+    CELL_SIZE: 56, // Secteurs visibles et quadrillés de 56px
+    DAY_DURATION_SEC: 50,
 
     MOOD: {
       GOLDEN_AGE: { min: 750, max: 1000, key: "golden_age", name: "Âge d'Or", color: "§a", speedBuff: 1.30, combatBuff: 1.25 },
@@ -26,26 +26,27 @@
     },
 
     STAGES: [
-      { tier: 0, id: "settlement", name: "Campement", reqPop: 10, reqTerritory: 20, reqGold: 0, maxCities: 1, color: "§7" },
-      { tier: 1, id: "union", name: "Union", reqPop: 35, reqTerritory: 60, reqGold: 50, maxCities: 1, color: "§f" },
-      { tier: 2, id: "commonwealth", name: "Commonwealth", reqPop: 80, reqTerritory: 140, reqGold: 150, maxCities: 1, color: "§e" },
-      { tier: 3, id: "state", name: "État", reqPop: 150, reqTerritory: 260, reqGold: 350, maxCities: 2, color: "§6" },
-      { tier: 4, id: "developing_state", name: "État en Dév.", reqPop: 260, reqTerritory: 450, reqGold: 700, maxCities: 2, color: "§b" },
-      { tier: 5, id: "advanced_state", name: "État Avancé", reqPop: 420, reqTerritory: 750, reqGold: 1200, maxCities: 3, color: "§9" },
-      { tier: 6, id: "nation", name: "Nation", reqPop: 650, reqTerritory: 1200, reqGold: 2000, maxCities: 5, color: "§2" },
-      { tier: 7, id: "rising_nation", name: "Nation Émergente", reqPop: 950, reqTerritory: 1800, reqGold: 3200, maxCities: 6, color: "§a" },
-      { tier: 8, id: "established_nation", name: "Nation Établie", reqPop: 1400, reqTerritory: 2600, reqGold: 5000, maxCities: 8, color: "§d" },
-      { tier: 9, id: "great_nation", name: "Grande Nation", reqPop: 2000, reqTerritory: 3800, reqGold: 8000, maxCities: 10, color: "§5" },
-      { tier: 10, id: "superpower_nation", name: "Superpuissance", reqPop: 3000, reqTerritory: 5500, reqGold: 13000, maxCities: 12, color: "§c" }
+      { tier: 0, id: "settlement", name: "Campement", reqPop: 10, reqTerritory: 12, reqGold: 0, maxCities: 1, color: "§7" },
+      { tier: 1, id: "union", name: "Union", reqPop: 35, reqTerritory: 30, reqGold: 50, maxCities: 1, color: "§f" },
+      { tier: 2, id: "commonwealth", name: "Commonwealth", reqPop: 80, reqTerritory: 65, reqGold: 150, maxCities: 1, color: "§e" },
+      { tier: 3, id: "state", name: "État", reqPop: 150, reqTerritory: 120, reqGold: 350, maxCities: 2, color: "§6" },
+      { tier: 4, id: "developing_state", name: "État en Dév.", reqPop: 260, reqTerritory: 200, reqGold: 700, maxCities: 2, color: "§b" },
+      { tier: 5, id: "advanced_state", name: "État Avancé", reqPop: 420, reqTerritory: 320, reqGold: 1200, maxCities: 3, color: "§9" },
+      { tier: 6, id: "nation", name: "Nation", reqPop: 650, reqTerritory: 500, reqGold: 2000, maxCities: 5, color: "§2" },
+      { tier: 7, id: "rising_nation", name: "Nation Émergente", reqPop: 950, reqTerritory: 750, reqGold: 3200, maxCities: 6, color: "§a" },
+      { tier: 8, id: "established_nation", name: "Nation Établie", reqPop: 1400, reqTerritory: 1100, reqGold: 5000, maxCities: 8, color: "§d" },
+      { tier: 9, id: "great_nation", name: "Grande Nation", reqPop: 2000, reqTerritory: 1600, reqGold: 8000, maxCities: 10, color: "§5" },
+      { tier: 10, id: "superpower_nation", name: "Superpuissance", reqPop: 3000, reqTerritory: 2400, reqGold: 13000, maxCities: 12, color: "§c" }
     ],
 
     TERRAIN: {
-      DEEP_WATER: { id: 0, name: "Mer Parchemin", color: "#dec89b", traversable: false, moveCost: 999 },
-      SHALLOW_WATER: { id: 1, name: "Rivière / Côte", color: "#ebe0c1", traversable: true, moveCost: 2.2 },
-      PLAIN: { id: 2, name: "Plaine Fertile", color: "#5b7b4a", traversable: true, moveCost: 1.0, foodYield: 1.2 },
-      FOREST: { id: 3, name: "Forêt Dense", color: "#34512b", traversable: true, moveCost: 1.5, woodYield: 1.5, defenseBonus: 0.25 },
-      HILLS: { id: 4, name: "Collines Rocheuses", color: "#8a7b62", traversable: true, moveCost: 1.8, stoneYield: 1.5, defenseBonus: 0.40 },
-      MOUNTAIN: { id: 5, name: "Hautes Montagnes", color: "#a49782", traversable: false, moveCost: 999, defenseBonus: 0.80 }
+      DEEP_WATER: { id: "deep_water", name: "Mer Parchemin", color: "#dec89b", traversable: false, desc: "Océan infranchissable" },
+      RIVER: { id: "river", name: "Rivière Navigable", color: "#c8b382", traversable: false, desc: "Obstacle naturel infranchissable" },
+      FORD: { id: "ford", name: "Gué de Rivière", color: "#d8c499", traversable: true, moveCost: 1.8, defenseBonus: -0.10, desc: "Point de passage stratégique" },
+      PLAIN: { id: "plain", name: "Plaine Arable", color: "#60804b", traversable: true, moveCost: 1.0, baseFood: 1.5, cavalrySpeedBonus: 1.20, allowsFarm: true, desc: "Terres fertiles idéales pour les Fermes et la Cavalerie" },
+      FOREST: { id: "forest", name: "Forêt Dense", color: "#355428", traversable: true, moveCost: 1.3, baseWood: 1.8, defenseBonus: 0.30, cavalrySpeedPenalty: 0.65, allowsLumberCamp: true, desc: "Abondance de Bois, couverture défensive pour l'infanterie" },
+      HILLS: { id: "hills", name: "Collines Rocheuses", color: "#847458", traversable: true, moveCost: 1.5, baseStone: 1.6, baseGold: 0.8, defenseBonus: 0.45, archerRangeBonus: 1.0, allowsQuarry: true, desc: "Gisements de Pierre et Or, surplomb pour les Archers" },
+      MOUNTAIN: { id: "mountain", name: "Pics Montagneux", color: "#9f9380", traversable: false, desc: "Rempart rocheux naturel infranchissable" }
     },
 
     UNITS: {
@@ -141,14 +142,14 @@
     ],
 
     INFRASTRUCTURES: {
-      FARM: { id: "farm", name: "Ferme Coloniale", woodCost: 40, stoneCost: 10, foodBonus: 3.5, hp: 150, icon: "farm" },
-      BARRACKS: { id: "barracks", name: "Caserne d'Armes", woodCost: 60, stoneCost: 35, goldCost: 20, hp: 250, icon: "barracks", desc: "Centre d'entraînement militaire" },
-      OUTPOST: { id: "outpost", name: "Avant-poste", woodCost: 50, stoneCost: 30, goldCost: 15, territoryRadius: 3, defenseBonus: 0.35, hp: 300, icon: "flag", desc: "Revendique et stabilise les terres" },
-      LUMBER_CAMP: { id: "lumber_camp", name: "Scierie", woodCost: 30, stoneCost: 10, woodBonus: 2.2, hp: 120, icon: "axe" },
-      QUARRY: { id: "quarry", name: "Carrière de Pierre", woodCost: 40, stoneCost: 20, stoneBonus: 1.8, hp: 140, icon: "pickaxe" },
-      PALISADE: { id: "palisade", name: "Palissade Frontalière", woodCost: 25, stoneCost: 10, defenseBonus: 0.45, hp: 180, icon: "shield" },
-      WATCHTOWER: { id: "watchtower", name: "Tour de Guet", woodCost: 60, stoneCost: 50, defenseBonus: 0.80, range: 4.5, attackDamage: 12, hp: 220, icon: "tower" },
-      CITADEL: { id: "citadel", name: "Bastion de Forteresse", woodCost: 150, stoneCost: 200, goldCost: 100, defenseBonus: 1.50, range: 6.0, attackDamage: 25, hp: 600, icon: "fortress" }
+      FARM: { id: "farm", name: "Ferme", allowedTerrain: ["plain"], woodCost: 40, stoneCost: 10, foodBonus: 5.0, hp: 150, icon: "farm", desc: "Produit des récoltes abondantes de Pain (Plaine obligatoire)" },
+      BARRACKS: { id: "barracks", name: "Caserne d'Armes", allowedTerrain: ["plain", "forest", "hills"], woodCost: 60, stoneCost: 35, goldCost: 20, hp: 250, icon: "barracks", desc: "Centre d'entraînement militaire" },
+      OUTPOST: { id: "outpost", name: "Avant-poste", allowedTerrain: ["plain", "forest", "hills"], woodCost: 50, stoneCost: 30, goldCost: 15, territoryRadius: 2, defenseBonus: 0.35, hp: 300, icon: "flag", desc: "Revendique et stabilise les secteurs voisins" },
+      LUMBER_CAMP: { id: "lumber_camp", name: "Scierie", allowedTerrain: ["forest"], woodCost: 30, stoneCost: 10, woodBonus: 4.5, hp: 120, icon: "axe", desc: "Exploitation forestière intensive de Bois (Forêt obligatoire)" },
+      QUARRY: { id: "quarry", name: "Carrière de Pierre", allowedTerrain: ["hills"], woodCost: 40, stoneCost: 20, stoneBonus: 3.5, goldBonus: 1.5, hp: 140, icon: "pickaxe", desc: "Extraction de Pierre et filons d'Or (Collines obligatoires)" },
+      PALISADE: { id: "palisade", name: "Palissade", allowedTerrain: ["plain", "forest", "hills"], woodCost: 25, stoneCost: 10, defenseBonus: 0.45, hp: 180, icon: "shield", desc: "Barricade défensive" },
+      WATCHTOWER: { id: "watchtower", name: "Tour de Guet", allowedTerrain: ["plain", "forest", "hills"], woodCost: 60, stoneCost: 50, defenseBonus: 0.80, range: 3.5, attackDamage: 14, hp: 220, icon: "tower", desc: "Tirs de flèches automatiques (portée accrue sur Collines)" },
+      CITADEL: { id: "citadel", name: "Bastion Impérial", allowedTerrain: ["plain", "hills"], woodCost: 150, stoneCost: 200, goldCost: 100, defenseBonus: 1.50, range: 5.0, attackDamage: 28, hp: 600, icon: "fortress", desc: "Citadelle souveraine imprenable" }
     },
 
     MC_COLORS: {
@@ -349,7 +350,7 @@
 
   const SOUND = new SoundEngine();
 
-  // ==================== 3. GÉNÉRATEUR DE MONDE & CARTE ====================
+  // ==================== 3. GÉNÉRATEUR DE MONDE & SECTEURS ====================
   class WorldMap {
     constructor(width = CONFIG.MAP_WIDTH, height = CONFIG.MAP_HEIGHT) {
       this.width = width;
@@ -361,8 +362,9 @@
     createPrng(seed) {
       let s = seed % 2147483647;
       if (s <= 0) s += 2147483646;
-      return function () {
-        return (s = (s * 16807) % 2147483647) / 2147483647;
+      return () => {
+        s = (s * 16807) % 2147483647;
+        return (s - 1) / 2147483646;
       };
     }
 
@@ -373,18 +375,18 @@
 
       for (let y = 0; y < this.height; y++) {
         for (let x = 0; x < this.width; x++) {
-          const nx = (x / this.width) * 4;
-          const ny = (y / this.height) * 4;
+          const nx = (x / this.width) * 3.5;
+          const ny = (y / this.height) * 3.5;
           const dx = 2 * (x / this.width) - 1;
           const dy = 2 * (y / this.height) - 1;
           const distFromCenter = Math.sqrt(dx * dx + dy * dy);
 
-          let h = Math.sin(nx + prng() * 0.1) * 0.4 + Math.cos(ny + prng() * 0.1) * 0.4;
-          h += Math.sin(nx * 2) * 0.2 + Math.cos(ny * 2) * 0.2;
-          h += Math.sin(nx * 4) * 0.1 + Math.cos(ny * 4) * 0.1;
-          h = (h + 1) * 0.5 - distFromCenter * 0.45;
+          let h = Math.sin(nx + prng() * 0.15) * 0.38 + Math.cos(ny + prng() * 0.15) * 0.38;
+          h += Math.sin(nx * 2.2 + 0.5) * 0.22 + Math.cos(ny * 2.2 + 0.3) * 0.22;
+          h += Math.sin(nx * 4.4) * 0.10 + Math.cos(ny * 4.4) * 0.10;
+          h = (h + 1) * 0.5 - distFromCenter * 0.42;
 
-          let m = Math.sin(nx * 1.5 + 1.2) * 0.5 + Math.cos(ny * 1.5 + 0.8) * 0.5;
+          let m = Math.sin(nx * 1.8 + 1.2) * 0.5 + Math.cos(ny * 1.8 + 0.8) * 0.5;
           m = (m + 1) * 0.5;
 
           const idx = y * this.width + x;
@@ -393,33 +395,54 @@
         }
       }
 
+      // Rivière sinueuse & Gués de passage
+      const riverY = Math.floor(this.height * 0.52);
+      const riverCoords = new Set();
+      const fordCoords = new Set();
+      let curY = riverY;
+
+      for (let x = 6; x < this.width - 6; x++) {
+        if (prng() < 0.25) curY += prng() < 0.5 ? 1 : -1;
+        curY = Math.max(8, Math.min(this.height - 8, curY));
+        riverCoords.add(`${x},${curY}`);
+
+        if (x % 10 === 0) {
+          fordCoords.add(`${x},${curY}`);
+        }
+      }
+
       for (let y = 0; y < this.height; y++) {
         for (let x = 0; x < this.width; x++) {
           const idx = y * this.width + x;
           const h = heightMap[idx];
           const m = moistureMap[idx];
+          const coordKey = `${x},${y}`;
 
           let terrain;
-          if (h < 0.22) {
+          if (fordCoords.has(coordKey) && h >= 0.22) {
+            terrain = CONFIG.TERRAIN.FORD;
+          } else if (riverCoords.has(coordKey) && h >= 0.22) {
+            terrain = CONFIG.TERRAIN.RIVER;
+          } else if (h < 0.20) {
             terrain = CONFIG.TERRAIN.DEEP_WATER;
-          } else if (h < 0.32) {
-            terrain = CONFIG.TERRAIN.SHALLOW_WATER;
-          } else if (h > 0.78) {
+          } else if (h > 0.74) {
             terrain = CONFIG.TERRAIN.MOUNTAIN;
-          } else if (h > 0.62) {
+          } else if (h > 0.55) {
             terrain = CONFIG.TERRAIN.HILLS;
-          } else if (m > 0.55) {
+          } else if (m > 0.48) {
             terrain = CONFIG.TERRAIN.FOREST;
           } else {
             terrain = CONFIG.TERRAIN.PLAIN;
           }
 
+          const variantSeed = Math.floor(prng() * 100);
+
           this.grid[idx] = {
             x,
             y,
             terrain,
+            variantSeed,
             owner: 0,
-            troops: terrain.traversable ? Math.floor(prng() * 4) + 1 : 0,
             infrastructure: null,
             infraHp: null,
             isCapital: false,
@@ -436,23 +459,25 @@
       const factions = CONFIG.FACTIONS;
       const candidates = [];
 
-      for (let y = 10; y < this.height - 10; y++) {
-        for (let x = 10; x < this.width - 10; x++) {
+      for (let y = 6; y < this.height - 6; y++) {
+        for (let x = 6; x < this.width - 6; x++) {
           const cell = this.getCell(x, y);
           if (cell && cell.terrain === CONFIG.TERRAIN.PLAIN) {
-            candidates.push(cell);
+            const neighbors = this.getNeighbors(x, y, true);
+            const hasWater = neighbors.some((n) => n.terrain === CONFIG.TERRAIN.DEEP_WATER);
+            if (!hasWater) candidates.push(cell);
           }
         }
       }
 
       if (candidates.length === 0) return;
-      const minDist = Math.floor(Math.min(this.width, this.height) / (factions.length * 0.7));
+      const minDist = Math.floor(Math.min(this.width, this.height) / (factions.length * 0.55));
 
       factions.forEach((faction) => {
         let chosen = null;
         let attempts = 0;
 
-        while (!chosen && attempts < 200) {
+        while (!chosen && attempts < 250) {
           attempts++;
           const candidate = candidates[Math.floor(prng() * candidates.length)];
           const tooClose = this.capitals.some((cap) => Math.hypot(cap.x - candidate.x, cap.y - candidate.y) < minDist);
@@ -467,7 +492,7 @@
         chosen.infrastructure = "citadel";
         chosen.infraHp = 600;
 
-        // Territoire initial 3x3
+        // Revendication territoriale initiale (3x3 secteurs)
         for (let dy = -1; dy <= 1; dy++) {
           for (let dx = -1; dx <= 1; dx++) {
             const neighbor = this.getCell(chosen.x + dx, chosen.y + dy);
@@ -477,7 +502,12 @@
           }
         }
 
-        this.capitals.push({ factionId: faction.id, x: chosen.x, y: chosen.y });
+        this.capitals.push({
+          factionId: faction.id,
+          x: chosen.x,
+          y: chosen.y,
+          name: faction.name
+        });
       });
     }
 
@@ -486,30 +516,24 @@
       return this.grid[y * this.width + x];
     }
 
-    getNeighbors(x, y) {
-      const neighbors = [];
-      const dirs = [[0, -1], [1, 0], [0, 1], [-1, 0]];
-      for (const [dx, dy] of dirs) {
-        const cell = this.getCell(x + dx, y + dy);
-        if (cell) neighbors.push(cell);
-      }
-      return neighbors;
-    }
+    getNeighbors(x, y, includeDiagonals = false) {
+      const list = [];
+      const dirs = includeDiagonals
+        ? [[0, 1], [1, 0], [0, -1], [-1, 0], [1, 1], [-1, -1], [1, -1], [-1, 1]]
+        : [[0, 1], [1, 0], [0, -1], [-1, 0]];
 
-    countFactionTerritory(factionId) {
-      let count = 0;
-      for (let i = 0; i < this.grid.length; i++) {
-        if (this.grid[i].owner === factionId) count++;
+      for (const [dx, dy] of dirs) {
+        const c = this.getCell(x + dx, y + dy);
+        if (c) list.push(c);
       }
-      return count;
+      return list;
     }
 
     isBorderCell(x, y, factionId) {
+      const cell = this.getCell(x, y);
+      if (!cell || cell.owner !== factionId) return false;
       const neighbors = this.getNeighbors(x, y);
-      for (let i = 0; i < neighbors.length; i++) {
-        if (neighbors[i].owner !== factionId) return true;
-      }
-      return false;
+      return neighbors.some((n) => n.owner !== factionId && n.terrain.traversable);
     }
 
     getBorderCells(factionId) {
@@ -521,6 +545,14 @@
         }
       }
       return borders;
+    }
+
+    countFactionTerritory(factionId) {
+      let count = 0;
+      for (let i = 0; i < this.grid.length; i++) {
+        if (this.grid[i].owner === factionId) count++;
+      }
+      return count;
     }
   }
 
@@ -635,6 +667,24 @@
       this.state = "attacking";
     }
 
+    getEffectiveRange(engine) {
+      let r = this.range;
+      const cell = engine.map.getCell(Math.floor(this.x), Math.floor(this.y));
+      if (cell && cell.terrain.archerRangeBonus && this.isRanged) {
+        r += cell.terrain.archerRangeBonus;
+      }
+      return r;
+    }
+
+    getEffectiveDefense(engine) {
+      let def = this.defense;
+      const cell = engine.map.getCell(Math.floor(this.x), Math.floor(this.y));
+      if (cell && cell.terrain.defenseBonus) {
+        def += Math.floor(cell.terrain.defenseBonus * 5);
+      }
+      return def;
+    }
+
     update(engine) {
       if (this.hp <= 0) return false;
       if (this.attackCooldown > 0) this.attackCooldown--;
@@ -650,7 +700,9 @@
           this.state = "idle";
         } else {
           const dist = Math.hypot(this.targetUnit.x - this.x, this.targetUnit.y - this.y);
-          if (dist <= this.range) {
+          const effectiveRange = this.getEffectiveRange(engine);
+
+          if (dist <= effectiveRange) {
             this.performAttack(this.targetUnit, engine, combatBuff);
             return true;
           } else {
@@ -681,7 +733,7 @@
         this.scanForNearbyEnemies(engine);
       }
 
-      // 4. Capture passive du territoire
+      // 4. Capture passive du secteur
       if (this.state === "idle") {
         this.claimCurrentCell(engine);
       }
@@ -690,17 +742,30 @@
     }
 
     stepTowards(tx, ty, moveSpeed, engine) {
+      const curCell = engine.map.getCell(Math.floor(this.x), Math.floor(this.y));
+      let adjustedSpeed = moveSpeed;
+
+      if (curCell) {
+        if (this.type === "cavalry") {
+          if (curCell.terrain.cavalrySpeedBonus) adjustedSpeed *= curCell.terrain.cavalrySpeedBonus;
+          if (curCell.terrain.cavalrySpeedPenalty) adjustedSpeed *= curCell.terrain.cavalrySpeedPenalty;
+        }
+        if (curCell.terrain.moveCost) {
+          adjustedSpeed /= curCell.terrain.moveCost;
+        }
+      }
+
       const angle = Math.atan2(ty - this.y, tx - this.x);
-      const nextX = this.x + Math.cos(angle) * moveSpeed;
-      const nextY = this.y + Math.sin(angle) * moveSpeed;
+      const nextX = this.x + Math.cos(angle) * adjustedSpeed;
+      const nextY = this.y + Math.sin(angle) * adjustedSpeed;
 
       const cell = engine.map.getCell(Math.floor(nextX), Math.floor(nextY));
       if (cell && cell.terrain.traversable) {
         this.x = nextX;
         this.y = nextY;
       } else {
-        this.x += Math.cos(angle + Math.PI / 4) * (moveSpeed * 0.5);
-        this.y += Math.sin(angle + Math.PI / 4) * (moveSpeed * 0.5);
+        this.x += Math.cos(angle + Math.PI / 4) * (adjustedSpeed * 0.5);
+        this.y += Math.sin(angle + Math.PI / 4) * (adjustedSpeed * 0.5);
       }
     }
 
@@ -726,7 +791,8 @@
     }
 
     takeDamage(amount, attackerId, engine) {
-      const netDamage = Math.max(2, Math.floor(amount - this.defense));
+      const def = this.getEffectiveDefense(engine);
+      const netDamage = Math.max(2, Math.floor(amount - def));
       this.hp -= netDamage;
 
       engine.combatEvents.push({
@@ -811,7 +877,7 @@
     }
   }
 
-  // ==================== 5. MOTEUR DE SIMULATION RTS ====================
+  // ==================== 5. MOTEUR DE SIMULATION ====================
   class GameEngine {
     constructor(worldMap) {
       this.map = worldMap;
@@ -1019,7 +1085,7 @@
 
         if (targetUnit) {
           const isCitadel = cell.infrastructure === "citadel";
-          const dmg = infra.attackDamage || 12;
+          const dmg = infra.attackDamage || 14;
           const proj = new Projectile(cell.owner, cell.x + 0.5, cell.y + 0.5, targetUnit.x, targetUnit.y, dmg, targetUnit, isCitadel);
           this.projectiles.push(proj);
         }
@@ -1073,7 +1139,7 @@
           f.food -= foodRequired;
           f.moodScore = Math.min(1000, f.moodScore + 40);
           if (f.isPlayer) {
-            this.addLog(`§aBanquet réussi : ${foodRequired} rations consommées. Les troupes sont prêtes au combat.`);
+            this.addLog(`§aBanquet réussi : ${foodRequired} rations consommées. Les troupes sont exaltées.`);
           }
         } else {
           const shortfall = foodRequired - f.food;
@@ -1103,19 +1169,27 @@
         const moodConfig = this.getMoodState(f.moodScore);
         const moodBuff = moodConfig.speedBuff;
 
-        let foodProd = f.territoryCount * 0.08;
-        let woodProd = 0.4;
+        let foodProd = 0.5;
+        let woodProd = 0.5;
         let stoneProd = 0.3;
-        let goldProd = f.territoryCount * 0.10;
+        let goldProd = 0.2;
 
         for (let i = 0; i < this.map.grid.length; i++) {
           const cell = this.map.grid[i];
-          if (cell.owner === f.id && cell.infrastructure) {
-            const infra = CONFIG.INFRASTRUCTURES[cell.infrastructure.toUpperCase()];
-            if (infra) {
-              if (infra.foodBonus) foodProd += infra.foodBonus;
-              if (infra.woodBonus) woodProd += infra.woodBonus;
-              if (infra.stoneBonus) stoneProd += infra.stoneBonus;
+          if (cell.owner === f.id) {
+            if (cell.terrain.baseFood) foodProd += cell.terrain.baseFood * 0.15;
+            if (cell.terrain.baseWood) woodProd += cell.terrain.baseWood * 0.15;
+            if (cell.terrain.baseStone) stoneProd += cell.terrain.baseStone * 0.15;
+            if (cell.terrain.baseGold) goldProd += cell.terrain.baseGold * 0.12;
+
+            if (cell.infrastructure) {
+              const infra = CONFIG.INFRASTRUCTURES[cell.infrastructure.toUpperCase()];
+              if (infra) {
+                if (infra.foodBonus) foodProd += infra.foodBonus * 0.25;
+                if (infra.woodBonus) woodProd += infra.woodBonus * 0.25;
+                if (infra.stoneBonus) stoneProd += infra.stoneBonus * 0.25;
+                if (infra.goldBonus) goldProd += infra.goldBonus * 0.25;
+              }
             }
           }
         }
@@ -1137,13 +1211,33 @@
       const infra = CONFIG.INFRASTRUCTURES[infraType.toUpperCase()];
       if (!infra) return false;
 
+      if (infra.allowedTerrain && !infra.allowedTerrain.includes(cell.terrain.id)) {
+        if (factionId === 1) {
+          const allowedNames = infra.allowedTerrain.map((tid) => {
+            const t = Object.values(CONFIG.TERRAIN).find((val) => val.id === tid);
+            return t ? t.name : tid;
+          }).join(" ou ");
+          this.addLog(`§cEmplacement invalide : la ${infra.name} requiert un secteur de type ${allowedNames} !`);
+          SOUND.playClick();
+        }
+        return false;
+      }
+
       if (infra.id === "outpost") {
         if (cell.owner !== 0 && cell.owner !== factionId) return false;
       } else {
-        if (cell.owner !== factionId) return false;
+        if (cell.owner !== factionId) {
+          if (factionId === 1) {
+            this.addLog(`§cVous devez contrôler ce secteur pour y bâtir une infrastructure !`);
+          }
+          return false;
+        }
       }
 
-      if (cell.infrastructure) return false;
+      if (cell.infrastructure) {
+        if (factionId === 1) this.addLog("§cUn bâtiment est déjà érigé sur ce secteur.");
+        return false;
+      }
 
       const woodCost = infra.woodCost || 0;
       const stoneCost = infra.stoneCost || 0;
@@ -1182,7 +1276,7 @@
 
       if (factionId === 1) {
         SOUND.playBuild();
-        this.addLog(`§2${infra.name} érigé en (${x}, ${y}).`);
+        this.addLog(`§2${infra.name} érigé en (${x}, ${y}) sur secteur ${cell.terrain.name}.`);
       }
 
       return true;
@@ -1197,10 +1291,13 @@
 
       for (let i = 0; i < this.map.grid.length; i++) {
         const cell = this.map.grid[i];
-        if (cell.owner === 0 && cell.terrain === CONFIG.TERRAIN.PLAIN) {
+        if (cell.owner === 0 && cell.terrain.traversable) {
           const distToOwned = this.getMinDistanceToFaction(cell.x, cell.y, factionId);
           if (distToOwned >= 2 && distToOwned <= 8) {
-            const score = 100 - distToOwned * 10;
+            let score = 100 - distToOwned * 8;
+            if (cell.terrain.id === "plain") score += 30;
+            if (cell.terrain.id === "forest") score += 20;
+            if (cell.terrain.id === "hills") score += 25;
             if (score > bestScore) {
               bestScore = score;
               bestCell = cell;
@@ -1230,7 +1327,7 @@
 
       if (factionId === 1) {
         SOUND.playCharge();
-        this.addLog(`§a[EXPÉDITION] Colonisation en route vers le secteur (${bestCell.x}, ${bestCell.y}) !`);
+        this.addLog(`§a[EXPÉDITION] Colonisation en route vers le secteur ${bestCell.terrain.name} (${bestCell.x}, ${bestCell.y}) !`);
       }
 
       return true;
@@ -1318,8 +1415,8 @@
 
     getMinDistanceToFaction(x, y, factionId) {
       let minDist = 999;
-      for (let dy = -8; dy <= 8; dy++) {
-        for (let dx = -8; dx <= 8; dx++) {
+      for (let dy = -6; dy <= 6; dy++) {
+        for (let dx = -6; dx <= 6; dx++) {
           const c = this.map.getCell(x + dx, y + dy);
           if (c && c.owner === factionId) {
             const d = Math.hypot(dx, dy);
@@ -1374,7 +1471,7 @@
     }
   }
 
-  // ==================== 6. RENDU CANVAS 2D RTS ====================
+  // ==================== 6. RENDU DE SECTEURS & BIOMES ====================
   class MapRenderer {
     constructor(canvas, worldMap, engine) {
       this.canvas = canvas;
@@ -1382,7 +1479,7 @@
       this.map = worldMap;
       this.engine = engine;
 
-      this.scale = 1.0;
+      this.scale = 0.95;
       this.offsetX = 0;
       this.offsetY = 0;
       this.isDragging = false;
@@ -1414,8 +1511,8 @@
       const playerCapital = this.map.capitals.find((c) => c.factionId === 1);
       const cellSize = CONFIG.CELL_SIZE;
       if (playerCapital) {
-        const capWorldX = playerCapital.x * cellSize;
-        const capWorldY = playerCapital.y * cellSize;
+        const capWorldX = playerCapital.x * cellSize + cellSize / 2;
+        const capWorldY = playerCapital.y * cellSize + cellSize / 2;
         this.offsetX = this.canvas.width / 2 - capWorldX * this.scale;
         this.offsetY = this.canvas.height / 2 - capWorldY * this.scale;
       }
@@ -1457,7 +1554,7 @@
         const mouseY = (e.clientY - rect.top) * (this.canvas.height / rect.height);
 
         const zoomFactor = e.deltaY < 0 ? 1.15 : 0.85;
-        const newScale = Math.max(0.45, Math.min(3.5, this.scale * zoomFactor));
+        const newScale = Math.max(0.35, Math.min(2.8, this.scale * zoomFactor));
 
         this.offsetX = mouseX - (mouseX - this.offsetX) * (newScale / this.scale);
         this.offsetY = mouseY - (mouseY - this.offsetY) * (newScale / this.scale);
@@ -1486,8 +1583,8 @@
       this.orderRipples.push({
         x: screenX,
         y: screenY,
-        radius: 4,
-        maxRadius: 22,
+        radius: 6,
+        maxRadius: 28,
         isAttack,
         alpha: 1.0
       });
@@ -1518,21 +1615,24 @@
           const px = x * cellSize;
           const py = y * cellSize;
 
-          ctx.fillStyle = cell.terrain.color;
-          ctx.fillRect(px, py, cellSize + 0.5, cellSize + 0.5);
+          this.drawSectorBiome(ctx, px, py, cellSize, cell);
+
+          ctx.strokeStyle = "rgba(40, 25, 10, 0.25)";
+          ctx.lineWidth = 1;
+          ctx.strokeRect(px, py, cellSize, cellSize);
 
           if (cell.owner > 0) {
             const faction = this.engine.factions.get(cell.owner);
             if (faction) {
               ctx.fillStyle = faction.color;
-              ctx.globalAlpha = 0.50;
-              ctx.fillRect(px, py, cellSize + 0.5, cellSize + 0.5);
+              ctx.globalAlpha = 0.38;
+              ctx.fillRect(px, py, cellSize, cellSize);
               ctx.globalAlpha = 1.0;
 
               if (this.map.isBorderCell(x, y, cell.owner)) {
                 ctx.strokeStyle = faction.border;
-                ctx.lineWidth = Math.max(1, 2 * this.scale);
-                ctx.strokeRect(px + 0.5, py + 0.5, cellSize - 1, cellSize - 1);
+                ctx.lineWidth = Math.max(2, 3 * this.scale);
+                ctx.strokeRect(px + 1, py + 1, cellSize - 2, cellSize - 2);
               }
             }
           }
@@ -1550,14 +1650,7 @@
       this.renderCombatEvents(ctx, cellSize);
 
       if (this.hoverCell) {
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.75)";
-        ctx.lineWidth = 1.5;
-        ctx.strokeRect(
-          this.hoverCell.x * cellSize,
-          this.hoverCell.y * cellSize,
-          cellSize,
-          cellSize
-        );
+        this.drawHoverSectorHighlight(ctx, this.hoverCell, cellSize);
       }
 
       ctx.restore();
@@ -1571,6 +1664,93 @@
       this.renderMinimap(ctx, width, height);
     }
 
+    drawSectorBiome(ctx, px, py, s, cell) {
+      const t = cell.terrain;
+      const v = cell.variantSeed;
+
+      ctx.fillStyle = t.color;
+      ctx.fillRect(px, py, s, s);
+
+      ctx.save();
+
+      if (t.id === "plain") {
+        ctx.fillStyle = "rgba(45, 75, 30, 0.4)";
+        const ox1 = ((v * 7) % 36) * (s / 56);
+        const oy1 = ((v * 13) % 36) * (s / 56);
+        ctx.fillRect(px + ox1 + 8, py + oy1 + 10, 4, 3);
+        ctx.fillRect(px + ox1 + 22, py + oy1 + 18, 5, 3);
+
+        if (cell.infrastructure === "farm") {
+          ctx.fillStyle = "#eab308";
+          for (let i = 8; i < s - 8; i += 7) {
+            ctx.fillRect(px + 6, py + i, s - 12, 3);
+          }
+        }
+      } else if (t.id === "forest") {
+        const treeOffsets = [
+          [14, 14], [34, 12], [22, 28], [38, 34], [12, 36]
+        ];
+
+        treeOffsets.forEach(([tx, ty]) => {
+          const x = px + (tx * s) / 56;
+          const y = py + (ty * s) / 56;
+          const r = 5.5 * this.scale;
+
+          ctx.fillStyle = "#3e2712";
+          ctx.fillRect(x - 1, y + 2, 2, 4);
+
+          ctx.fillStyle = "#1e3713";
+          ctx.beginPath();
+          ctx.arc(x, y, r, 0, Math.PI * 2);
+          ctx.fill();
+        });
+
+        if (cell.infrastructure === "lumber_camp") {
+          ctx.fillStyle = "#b45309";
+          ctx.fillRect(px + s * 0.4, py + s * 0.4, s * 0.25, 4);
+        }
+      } else if (t.id === "hills") {
+        ctx.fillStyle = "#5c4f3a";
+        ctx.beginPath();
+        ctx.arc(px + s * 0.35, py + s * 0.55, s * 0.28, Math.PI, 0);
+        ctx.fill();
+
+        ctx.fillStyle = "#4a3f2e";
+        ctx.beginPath();
+        ctx.arc(px + s * 0.65, py + s * 0.60, s * 0.24, Math.PI, 0);
+        ctx.fill();
+      } else if (t.id === "mountain") {
+        ctx.fillStyle = "#334155";
+        ctx.beginPath();
+        ctx.moveTo(px + s * 0.1, py + s * 0.85);
+        ctx.lineTo(px + s * 0.45, py + s * 0.15);
+        ctx.lineTo(px + s * 0.8, py + s * 0.85);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = "#f8fafc";
+        ctx.beginPath();
+        ctx.moveTo(px + s * 0.35, py + s * 0.35);
+        ctx.lineTo(px + s * 0.45, py + s * 0.15);
+        ctx.lineTo(px + s * 0.55, py + s * 0.35);
+        ctx.closePath();
+        ctx.fill();
+      } else if (t.id === "river") {
+        ctx.fillStyle = "rgba(255, 255, 255, 0.25)";
+        ctx.fillRect(px + 6, py + s * 0.4, s - 12, 2);
+        ctx.fillRect(px + 12, py + s * 0.6, s - 20, 2);
+      } else if (t.id === "ford") {
+        ctx.fillStyle = "#78716c";
+        ctx.beginPath();
+        ctx.arc(px + s * 0.3, py + s * 0.4, 4, 0, Math.PI * 2);
+        ctx.arc(px + s * 0.5, py + s * 0.5, 4, 0, Math.PI * 2);
+        ctx.arc(px + s * 0.7, py + s * 0.6, 4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.restore();
+    }
+
     renderUnits(ctx, cellSize) {
       const units = this.engine.units;
 
@@ -1578,7 +1758,7 @@
         const u = units[i];
         const px = (u.x + u.offsetX) * cellSize;
         const py = (u.y + u.offsetY) * cellSize;
-        const radius = Math.max(5, 7 * this.scale);
+        const radius = Math.max(8, 11 * this.scale);
 
         const faction = this.engine.factions.get(u.factionId);
         const factionColor = faction ? faction.color : "#999999";
@@ -1586,9 +1766,9 @@
 
         if (u.isSelected) {
           ctx.strokeStyle = "#55FF55";
-          ctx.lineWidth = 2.5;
+          ctx.lineWidth = 3.0;
           ctx.beginPath();
-          ctx.arc(px, py, radius + 4, 0, Math.PI * 2);
+          ctx.arc(px, py, radius + 5, 0, Math.PI * 2);
           ctx.stroke();
         }
 
@@ -1598,16 +1778,16 @@
         ctx.fill();
 
         ctx.strokeStyle = factionBorder;
-        ctx.lineWidth = 1.5;
+        ctx.lineWidth = 2.0;
         ctx.stroke();
 
         this.drawUnitInsignia(ctx, px, py, radius, u.type);
 
         if (u.hp < u.maxHp || u.isSelected) {
-          const barW = Math.max(14, 18 * this.scale);
-          const barH = Math.max(2, 3 * this.scale);
+          const barW = Math.max(18, 24 * this.scale);
+          const barH = Math.max(3, 4 * this.scale);
           const barX = px - barW / 2;
-          const barY = py - radius - barH - 3;
+          const barY = py - radius - barH - 4;
 
           ctx.fillStyle = "#1e1b18";
           ctx.fillRect(barX, barY, barW, barH);
@@ -1623,7 +1803,7 @@
       ctx.save();
       ctx.strokeStyle = "#ffffff";
       ctx.fillStyle = "#ffffff";
-      ctx.lineWidth = Math.max(1, 1.4 * this.scale);
+      ctx.lineWidth = Math.max(1.5, 2.0 * this.scale);
 
       const s = r * 0.55;
 
@@ -1677,11 +1857,11 @@
         const p = projs[i];
         const px = p.currentX * cellSize;
         const py = p.currentY * cellSize;
-        const arcElevation = Math.sin(p.progress * Math.PI) * Math.max(12, 18 * this.scale);
+        const arcElevation = Math.sin(p.progress * Math.PI) * Math.max(16, 26 * this.scale);
 
         ctx.fillStyle = "rgba(40, 30, 20, 0.35)";
         ctx.beginPath();
-        ctx.ellipse(px, py, 3 * this.scale, 2 * this.scale, 0, 0, Math.PI * 2);
+        ctx.ellipse(px, py, 4 * this.scale, 2.5 * this.scale, 0, 0, Math.PI * 2);
         ctx.fill();
 
         const flyingY = py - arcElevation;
@@ -1689,16 +1869,16 @@
         if (p.isSiege) {
           ctx.fillStyle = "#4a453f";
           ctx.beginPath();
-          ctx.arc(px, flyingY, 4 * this.scale, 0, Math.PI * 2);
+          ctx.arc(px, flyingY, 5 * this.scale, 0, Math.PI * 2);
           ctx.fill();
           ctx.strokeStyle = "#1a1612";
           ctx.stroke();
         } else {
           const angle = Math.atan2(p.targetY - p.fromY, p.targetX - p.fromX);
-          const len = 6 * this.scale;
+          const len = 8 * this.scale;
 
           ctx.strokeStyle = "#5a3a1a";
-          ctx.lineWidth = 1.5;
+          ctx.lineWidth = 2;
           ctx.beginPath();
           ctx.moveTo(px - Math.cos(angle) * len, flyingY - Math.sin(angle) * len);
           ctx.lineTo(px, flyingY);
@@ -1706,7 +1886,7 @@
 
           ctx.fillStyle = "#ffffff";
           ctx.beginPath();
-          ctx.arc(px, flyingY, 1.5, 0, Math.PI * 2);
+          ctx.arc(px, flyingY, 2, 0, Math.PI * 2);
           ctx.fill();
         }
       }
@@ -1727,12 +1907,12 @@
         if (ev.type === "explosion") {
           ctx.fillStyle = "#f97316";
           ctx.beginPath();
-          ctx.arc(px, py, (14 - ev.life) * 1.5 * this.scale, 0, Math.PI * 2);
+          ctx.arc(px, py, (14 - ev.life) * 2.2 * this.scale, 0, Math.PI * 2);
           ctx.fill();
         } else {
           ctx.strokeStyle = "#fef08a";
           ctx.lineWidth = 2;
-          const s = (14 - ev.life) * this.scale;
+          const s = (14 - ev.life) * 1.5 * this.scale;
           ctx.beginPath();
           ctx.moveTo(px - s, py - s);
           ctx.lineTo(px + s, py + s);
@@ -1745,66 +1925,98 @@
       }
     }
 
-    drawCapitalIcon(ctx, px, py, cellSize, cell) {
+    drawCapitalIcon(ctx, px, py, s, cell) {
       const faction = this.engine.factions.get(cell.owner);
       const color = faction ? faction.border : "#ffffff";
 
       ctx.save();
-      ctx.fillStyle = "#334155";
-      ctx.fillRect(px + 1, py + 1, cellSize - 2, cellSize - 2);
+      ctx.fillStyle = "#1e293b";
+      ctx.fillRect(px + s * 0.15, py + s * 0.15, s * 0.7, s * 0.7);
+
+      ctx.strokeStyle = "#475569";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(px + s * 0.15, py + s * 0.15, s * 0.7, s * 0.7);
 
       ctx.fillStyle = color;
-      ctx.fillRect(px + 3, py + 2, cellSize - 6, 3);
+      ctx.fillRect(px + s * 0.35, py + s * 0.3, s * 0.3, s * 0.2);
 
       ctx.strokeStyle = "#fbbf24";
-      ctx.lineWidth = 1.5;
-      ctx.strokeRect(px + 2, py + 2, cellSize - 4, cellSize - 4);
+      ctx.strokeRect(px + s * 0.35, py + s * 0.3, s * 0.3, s * 0.2);
       ctx.restore();
     }
 
-    drawInfraIcon(ctx, px, py, cellSize, cell) {
+    drawInfraIcon(ctx, px, py, s, cell) {
       const type = cell.infrastructure;
       ctx.save();
 
       if (type === "farm") {
-        ctx.fillStyle = "#854d0e";
-        ctx.fillRect(px + 2, py + 2, cellSize - 4, cellSize - 4);
+        ctx.fillStyle = "#78350f";
+        ctx.fillRect(px + s * 0.2, py + s * 0.2, s * 0.6, s * 0.6);
         ctx.strokeStyle = "#eab308";
-        ctx.lineWidth = 1;
-        ctx.strokeRect(px + 3, py + 3, cellSize - 6, cellSize - 6);
+        ctx.lineWidth = 2;
+        ctx.strokeRect(px + s * 0.2, py + s * 0.2, s * 0.6, s * 0.6);
       } else if (type === "barracks") {
-        ctx.fillStyle = "#991b1b";
-        ctx.fillRect(px + 1, py + 1, cellSize - 2, cellSize - 2);
+        ctx.fillStyle = "#881337";
+        ctx.fillRect(px + s * 0.2, py + s * 0.2, s * 0.6, s * 0.6);
         ctx.fillStyle = "#ffffff";
-        ctx.fillRect(px + cellSize * 0.4, py + 2, cellSize * 0.2, cellSize - 4);
+        ctx.fillRect(px + s * 0.42, py + s * 0.25, s * 0.16, s * 0.5);
       } else if (type === "outpost") {
         ctx.fillStyle = "#1e3a8a";
-        ctx.fillRect(px + 2, py + 2, cellSize - 4, cellSize - 4);
+        ctx.fillRect(px + s * 0.25, py + s * 0.25, s * 0.5, s * 0.5);
         ctx.strokeStyle = "#60a5fa";
-        ctx.strokeRect(px + 2, py + 2, cellSize - 4, cellSize - 4);
+        ctx.lineWidth = 2;
+        ctx.strokeRect(px + s * 0.25, py + s * 0.25, s * 0.5, s * 0.5);
       } else if (type === "watchtower") {
-        ctx.fillStyle = "#475569";
-        ctx.fillRect(px + 3, py + 1, cellSize - 6, cellSize - 2);
-        ctx.fillStyle = "#cbd5e1";
-        ctx.fillRect(px + 4, py + 2, cellSize - 8, 3);
+        ctx.fillStyle = "#334155";
+        ctx.fillRect(px + s * 0.3, py + s * 0.15, s * 0.4, s * 0.7);
+        ctx.fillStyle = "#94a3b8";
+        ctx.fillRect(px + s * 0.35, py + s * 0.2, s * 0.3, s * 0.15);
       } else if (type === "palisade") {
         ctx.strokeStyle = "#78350f";
-        ctx.lineWidth = 2;
-        ctx.strokeRect(px + 1, py + 1, cellSize - 2, cellSize - 2);
+        ctx.lineWidth = 3;
+        ctx.strokeRect(px + 4, py + 4, s - 8, s - 8);
       } else if (type === "citadel") {
-        ctx.fillStyle = "#1e293b";
-        ctx.fillRect(px + 1, py + 1, cellSize - 2, cellSize - 2);
+        ctx.fillStyle = "#0f172a";
+        ctx.fillRect(px + s * 0.15, py + s * 0.15, s * 0.7, s * 0.7);
         ctx.strokeStyle = "#f59e0b";
         ctx.lineWidth = 2;
-        ctx.strokeRect(px + 2, py + 2, cellSize - 4, cellSize - 4);
+        ctx.strokeRect(px + s * 0.15, py + s * 0.15, s * 0.7, s * 0.7);
       } else if (type === "lumber_camp") {
-        ctx.fillStyle = "#273f1d";
-        ctx.fillRect(px + 2, py + 2, cellSize - 4, cellSize - 4);
+        ctx.fillStyle = "#1c1917";
+        ctx.fillRect(px + s * 0.25, py + s * 0.25, s * 0.5, s * 0.5);
+        ctx.fillStyle = "#b45309";
+        ctx.fillRect(px + s * 0.3, py + s * 0.4, s * 0.4, 4);
       } else if (type === "quarry") {
-        ctx.fillStyle = "#52525b";
-        ctx.fillRect(px + 2, py + 2, cellSize - 4, cellSize - 4);
+        ctx.fillStyle = "#3f3f46";
+        ctx.fillRect(px + s * 0.2, py + s * 0.2, s * 0.6, s * 0.6);
+        ctx.fillStyle = "#a1a1aa";
+        ctx.fillRect(px + s * 0.35, py + s * 0.35, s * 0.3, s * 0.3);
       }
 
+      ctx.restore();
+    }
+
+    drawHoverSectorHighlight(ctx, cell, cellSize) {
+      const px = cell.x * cellSize;
+      const py = cell.y * cellSize;
+
+      ctx.save();
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(px + 1, py + 1, cellSize - 2, cellSize - 2);
+
+      ctx.fillStyle = "rgba(20, 15, 10, 0.85)";
+      const labelW = 130;
+      const labelH = 22;
+      ctx.fillRect(px + cellSize / 2 - labelW / 2, py - labelH - 4, labelW, labelH);
+      ctx.strokeStyle = "#b45309";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(px + cellSize / 2 - labelW / 2, py - labelH - 4, labelW, labelH);
+
+      ctx.fillStyle = "#fef08a";
+      ctx.font = "10px sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText(`${cell.terrain.name}`, px + cellSize / 2, py - 9);
       ctx.restore();
     }
 
@@ -1826,8 +2038,8 @@
     renderOrderRipples(ctx) {
       for (let i = this.orderRipples.length - 1; i >= 0; i--) {
         const r = this.orderRipples[i];
-        r.radius += 1.2;
-        r.alpha -= 0.05;
+        r.radius += 1.4;
+        r.alpha -= 0.045;
 
         if (r.alpha <= 0 || r.radius >= r.maxRadius) {
           this.orderRipples.splice(i, 1);
@@ -1836,7 +2048,7 @@
 
         ctx.save();
         ctx.strokeStyle = r.isAttack ? `rgba(239, 68, 68, ${r.alpha})` : `rgba(34, 197, 94, ${r.alpha})`;
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 2.5;
         ctx.beginPath();
         ctx.arc(r.x, r.y, r.radius, 0, Math.PI * 2);
         ctx.stroke();
@@ -1863,8 +2075,8 @@
     }
 
     renderMinimap(ctx, screenWidth, screenHeight) {
-      const miniW = 150;
-      const miniH = 100;
+      const miniW = 160;
+      const miniH = 106;
       const pad = 12;
       const miniX = screenWidth - miniW - pad;
       const miniY = screenHeight - miniH - 126;
@@ -1878,22 +2090,21 @@
       const stepX = miniW / this.map.width;
       const stepY = miniH / this.map.height;
 
-      for (let y = 0; y < this.map.height; y += 2) {
-        for (let x = 0; x < this.map.width; x += 2) {
+      for (let y = 0; y < this.map.height; y++) {
+        for (let x = 0; x < this.map.width; x++) {
           const cell = this.map.getCell(x, y);
-          if (cell && cell.owner > 0) {
-            const faction = this.engine.factions.get(cell.owner);
-            if (faction) {
-              ctx.fillStyle = faction.color;
-              ctx.fillRect(miniX + x * stepX, miniY + y * stepY, stepX * 2, stepY * 2);
-            }
+          if (cell) {
+            ctx.fillStyle = cell.owner > 0
+              ? (this.engine.factions.get(cell.owner)?.color || cell.terrain.color)
+              : cell.terrain.color;
+            ctx.fillRect(miniX + x * stepX, miniY + y * stepY, stepX + 0.5, stepY + 0.5);
           }
         }
       }
 
       this.engine.units.forEach((u) => {
         ctx.fillStyle = u.factionId === 1 ? "#55FF55" : "#FF5555";
-        ctx.fillRect(miniX + u.x * stepX, miniY + u.y * stepY, 2, 2);
+        ctx.fillRect(miniX + u.x * stepX, miniY + u.y * stepY, 2.5, 2.5);
       });
 
       const cellSize = CONFIG.CELL_SIZE * this.scale;
@@ -1908,7 +2119,7 @@
     }
   }
 
-  // ==================== 7. IA TACTIQUE RTS ====================
+  // ==================== 7. IA TACTIQUE ====================
   class AIController {
     constructor(engine, worldMap) {
       this.engine = engine;
@@ -1970,16 +2181,32 @@
       if (borders.length === 0) return;
 
       if (faction.food < 40 && faction.wood >= 40 && faction.stone >= 10) {
-        const plainCell = borders.find((c) => c.terrain === CONFIG.TERRAIN.PLAIN && !c.infrastructure);
+        const plainCell = borders.find((c) => c.terrain.id === "plain" && !c.infrastructure);
         if (plainCell) {
           this.engine.buildInfrastructure(fid, plainCell.x, plainCell.y, "farm");
           return;
         }
       }
 
+      if (faction.wood < 60 && faction.wood >= 30 && faction.stone >= 10) {
+        const forestCell = borders.find((c) => c.terrain.id === "forest" && !c.infrastructure);
+        if (forestCell) {
+          this.engine.buildInfrastructure(fid, forestCell.x, forestCell.y, "lumber_camp");
+          return;
+        }
+      }
+
+      if (faction.stone < 50 && faction.wood >= 40 && faction.stone >= 20) {
+        const hillsCell = borders.find((c) => c.terrain.id === "hills" && !c.infrastructure);
+        if (hillsCell) {
+          this.engine.buildInfrastructure(fid, hillsCell.x, hillsCell.y, "quarry");
+          return;
+        }
+      }
+
       if (faction.wood >= 50 && faction.stone >= 30 && faction.gold >= 15 && Math.random() < 0.25) {
         const targetBorder = borders[Math.floor(Math.random() * borders.length)];
-        if (targetBorder && !targetBorder.infrastructure) {
+        if (targetBorder && !targetBorder.infrastructure && targetBorder.terrain.traversable) {
           this.engine.buildInfrastructure(fid, targetBorder.x, targetBorder.y, "outpost");
           return;
         }
@@ -1987,7 +2214,7 @@
 
       if (faction.wood >= 60 && faction.stone >= 50 && Math.random() < 0.2) {
         const targetBorder = borders[Math.floor(Math.random() * borders.length)];
-        if (targetBorder && !targetBorder.infrastructure) {
+        if (targetBorder && !targetBorder.infrastructure && targetBorder.terrain.traversable) {
           this.engine.buildInfrastructure(fid, targetBorder.x, targetBorder.y, "watchtower");
         }
       }
@@ -2064,7 +2291,7 @@
     }
   }
 
-  // ==================== 8. GESTIONNAIRE RÉSEAU P2P ====================
+  // ==================== 8. RÉSEAU P2P ====================
   class NetworkManager {
     constructor(engine) {
       this.engine = engine;
@@ -2228,7 +2455,7 @@
     }
   }
 
-  // ==================== 9. CONTRÔLEUR D'INTERFACE UTILISATEUR ====================
+  // ==================== 9. UI & COMMANDEMENT RTS ====================
   class UIManager {
     constructor(engine, renderer, network) {
       this.engine = engine;
@@ -2347,11 +2574,22 @@
           if (this.selectedBuildMode === type) {
             this.selectedBuildMode = null;
             btn.classList.remove("active");
+            this.updateSelectionDisplay();
           } else {
             this.selectedBuildMode = type;
             document.querySelectorAll(".btn-build-action").forEach((b) => b.classList.remove("active"));
             btn.classList.add("active");
             SOUND.playClick();
+
+            const proto = CONFIG.INFRASTRUCTURES[type.toUpperCase()];
+            if (proto && this.elSelectionInfo) {
+              const req = proto.allowedTerrain
+                ? proto.allowedTerrain.map((tid) => Object.values(CONFIG.TERRAIN).find((v) => v.id === tid)?.name || tid).join(" ou ")
+                : "Tous";
+              this.elSelectionInfo.innerHTML = `
+                <span style="color:var(--parchment-gold)">MODE CONSTRUCTION : Cliquez sur un secteur contrôlé (Biome requis : <strong>${req}</strong>)</span>
+              `;
+            }
           }
         });
       });
@@ -2413,6 +2651,7 @@
             if (success && !e.shiftKey) {
               this.selectedBuildMode = null;
               document.querySelectorAll(".btn-build-action").forEach((b) => b.classList.remove("active"));
+              this.updateSelectionDisplay();
             }
           }
           return;
@@ -2579,7 +2818,7 @@
 
       const activeTroops = this.engine.units.filter((u) => u.factionId === myPlayerId).length;
       if (this.elTroops) this.elTroops.textContent = activeTroops;
-      if (this.elTerritory) this.elTerritory.textContent = `${playerFaction.territoryCount} pts`;
+      if (this.elTerritory) this.elTerritory.textContent = `${playerFaction.territoryCount} secteurs`;
 
       if (this.elDayDisplay) {
         this.elDayDisplay.textContent = `JOUR ${this.engine.dayCount}`;
@@ -2588,6 +2827,17 @@
       if (this.selectedUnits.some((u) => u.hp <= 0)) {
         this.selectedUnits = this.selectedUnits.filter((u) => u.hp > 0);
         this.updateSelectionDisplay();
+      }
+
+      // Inspection de secteur au survol si pas d'unité sélectionnée
+      if (this.renderer.hoverCell && this.selectedUnits.length === 0 && !this.selectedBuildMode && this.elSelectionInfo) {
+        const c = this.renderer.hoverCell;
+        const ownerFac = c.owner > 0 ? this.engine.factions.get(c.owner) : null;
+        const ownerStr = ownerFac ? `<strong style="color:${ownerFac.border}">${ownerFac.name}</strong>` : `<span class="mc-gray">Terre Sauvage</span>`;
+        const infraStr = c.infrastructure ? ` | Bâtiment : <strong style="color:#b45309">${CONFIG.INFRASTRUCTURES[c.infrastructure.toUpperCase()]?.name || c.infrastructure}</strong>` : "";
+        this.elSelectionInfo.innerHTML = `
+          <span style="font-size:11px;">Secteur (${c.x}, ${c.y}) : <strong>${c.terrain.name}</strong> | ${c.terrain.desc} | Contrôle : ${ownerStr}${infraStr}</span>
+        `;
       }
 
       this.renderCombatLog();
@@ -2617,7 +2867,7 @@
     }
   }
 
-  // ==================== 10. ORCHESTRATEUR PRINCIPAL (GAME APP) ====================
+  // ==================== 10. APP PRINCIPALE ====================
   class GameApp {
     constructor() {
       this.map = new WorldMap();
@@ -2708,7 +2958,7 @@
 
       this.isPlayingSession = true;
       this.renderer.centerCameraOnPlayerCapital();
-      this.engine.addLog("§aPartie lancée ! Sélectionnez vos bataillons (clic/glisser) et commandez vos troupes au clic droit !");
+      this.engine.addLog("§aPartie lancée ! Explorez les secteurs, exploitez les forêts et plaines, et commandez vos bataillons !");
     }
 
     gameLoop() {
@@ -2717,7 +2967,7 @@
         this.ai.update();
         this.ui.updateHUD();
       } else {
-        this.renderer.offsetX -= 0.25;
+        this.renderer.offsetX -= 0.35;
       }
 
       this.renderer.render();

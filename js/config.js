@@ -5,14 +5,14 @@
  */
 
 export const CONFIG = {
-  VERSION: "1.0.0",
+  VERSION: "2.1.0",
   TICK_RATE: 20, // 20 ticks par seconde (simulation)
-  MAP_WIDTH: 140, // Largeur de la grille territoriale
-  MAP_HEIGHT: 90, // Hauteur de la grille territoriale
-  CELL_SIZE: 12, // Taille d'affichage de base en pixels
+  MAP_WIDTH: 72, // Largeur de la grille territoriale en secteurs
+  MAP_HEIGHT: 48, // Hauteur de la grille territoriale en secteurs
+  CELL_SIZE: 56, // Taille d'affichage de chaque secteur en pixels (quadrillage visible)
 
   // Échelle de temps
-  DAY_DURATION_SEC: 45, // Durée d'une journée complète in-game
+  DAY_DURATION_SEC: 50, // Durée d'une journée complète in-game
 
   // Scoreboard National Mood [-1000 à +1000]
   MOOD: {
@@ -25,27 +25,87 @@ export const CONFIG = {
 
   // Hiérarchie des 11 Stades de Nation (Tiers 0 à 10)
   STAGES: [
-    { tier: 0, id: "settlement", name: "Campement", reqPop: 10, reqTerritory: 20, reqGold: 0, maxCities: 1, color: "§7" },
-    { tier: 1, id: "union", name: "Union", reqPop: 35, reqTerritory: 60, reqGold: 50, maxCities: 1, color: "§f" },
-    { tier: 2, id: "commonwealth", name: "Commonwealth", reqPop: 80, reqTerritory: 140, reqGold: 150, maxCities: 1, color: "§e" },
-    { tier: 3, id: "state", name: "État", reqPop: 150, reqTerritory: 260, reqGold: 350, maxCities: 2, color: "§6" },
-    { tier: 4, id: "developing_state", name: "État en Dév.", reqPop: 260, reqTerritory: 450, reqGold: 700, maxCities: 2, color: "§b" },
-    { tier: 5, id: "advanced_state", name: "État Avancé", reqPop: 420, reqTerritory: 750, reqGold: 1200, maxCities: 3, color: "§9" },
-    { tier: 6, id: "nation", name: "Nation", reqPop: 650, reqTerritory: 1200, reqGold: 2000, maxCities: 5, color: "§2" },
-    { tier: 7, id: "rising_nation", name: "Nation Émergente", reqPop: 950, reqTerritory: 1800, reqGold: 3200, maxCities: 6, color: "§a" },
-    { tier: 8, id: "established_nation", name: "Nation Établie", reqPop: 1400, reqTerritory: 2600, reqGold: 5000, maxCities: 8, color: "§d" },
-    { tier: 9, id: "great_nation", name: "Grande Nation", reqPop: 2000, reqTerritory: 3800, reqGold: 8000, maxCities: 10, color: "§5" },
-    { tier: 10, id: "superpower_nation", name: "Superpuissance", reqPop: 3000, reqTerritory: 5500, reqGold: 13000, maxCities: 12, color: "§c" }
+    { tier: 0, id: "settlement", name: "Campement", reqPop: 10, reqTerritory: 12, reqGold: 0, maxCities: 1, color: "§7" },
+    { tier: 1, id: "union", name: "Union", reqPop: 35, reqTerritory: 30, reqGold: 50, maxCities: 1, color: "§f" },
+    { tier: 2, id: "commonwealth", name: "Commonwealth", reqPop: 80, reqTerritory: 65, reqGold: 150, maxCities: 1, color: "§e" },
+    { tier: 3, id: "state", name: "État", reqPop: 150, reqTerritory: 120, reqGold: 350, maxCities: 2, color: "§6" },
+    { tier: 4, id: "developing_state", name: "État en Dév.", reqPop: 260, reqTerritory: 200, reqGold: 700, maxCities: 2, color: "§b" },
+    { tier: 5, id: "advanced_state", name: "État Avancé", reqPop: 420, reqTerritory: 320, reqGold: 1200, maxCities: 3, color: "§9" },
+    { tier: 6, id: "nation", name: "Nation", reqPop: 650, reqTerritory: 500, reqGold: 2000, maxCities: 5, color: "§2" },
+    { tier: 7, id: "rising_nation", name: "Nation Émergente", reqPop: 950, reqTerritory: 750, reqGold: 3200, maxCities: 6, color: "§a" },
+    { tier: 8, id: "established_nation", name: "Nation Établie", reqPop: 1400, reqTerritory: 1100, reqGold: 5000, maxCities: 8, color: "§d" },
+    { tier: 9, id: "great_nation", name: "Grande Nation", reqPop: 2000, reqTerritory: 1600, reqGold: 8000, maxCities: 10, color: "§5" },
+    { tier: 10, id: "superpower_nation", name: "Superpuissance", reqPop: 3000, reqTerritory: 2400, reqGold: 13000, maxCities: 12, color: "§c" }
   ],
 
-  // Types de terrains (Harmonisés avec le parchemin des menus dialogue_box.png)
+  // Types de terrains / Biomes avec impact stratégique sur le gameplay
   TERRAIN: {
-    DEEP_WATER: { id: 0, name: "Mer Parchemin", color: "#dec89b", traversable: false, moveCost: 999 },
-    SHALLOW_WATER: { id: 1, name: "Rivière / Côte", color: "#ebe0c1", traversable: true, moveCost: 2.2 },
-    PLAIN: { id: 2, name: "Plaine Fertile", color: "#5b7b4a", traversable: true, moveCost: 1.0, foodYield: 1.2 },
-    FOREST: { id: 3, name: "Forêt Dense", color: "#34512b", traversable: true, moveCost: 1.5, woodYield: 1.5, defenseBonus: 0.25 },
-    HILLS: { id: 4, name: "Collines Rocheuses", color: "#8a7b62", traversable: true, moveCost: 1.8, stoneYield: 1.5, defenseBonus: 0.40 },
-    MOUNTAIN: { id: 5, name: "Hautes Montagnes", color: "#a49782", traversable: false, moveCost: 999, defenseBonus: 0.80 }
+    DEEP_WATER: {
+      id: "deep_water",
+      name: "Mer Parchemin",
+      color: "#dec89b",
+      traversable: false,
+      desc: "Océan infranchissable"
+    },
+    RIVER: {
+      id: "river",
+      name: "Rivière Navigable",
+      color: "#c8b382",
+      traversable: false,
+      desc: "Obstacle naturel infranchissable"
+    },
+    FORD: {
+      id: "ford",
+      name: "Gué de Rivière",
+      color: "#d8c499",
+      traversable: true,
+      moveCost: 1.8,
+      defenseBonus: -0.10,
+      desc: "Point de passage stratégique"
+    },
+    PLAIN: {
+      id: "plain",
+      name: "Plaine Arable",
+      color: "#60804b",
+      traversable: true,
+      moveCost: 1.0,
+      baseFood: 1.5,
+      cavalrySpeedBonus: 1.20,
+      allowsFarm: true,
+      desc: "Terres fertiles idéales pour les Fermes et la Cavalerie"
+    },
+    FOREST: {
+      id: "forest",
+      name: "Forêt Dense",
+      color: "#355428",
+      traversable: true,
+      moveCost: 1.3,
+      baseWood: 1.8,
+      defenseBonus: 0.30,
+      cavalrySpeedPenalty: 0.65,
+      allowsLumberCamp: true,
+      desc: "Abondance de Bois, couverture défensive pour l'infanterie"
+    },
+    HILLS: {
+      id: "hills",
+      name: "Collines Rocheuses",
+      color: "#847458",
+      traversable: true,
+      moveCost: 1.5,
+      baseStone: 1.6,
+      baseGold: 0.8,
+      defenseBonus: 0.45,
+      archerRangeBonus: 1.0,
+      allowsQuarry: true,
+      desc: "Gisements de Pierre et Or, surplomb pour les Archers"
+    },
+    MOUNTAIN: {
+      id: "mountain",
+      name: "Pics Montagneux",
+      color: "#9f9380",
+      traversable: false,
+      desc: "Rempart rocheux naturel infranchissable"
+    }
   },
 
   // Classes de Bataillons et Unités physiques RTS
@@ -144,14 +204,14 @@ export const CONFIG = {
 
   // Bâtiments & Infrastructures de territoire
   INFRASTRUCTURES: {
-    FARM: { id: "farm", name: "Ferme Coloniale", woodCost: 40, stoneCost: 10, foodBonus: 3.5, hp: 150, icon: "farm" },
-    BARRACKS: { id: "barracks", name: "Caserne d'Armes", woodCost: 60, stoneCost: 35, goldCost: 20, hp: 250, icon: "barracks", desc: "Centre d'entraînement militaire" },
-    OUTPOST: { id: "outpost", name: "Avant-poste", woodCost: 50, stoneCost: 30, goldCost: 15, territoryRadius: 3, defenseBonus: 0.35, hp: 300, icon: "flag", desc: "Revendique et stabilise les terres" },
-    LUMBER_CAMP: { id: "lumber_camp", name: "Scierie", woodCost: 30, stoneCost: 10, woodBonus: 2.2, hp: 120, icon: "axe" },
-    QUARRY: { id: "quarry", name: "Carrière de Pierre", woodCost: 40, stoneCost: 20, stoneBonus: 1.8, hp: 140, icon: "pickaxe" },
-    PALISADE: { id: "palisade", name: "Palissade Frontalière", woodCost: 25, stoneCost: 10, defenseBonus: 0.45, hp: 180, icon: "shield" },
-    WATCHTOWER: { id: "watchtower", name: "Tour de Guet", woodCost: 60, stoneCost: 50, defenseBonus: 0.80, range: 4.5, attackDamage: 12, hp: 220, icon: "tower" },
-    CITADEL: { id: "citadel", name: "Bastion de Forteresse", woodCost: 150, stoneCost: 200, goldCost: 100, defenseBonus: 1.50, range: 6.0, attackDamage: 25, hp: 600, icon: "fortress" }
+    FARM: { id: "farm", name: "Ferme", allowedTerrain: ["plain"], woodCost: 40, stoneCost: 10, foodBonus: 5.0, hp: 150, icon: "farm", desc: "Produit des récoltes abondantes de Pain (Plaine obligatoire)" },
+    BARRACKS: { id: "barracks", name: "Caserne d'Armes", allowedTerrain: ["plain", "forest", "hills"], woodCost: 60, stoneCost: 35, goldCost: 20, hp: 250, icon: "barracks", desc: "Centre d'entraînement militaire" },
+    OUTPOST: { id: "outpost", name: "Avant-poste", allowedTerrain: ["plain", "forest", "hills"], woodCost: 50, stoneCost: 30, goldCost: 15, territoryRadius: 2, defenseBonus: 0.35, hp: 300, icon: "flag", desc: "Revendique et stabilise les secteurs voisins" },
+    LUMBER_CAMP: { id: "lumber_camp", name: "Scierie", allowedTerrain: ["forest"], woodCost: 30, stoneCost: 10, woodBonus: 4.5, hp: 120, icon: "axe", desc: "Exploitation forestière intensive de Bois (Forêt obligatoire)" },
+    QUARRY: { id: "quarry", name: "Carrière de Pierre", allowedTerrain: ["hills"], woodCost: 40, stoneCost: 20, stoneBonus: 3.5, goldBonus: 1.5, hp: 140, icon: "pickaxe", desc: "Extraction de Pierre et filons d'Or (Collines obligatoires)" },
+    PALISADE: { id: "palisade", name: "Palissade", allowedTerrain: ["plain", "forest", "hills"], woodCost: 25, stoneCost: 10, defenseBonus: 0.45, hp: 180, icon: "shield", desc: "Barricade défensive" },
+    WATCHTOWER: { id: "watchtower", name: "Tour de Guet", allowedTerrain: ["plain", "forest", "hills"], woodCost: 60, stoneCost: 50, defenseBonus: 0.80, range: 3.5, attackDamage: 14, hp: 220, icon: "tower", desc: "Tirs de flèches automatiques (portée accrue sur Collines)" },
+    CITADEL: { id: "citadel", name: "Bastion Impérial", allowedTerrain: ["plain", "hills"], woodCost: 150, stoneCost: 200, goldCost: 100, defenseBonus: 1.50, range: 5.0, attackDamage: 28, hp: 600, icon: "fortress", desc: "Citadelle souveraine imprenable" }
   },
 
   // Couleurs textuelles Minecraft adaptées au parchemin (dialogue_box.png)
