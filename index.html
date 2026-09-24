@@ -15,7 +15,7 @@
 </head>
 <body>
 
-  <!-- ==================== ÉCRAN DE TITRE & LOBBY ==================== -->
+  <!-- ==================== ÉCRAN DE TITRE & CONFIGURATION DE PARTIE ==================== -->
   <div id="lobby-overlay">
     <div class="lobby-container">
       <div class="lobby-header">
@@ -23,46 +23,100 @@
         <div class="lobby-subtitle">Frontline Realms - Grand RTS de Conquête Territoriale</div>
       </div>
 
-      <div class="lobby-cards-grid">
-        <!-- Carte Mode Solo -->
-        <div class="mode-card panel-slate">
-          <div>
-            <div class="mode-card-title">MODE SOLO / ESCARMOUCHE</div>
-            <p class="mode-card-desc">
-              Prenez la tête de votre nation sur une carte continentale vivante. Conquérez les terres sauvages, 
-              repoussez les raids du Clan Maraudeur, et érigez votre capitale jusqu'au rang de Superpuissance.
-            </p>
-          </div>
-          <button id="btn-start-solo" class="btn-mc btn-gold" style="width: 100%; font-size: 14px; padding: 12px 0;">
-            LANCER LA PARTIE SOLO
-          </button>
-        </div>
+      <!-- Panneau Principal de Configuration de Partie -->
+      <div class="setup-main-card panel-slate">
+        <div class="setup-grid-columns">
+          
+          <!-- Colonne 1 : Identité de la Nation & du Dirigeant -->
+          <div class="setup-col">
+            <div class="setup-section-title">1. IDENTITÉ DE LA NATION</div>
+            
+            <label class="setup-label" for="setup-player-name">Pseudo du Dirigeant :</label>
+            <input type="text" id="setup-player-name" class="setup-input" value="Jerry" maxlength="20" placeholder="Votre Nom ou Pseudo">
 
-        <!-- Carte Mode Multijoueur P2P -->
-        <div class="mode-card panel-slate">
-          <div>
-            <div class="mode-card-title">MULTIJOUEUR P2P WEBRTC</div>
-            <p class="mode-card-desc">
-              Affrontez d'autres joueurs en direct via une liaison navigateur à navigateur instantanée, 
-              sans configuration de serveur requise.
-            </p>
-            <div class="p2p-join-box">
-              <input type="text" id="input-room-code" placeholder="Code de salon (ex: jerry-realm-1234)">
-              <button id="btn-join-room" class="btn-mc">REJOINDRE</button>
+            <label class="setup-label" for="setup-nation-name">Nom du Royaume / Nation :</label>
+            <input type="text" id="setup-nation-name" class="setup-input" value="Empire d'Émeraude" maxlength="28" placeholder="Nom de votre Empire">
+
+            <label class="setup-label">Bannière Royale & Couleur :</label>
+            <div class="banner-picker-row" id="banner-picker">
+              <button type="button" class="banner-swatch active" data-banner="emerald" style="background:#1b7a63; border-color:#22c55e;" title="Émeraude (Vert)"></button>
+              <button type="button" class="banner-swatch" data-banner="ruby" style="background:#8a2424; border-color:#ef4444;" title="Rubis (Rouge)"></button>
+              <button type="button" class="banner-swatch" data-banner="sapphire" style="background:#1d4ed8; border-color:#06b6d4;" title="Saphir (Bleu)"></button>
+              <button type="button" class="banner-swatch" data-banner="amethyst" style="background:#6a2d9c; border-color:#a855f7;" title="Améthyste (Violet)"></button>
+              <button type="button" class="banner-swatch" data-banner="amber" style="background:#b8860b; border-color:#eab308;" title="Ambre (Or)"></button>
             </div>
-            <div id="p2p-status-msg"></div>
+
+            <label class="setup-label" for="setup-nation-motto">Devise de la Faction :</label>
+            <input type="text" id="setup-nation-motto" class="setup-input" value="Souveraineté, Moissons et Gloire" maxlength="40">
           </div>
-          <button id="btn-create-room" class="btn-mc" style="width: 100%; font-size: 13px; padding: 10px 0;">
-            HÉBERGER UN NOUVEAU SALON
-          </button>
+
+          <!-- Colonne 2 : Paramètres & Règles de la Partie -->
+          <div class="setup-col">
+            <div class="setup-section-title">2. RÈGLES & DIFFICULTÉ</div>
+
+            <label class="setup-label">Mode de Jeu :</label>
+            <div class="toggle-group-row">
+              <button type="button" class="btn-mc setup-btn-toggle active" data-setting="gameMode" data-value="standard">CONQUÊTE (T0-T10)</button>
+              <button type="button" class="btn-mc setup-btn-toggle" data-setting="gameMode" data-value="sandbox">BAC À SABLE</button>
+            </div>
+            <div id="mode-help-text" class="setup-subtext">11 Stades, Banquet au crépuscule et gestion alimentaire.</div>
+
+            <label class="setup-label">Nations Rivales IA (Bots) :</label>
+            <div class="toggle-group-row">
+              <button type="button" class="btn-mc setup-btn-toggle" data-setting="botCount" data-value="0">0 (SEUL)</button>
+              <button type="button" class="btn-mc setup-btn-toggle" data-setting="botCount" data-value="1">1 BOT</button>
+              <button type="button" class="btn-mc setup-btn-toggle" data-setting="botCount" data-value="2">2 BOTS</button>
+              <button type="button" class="btn-mc setup-btn-toggle active" data-setting="botCount" data-value="3">3 BOTS</button>
+            </div>
+
+            <label class="setup-label">Niveau de Menace / Difficulté IA :</label>
+            <div class="toggle-group-row">
+              <button type="button" class="btn-mc setup-btn-toggle" data-setting="aiDifficulty" data-value="peaceful">PAISIBLE</button>
+              <button type="button" class="btn-mc setup-btn-toggle active" data-setting="aiDifficulty" data-value="normal">ÉQUILIBRÉ</button>
+              <button type="button" class="btn-mc setup-btn-toggle" data-setting="aiDifficulty" data-value="hard">IMPLACABLE</button>
+            </div>
+
+            <label class="setup-label">Pillards Maraudeurs :</label>
+            <div class="toggle-group-row">
+              <button type="button" class="btn-mc setup-btn-toggle active" data-setting="marauders" data-value="true">ACTIVÉS (HOSTILES)</button>
+              <button type="button" class="btn-mc setup-btn-toggle" data-setting="marauders" data-value="false">DÉSACTIVÉS</button>
+            </div>
+          </div>
+
+          <!-- Colonne 3 : Lancement & Multijoueur -->
+          <div class="setup-col setup-col-action">
+            <div class="setup-section-title">3. COMMANDEMENT</div>
+            <p class="setup-p-desc">
+              Explorez la carte, exploitez les forêts pour le bois, les plaines pour le pain et les collines pour la pierre.
+            </p>
+
+            <button type="button" id="btn-start-game" class="btn-mc btn-gold setup-btn-launch">
+              FONDER LA NATION & COMMENCER
+            </button>
+
+            <div class="setup-divider"></div>
+
+            <div class="setup-p2p-block">
+              <div class="p2p-title">MULTIJOUEUR P2P WEBRTC :</div>
+              <div class="p2p-join-box">
+                <input type="text" id="input-room-code" placeholder="Code de salon (ex: jerry-123)">
+                <button type="button" id="btn-join-room" class="btn-mc">REJOINDRE</button>
+              </div>
+              <button type="button" id="btn-create-room" class="btn-mc" style="width: 100%; margin-top: 6px; font-size: 11px;">
+                HÉBERGER UN NOUVEAU SALON
+              </button>
+              <div id="p2p-status-msg"></div>
+            </div>
+          </div>
+
         </div>
       </div>
 
-      <!-- Récapitulatif des Mécaniques Officielles -->
+      <!-- Barre d'aide aux commandes et mécaniques -->
       <div class="mechanics-recap-bar panel-slate">
-        <div class="recap-item"><strong>11 Stades</strong> : Tiers 0 (Campement) à Tier 10 (Superpuissance)</div>
-        <div class="recap-item"><strong>Bataillons RTS</strong> : Pionniers, Milice, Archers, Cavaliers, Trébuchets (Sélection & Clic Droit)</div>
-        <div class="recap-item"><strong>Ravitaillement</strong> : Banquet obligatoire au crépuscule (jn_food) & Scoreboard Mood [-1000 à +1000]</div>
+        <div class="recap-item"><strong>Navigation Carte</strong> : Bords d'écran, Clic droit glissé, Clic molette, ZQSD/Flèches ou Clic Minimap</div>
+        <div class="recap-item"><strong>Bataillons RTS</strong> : Glisser pour encadrer (Box Select), Clic droit pour ordonner</div>
+        <div class="recap-item"><strong>Recentrer Caméra</strong> : Touche C ou bouton [CENTRER]</div>
       </div>
     </div>
   </div>
@@ -123,7 +177,7 @@
         </div>
       </div>
 
-      <!-- Section Droite : Temps, Vitesse & Son -->
+      <!-- Section Droite : Temps, Vitesse, Centrage & Menu -->
       <div class="hud-section-right">
         <div id="hud-day-display">JOUR 1</div>
         <div class="speed-ctrl-group">
@@ -132,7 +186,9 @@
           <button class="btn-mc btn-speed-ctrl" data-speed="2">x2</button>
           <button class="btn-mc btn-speed-ctrl" data-speed="5">x5</button>
         </div>
-        <button id="btn-toggle-sound" class="btn-mc" style="font-size: 11px; padding: 6px 10px;">[SON : ACTIF]</button>
+        <button type="button" id="btn-center-camera" class="btn-mc" title="Recentrer la caméra sur la Capitale (Touche C)">CENTRER</button>
+        <button type="button" id="btn-open-menu" class="btn-mc" title="Menu de pause et options">MENU</button>
+        <button type="button" id="btn-toggle-sound" class="btn-mc" style="font-size: 11px; padding: 6px 10px;">[SON : ACTIF]</button>
       </div>
     </header>
 
@@ -185,6 +241,24 @@
         </div>
       </div>
     </footer>
+  </div>
+
+  <!-- ==================== MODAL DE PAUSE & OPTIONS ==================== -->
+  <div id="pause-modal" class="modal-overlay hidden">
+    <div class="modal-dialog panel-slate">
+      <div class="modal-header">
+        <h2 class="modal-title">CONSEIL DE GUERRE - PAUSE</h2>
+      </div>
+      <div class="modal-content">
+        <p class="modal-desc">La simulation est suspendue. Choisissez une directive :</p>
+        <div class="modal-actions-list">
+          <button type="button" id="modal-btn-resume" class="btn-mc btn-gold" style="padding: 10px 0;">REPRENDRE LA PARTIE</button>
+          <button type="button" id="modal-btn-center" class="btn-mc" style="padding: 10px 0;">RECENTRER SUR LA CAPITALE (C)</button>
+          <button type="button" id="modal-btn-toggle-edge-scroll" class="btn-mc" style="padding: 10px 0;">DÉFILEMENT BORD ÉCRAN : ACTIF</button>
+          <button type="button" id="modal-btn-quit-lobby" class="btn-mc btn-red" style="padding: 10px 0; margin-top: 8px;">QUITTER VERS LE MENU PRINCIPAL</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Script d'orchestration autonome (compatible file:///) -->

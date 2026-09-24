@@ -9,13 +9,28 @@ import { SOUND } from "./audio.js";
 import { Unit, Projectile } from "./units.js";
 
 export class GameEngine {
-  constructor(worldMap) {
+  constructor(worldMap, settings = {}) {
     this.map = worldMap;
+    this.settings = Object.assign({
+      playerName: "Jerry",
+      nationName: "Empire d'Émeraude",
+      bannerPreset: "emerald",
+      bannerColor: "#1b7a63",
+      bannerBorder: "#22c55e",
+      textCode: "§a",
+      gameMode: "standard",
+      botCount: 3,
+      aiDifficulty: "normal",
+      enableMarauders: true
+    }, settings);
+
     this.tickCount = 0;
     this.dayTimeSec = 0;
     this.dayCount = 1;
     this.timeScale = 1; // 0 = Pause, 1 = Normal, 2 = x2, 5 = x5
     this.isPaused = false;
+    this.aiDifficulty = this.settings.aiDifficulty;
+    this.gameMode = this.settings.gameMode;
 
     this.factions = new Map();
     this.units = [];
@@ -28,17 +43,59 @@ export class GameEngine {
   }
 
   initFactions() {
-    CONFIG.FACTIONS.forEach((fac) => {
+    const isSandbox = this.gameMode === "sandbox";
+    const modeConfig = isSandbox ? CONFIG.GAME_MODES.SANDBOX : CONFIG.GAME_MODES.STANDARD;
+
+    // 1. Faction du Joueur
+    const playerBanner = CONFIG.BANNER_PRESETS.find((b) => b.id === this.settings.bannerPreset) || CONFIG.BANNER_PRESETS[0];
+
+    const playerFaction = {
+      id: 1,
+      name: this.settings.nationName || "Empire d'Émeraude",
+      leaderName: this.settings.playerName || "Jerry",
+      color: this.settings.bannerColor || playerBanner.color,
+      border: this.settings.bannerBorder || playerBanner.border,
+      textCode: this.settings.textCode || playerBanner.textCode,
+      isPlayer: true,
+      isAI: false,
+      territoryCount: 0,
+      population: 30,
+      food: modeConfig.startingFood,
+      wood: modeConfig.startingWood,
+      stone: modeConfig.startingStone,
+      gold: modeConfig.startingGold,
+      moodScore: isSandbox ? 1000 : 0,
+      stageTier: isSandbox ? 10 : 0,
+      isDefeated: false,
+      totalLosses: 0,
+      totalKills: 0
+    };
+    this.factions.set(1, playerFaction);
+
+    // 2. Factions IA (selon le nombre choisi par le joueur)
+    const botCount = typeof this.settings.botCount === "number" ? this.settings.botCount : 3;
+    const candidatesAI = [];
+
+    if (this.settings.enableMarauders) {
+      candidatesAI.push(CONFIG.FACTIONS[1]); // Clan Maraudeur
+    }
+    candidatesAI.push(CONFIG.FACTIONS[2]); // Ordre Solaire
+    candidatesAI.push(CONFIG.FACTIONS[3]); // Confédération Royale
+    candidatesAI.push(CONFIG.FACTIONS[4]); // Guilde d'Améthyste
+
+    const activeBots = candidatesAI.slice(0, botCount);
+
+    activeBots.forEach((fac) => {
       this.factions.set(fac.id, {
         ...fac,
         territoryCount: 0,
         population: 30,
-        food: 120, // jn_food
-        wood: 80,
-        stone: 60,
-        gold: 100,
-        moodScore: 0, // Scoreboard jn_mood [-1000 à +1000]
-        stageTier: 0, // Tier 0: settlement
+        food: isSandbox ? 150 : modeConfig.startingFood,
+        wood: isSandbox ? 100 : modeConfig.startingWood,
+        stone: isSandbox ? 75 : modeConfig.startingStone,
+        gold: isSandbox ? 100 : modeConfig.startingGold,
+        moodScore: 0,
+        stageTier: 0,
         isDefeated: false,
         totalLosses: 0,
         totalKills: 0
@@ -76,13 +133,15 @@ export class GameEngine {
     const proto = CONFIG.UNITS[typeKey.toUpperCase()];
     if (!proto) return false;
 
-    // Vérifier les coûts en ressources
-    if (
+    const isSandbox = this.gameMode === "sandbox";
+
+    // Vérifier les coûts en ressources (sauf bac à sable)
+    if (!isSandbox && (
       faction.food < proto.foodCost ||
       faction.wood < proto.woodCost ||
       faction.stone < proto.stoneCost ||
       faction.gold < proto.goldCost
-    ) {
+    )) {
       if (factionId === 1) {
         this.addLog(`§cRessources insuffisantes pour recruter un ${proto.name} !`);
       }
@@ -113,11 +172,13 @@ export class GameEngine {
       }
     }
 
-    // Déduction des ressources
-    faction.food -= proto.foodCost;
-    faction.wood -= proto.woodCost;
-    faction.stone -= proto.stoneCost;
-    faction.gold -= proto.goldCost;
+    // Déduction des ressources (sauf bac à sable)
+    if (!isSandbox) {
+      faction.food -= proto.foodCost;
+      faction.wood -= proto.woodCost;
+      faction.stone -= proto.stoneCost;
+      faction.gold -= proto.goldCost;
+    }
 
     const newUnit = this.spawnUnit(factionId, typeKey, spawnX, spawnY);
 
@@ -278,6 +339,19 @@ export class GameEngine {
     SOUND.playSunsetBell();
     this.addLog(`§6[Crépuscule - Jour ${this.dayCount}] Le banquet de la nation commence...`);
 
+    if (this.gameMode === "sandbox") {
+      const p = this.factions.get(1);
+      if (p) {
+        p.food = 99999;
+        p.wood = 99999;
+        p.stone = 99999;
+        p.gold = 99999;
+        p.moodScore = 1000;
+        this.addLog("§a[BAC À SABLE] Festin nocturne illimité ! Rations et stocks maintenus au maximum.");
+      }
+      return;
+    }
+
     this.factions.forEach((f) => {
       if (f.isDefeated) return;
 
@@ -320,6 +394,14 @@ export class GameEngine {
   updateEconomy() {
     this.factions.forEach((f) => {
       if (f.isDefeated) return;
+
+      if (this.gameMode === "sandbox" && f.isPlayer) {
+        f.food = 99999;
+        f.wood = 99999;
+        f.stone = 99999;
+        f.gold = 99999;
+        return;
+      }
 
       const moodConfig = this.getMoodState(f.moodScore);
       const moodBuff = moodConfig.speedBuff;
@@ -400,9 +482,10 @@ export class GameEngine {
       return false;
     }
 
-    const woodCost = infra.woodCost || 0;
-    const stoneCost = infra.stoneCost || 0;
-    const goldCost = infra.goldCost || 0;
+    const isSandbox = this.gameMode === "sandbox";
+    const woodCost = isSandbox ? 0 : (infra.woodCost || 0);
+    const stoneCost = isSandbox ? 0 : (infra.stoneCost || 0);
+    const goldCost = isSandbox ? 0 : (infra.goldCost || 0);
 
     if (faction.wood < woodCost || faction.stone < stoneCost || faction.gold < goldCost) {
       if (factionId === 1) {

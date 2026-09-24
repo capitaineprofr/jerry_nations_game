@@ -17,6 +17,7 @@ export class UIManager {
     this.selectedBuildMode = null;
 
     this.bindDomElements();
+    this.setupCameraAndMenuControls();
     this.setupRTSMouseControls();
     this.setupSpeedControls();
     this.setupRecruitmentControls();
@@ -79,6 +80,80 @@ export class UIManager {
         btn.classList.add("active");
         SOUND.playClick();
       });
+    });
+  }
+
+  setupCameraAndMenuControls() {
+    const btnCenter = document.getElementById("btn-center-camera");
+    const btnMenu = document.getElementById("btn-open-menu");
+    const modal = document.getElementById("pause-modal");
+    const btnResume = document.getElementById("modal-btn-resume");
+    const btnModalCenter = document.getElementById("modal-btn-center");
+    const btnToggleEdge = document.getElementById("modal-btn-toggle-edge-scroll");
+    const btnQuit = document.getElementById("modal-btn-quit-lobby");
+
+    if (btnCenter) {
+      btnCenter.addEventListener("click", () => {
+        this.renderer.centerCameraOnPlayerCapital();
+        SOUND.playClick();
+      });
+    }
+
+    const openPauseMenu = () => {
+      if (modal) modal.classList.remove("hidden");
+      this.engine.isPaused = true;
+      SOUND.playClick();
+    };
+
+    const closePauseMenu = () => {
+      if (modal) modal.classList.add("hidden");
+      this.engine.isPaused = false;
+      SOUND.playClick();
+    };
+
+    if (btnMenu) {
+      btnMenu.addEventListener("click", openPauseMenu);
+    }
+
+    if (btnResume) {
+      btnResume.addEventListener("click", closePauseMenu);
+    }
+
+    if (btnModalCenter) {
+      btnModalCenter.addEventListener("click", () => {
+        this.renderer.centerCameraOnPlayerCapital();
+        closePauseMenu();
+      });
+    }
+
+    if (btnToggleEdge) {
+      btnToggleEdge.addEventListener("click", () => {
+        this.renderer.edgeScrollEnabled = !this.renderer.edgeScrollEnabled;
+        btnToggleEdge.textContent = this.renderer.edgeScrollEnabled
+          ? "DÉFILEMENT BORD ÉCRAN : ACTIF"
+          : "DÉFILEMENT BORD ÉCRAN : DÉSACTIVÉ";
+        SOUND.playClick();
+      });
+    }
+
+    if (btnQuit) {
+      btnQuit.addEventListener("click", () => {
+        if (this.onQuitToLobby) {
+          this.onQuitToLobby();
+        } else {
+          location.reload();
+        }
+      });
+    }
+
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        if (modal && !modal.classList.contains("hidden")) {
+          closePauseMenu();
+        } else {
+          openPauseMenu();
+        }
+      }
     });
   }
 
@@ -267,6 +342,7 @@ export class UIManager {
     // Clic droit : Ordre de déplacement ou Attaque
     canvas.addEventListener("contextmenu", (e) => {
       e.preventDefault();
+      if (this.renderer.hasRightDragged) return;
       if (this.selectedUnits.length === 0) return;
 
       const rect = canvas.getBoundingClientRect();
@@ -364,10 +440,18 @@ export class UIManager {
       this.elNationName.style.color = playerFaction.border;
     }
 
-    // Stade de progression
-    const stage = CONFIG.STAGES[playerFaction.stageTier];
-    if (this.elStageBadge && stage) {
-      this.elStageBadge.textContent = `[T${stage.tier}] ${stage.name}`;
+    // Stade de progression ou Mode Bac à Sable
+    if (this.elStageBadge) {
+      if (this.engine.gameMode === "sandbox") {
+        this.elStageBadge.textContent = "[BAC À SABLE]";
+        this.elStageBadge.style.color = "var(--parchment-gold)";
+      } else {
+        const stage = CONFIG.STAGES[playerFaction.stageTier];
+        if (stage) {
+          this.elStageBadge.textContent = `[T${stage.tier}] ${stage.name}`;
+          this.elStageBadge.style.color = "";
+        }
+      }
     }
 
     // Scoreboard Mood

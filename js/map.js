@@ -23,27 +23,27 @@ export class WorldMap {
     };
   }
 
-  generate(seed = Date.now()) {
+  generate(seed = Date.now(), activeFactions = null) {
     const prng = this.createPrng(seed);
 
     const heightMap = new Float32Array(this.width * this.height);
     const moistureMap = new Float32Array(this.width * this.height);
 
-    // 1. Génération de carte de relief et d'humidité
+    // 1. Génération de carte de relief et d'humidité (Grand continent avec golfes et côtes)
     for (let y = 0; y < this.height; y++) {
       for (let x = 0; x < this.width; x++) {
-        const nx = (x / this.width) * 3.5;
-        const ny = (y / this.height) * 3.5;
+        const nx = (x / this.width) * 3.2;
+        const ny = (y / this.height) * 3.2;
 
-        // Masque de continent insulaire
+        // Masque de continent organique (forme continentale vaste sans grand vide)
         const dx = 2 * (x / this.width) - 1;
         const dy = 2 * (y / this.height) - 1;
-        const distFromCenter = Math.sqrt(dx * dx + dy * dy);
+        const distFromCenter = Math.sqrt(dx * dx * 0.85 + dy * dy * 1.15);
 
         let h = Math.sin(nx + prng() * 0.15) * 0.38 + Math.cos(ny + prng() * 0.15) * 0.38;
         h += Math.sin(nx * 2.2 + 0.5) * 0.22 + Math.cos(ny * 2.2 + 0.3) * 0.22;
         h += Math.sin(nx * 4.4) * 0.10 + Math.cos(ny * 4.4) * 0.10;
-        h = (h + 1) * 0.5 - distFromCenter * 0.42;
+        h = (h + 1) * 0.5 - distFromCenter * 0.26;
 
         let m = Math.sin(nx * 1.8 + 1.2) * 0.5 + Math.cos(ny * 1.8 + 0.8) * 0.5;
         m = (m + 1) * 0.5;
@@ -60,13 +60,13 @@ export class WorldMap {
     const fordCoords = new Set();
 
     let curY = riverY;
-    for (let x = 6; x < this.width - 6; x++) {
+    for (let x = 4; x < this.width - 4; x++) {
       if (prng() < 0.25) curY += prng() < 0.5 ? 1 : -1;
-      curY = Math.max(8, Math.min(this.height - 8, curY));
+      curY = Math.max(6, Math.min(this.height - 6, curY));
       riverCoords.add(`${x},${curY}`);
 
-      // Gués placés tous les 8 à 12 secteurs
-      if (x % 10 === 0) {
+      // Gués placés tous les 8 à 11 secteurs
+      if (x % 9 === 0) {
         fordCoords.add(`${x},${curY}`);
       }
     }
@@ -81,15 +81,15 @@ export class WorldMap {
 
         let terrain;
 
-        if (fordCoords.has(coordKey) && h >= 0.22) {
+        if (fordCoords.has(coordKey) && h >= 0.18) {
           terrain = CONFIG.TERRAIN.FORD;
-        } else if (riverCoords.has(coordKey) && h >= 0.22) {
+        } else if (riverCoords.has(coordKey) && h >= 0.18) {
           terrain = CONFIG.TERRAIN.RIVER;
-        } else if (h < 0.20) {
+        } else if (h < 0.16) {
           terrain = CONFIG.TERRAIN.DEEP_WATER;
-        } else if (h > 0.74) {
+        } else if (h > 0.75) {
           terrain = CONFIG.TERRAIN.MOUNTAIN;
-        } else if (h > 0.55) {
+        } else if (h > 0.56) {
           terrain = CONFIG.TERRAIN.HILLS;
         } else if (m > 0.48) {
           terrain = CONFIG.TERRAIN.FOREST;
@@ -97,7 +97,7 @@ export class WorldMap {
           terrain = CONFIG.TERRAIN.PLAIN;
         }
 
-        // Variantes visuelles (arbres, rochers, herbes) pour le rendu sectorisé
+        // Variantes visuelles (arbres, rochers, herbes, vagues) pour le rendu sectorisé
         const variantSeed = Math.floor(prng() * 100);
 
         this.grid[idx] = {
@@ -114,21 +114,19 @@ export class WorldMap {
       }
     }
 
-    // 4. Implantation stratégique des capitales
-    this.placeCapitals(prng);
+    // 4. Implantation stratégique des capitales (pour les factions actives)
+    this.placeCapitals(prng, activeFactions || CONFIG.FACTIONS);
   }
 
-  placeCapitals(prng) {
+  placeCapitals(prng, factions = CONFIG.FACTIONS) {
     this.capitals = [];
-    const factions = CONFIG.FACTIONS;
     const candidates = [];
 
     // Trouver les secteurs de plaine entourés de forêts et collines exploitables
-    for (let y = 6; y < this.height - 6; y++) {
-      for (let x = 6; x < this.width - 6; x++) {
+    for (let y = 5; y < this.height - 5; y++) {
+      for (let x = 5; x < this.width - 5; x++) {
         const cell = this.getCell(x, y);
         if (cell && cell.terrain === CONFIG.TERRAIN.PLAIN) {
-          // Vérifier qu'il y a du bois et de la roche à proximité (2 à 4 cases)
           const neighbors = this.getNeighbors(x, y, true);
           const hasWater = neighbors.some((n) => n.terrain === CONFIG.TERRAIN.DEEP_WATER);
           if (!hasWater) {
@@ -140,7 +138,7 @@ export class WorldMap {
 
     if (candidates.length === 0) return;
 
-    const minDist = Math.floor(Math.min(this.width, this.height) / (factions.length * 0.55));
+    const minDist = Math.floor(Math.min(this.width, this.height) / Math.max(1, factions.length * 0.5));
 
     factions.forEach((faction) => {
       let chosen = null;

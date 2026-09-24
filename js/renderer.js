@@ -18,9 +18,24 @@ export class MapRenderer {
     this.scale = 0.95;
     this.offsetX = 0;
     this.offsetY = 0;
+    this.dpr = window.devicePixelRatio || 1;
+
+    // Déplacement et navigation
     this.isDragging = false;
     this.dragStartX = 0;
     this.dragStartY = 0;
+    this.isRightMouseDown = false;
+    this.rightDragStartX = 0;
+    this.rightDragStartY = 0;
+    this.hasRightDragged = false;
+
+    this.keysDown = {};
+    this.mouseScreenX = -1;
+    this.mouseScreenY = -1;
+    this.isMouseInWindow = false;
+    this.isSpacePressed = false;
+    this.edgeScrollEnabled = true;
+    this.minimapBounds = { x: 0, y: 0, w: 160, h: 106 };
 
     // Box Selection (Rectangle de sélection RTS à la souris)
     this.isBoxSelecting = false;
@@ -40,48 +55,162 @@ export class MapRenderer {
   }
 
   initCanvasSize() {
-    const dpr = window.devicePixelRatio || 1;
-    this.canvas.width = this.canvas.parentElement.clientWidth * dpr;
-    this.canvas.height = this.canvas.parentElement.clientHeight * dpr;
+    this.dpr = window.devicePixelRatio || 1;
+    this.canvas.width = this.canvas.parentElement.clientWidth * this.dpr;
+    this.canvas.height = this.canvas.parentElement.clientHeight * this.dpr;
     this.ctx.imageSmoothingEnabled = false;
+  }
+
+  updateCamera() {
+    const panSpeed = 14 * this.dpr;
+
+    // 1. Déplacement Clavier (ZQSD / WASD / Flèches)
+    if (this.keysDown["KeyW"] || this.keysDown["KeyZ"] || this.keysDown["ArrowUp"]) {
+      this.offsetY += panSpeed;
+    }
+    if (this.keysDown["KeyS"] || this.keysDown["ArrowDown"]) {
+      this.offsetY -= panSpeed;
+    }
+    if (this.keysDown["KeyA"] || this.keysDown["KeyQ"] || this.keysDown["ArrowLeft"]) {
+      this.offsetX += panSpeed;
+    }
+    if (this.keysDown["KeyD"] || this.keysDown["ArrowRight"]) {
+      this.offsetX -= panSpeed;
+    }
+
+    // 2. Défilement aux bords de l'écran (Edge Scrolling via le curseur)
+    if (this.edgeScrollEnabled && this.isMouseInWindow && !this.isBoxSelecting && !this.isDragging) {
+      const edge = 32;
+      const bottomLimit = window.innerHeight - 130; // Laisser le dock inférieur libre pour les clics
+
+      if (this.mouseScreenX >= 0 && this.mouseScreenX < edge) {
+        this.offsetX += panSpeed;
+      } else if (this.mouseScreenX > window.innerWidth - edge && this.mouseScreenX <= window.innerWidth) {
+        this.offsetX -= panSpeed;
+      }
+
+      if (this.mouseScreenY >= 0 && this.mouseScreenY < edge) {
+        this.offsetY += panSpeed;
+      } else if (this.mouseScreenY > bottomLimit - edge && this.mouseScreenY < bottomLimit) {
+        this.offsetY -= panSpeed;
+      }
+    }
+
+    this.clampCamera();
   }
 
   centerCameraOnPlayerCapital() {
     const playerCapital = this.map.capitals.find((c) => c.factionId === 1);
     const cellSize = CONFIG.CELL_SIZE;
     if (playerCapital) {
-      const capWorldX = playerCapital.x * cellSize + cellSize / 2;
-      const capWorldY = playerCapital.y * cellSize + cellSize / 2;
-      this.offsetX = this.canvas.width / 2 - capWorldX * this.scale;
-      this.offsetY = this.canvas.height / 2 - capWorldY * this.scale;
+      this.centerCameraOnWorld(playerCapital.x * cellSize + cellSize / 2, playerCapital.y * cellSize + cellSize / 2);
+    } else {
+      this.centerCameraOnWorld((this.map.width * cellSize) / 2, (this.map.height * cellSize) / 2);
     }
   }
 
-  setupEventListeners() {
-    window.addEventListener("resize", () => this.initCanvasSize());
+  centerCameraOnWorld(worldX, worldY) {
+    this.offsetX = this.canvas.width / 2 - worldX * this.scale;
+    this.offsetY = this.canvas.height / 2 - worldY * this.scale;
+    this.clampCamera();
+  }
 
-    // Déplacement caméra (Clic molette ou clic droit + shift)
-    this.canvas.addEventListener("mousedown", (e) => {
-      if (e.button === 1 || (e.button === 2 && e.shiftKey)) {
-        this.isDragging = true;
-        this.dragStartX = e.clientX - this.offsetX;
-        this.dragStartY = e.clientY - this.offsetY;
+  clampCamera() {
+    const totalW = this.map.width * CONFIG.CELL_SIZE * this.scale;
+    const totalH = this.map.height * CONFIG.CELL_SIZE * this.scale;
+    const margin = 160 * this.dpr;
+
+    const minOffsetX = this.canvas.width - totalW - margin;
+    const maxOffsetX = margin;
+    const minOffsetY = this.canvas.height - totalH - margin;
+    const maxOffsetY = margin;
+
+    this.offsetX = Math.min(maxOffsetX, Math.max(minOffsetX, this.offsetX));
+    this.offsetY = Math.min(maxOffsetY, Math.max(minOffsetY, this.offsetY));
+  }
+
+  setupEventListeners() {
+    window.addEventListener("resize", () => {
+      this.initCanvasSize();
+      this.clampCamera();
+    });
+
+    window.addEventListener("keydown", (e) => {
+      if (e.target && (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA")) return;
+      this.keysDown[e.code] = true;
+      if (e.code === "Space") this.isSpacePressed = true;
+      if (e.code === "KeyC") {
+        this.centerCameraOnPlayerCapital();
       }
     });
 
+    window.addEventListener("keyup", (e) => {
+      this.keysDown[e.code] = false;
+      if (e.code === "Space") this.isSpacePressed = false;
+    });
+
     window.addEventListener("mousemove", (e) => {
+      this.mouseScreenX = e.clientX;
+      this.mouseScreenY = e.clientY;
+      this.isMouseInWindow = true;
+
+      const rect = this.canvas.getBoundingClientRect();
+      const mouseX = (e.clientX - rect.left) * (this.canvas.width / rect.width);
+      const mouseY = (e.clientY - rect.top) * (this.canvas.height / rect.height);
+
+      if (this.isRightMouseDown) {
+        const dist = Math.hypot(e.clientX - this.rightDragStartX, e.clientY - this.rightDragStartY);
+        if (dist > 6) {
+          this.hasRightDragged = true;
+          this.isDragging = true;
+        }
+      }
+
       if (this.isDragging) {
-        this.offsetX = e.clientX - this.dragStartX;
-        this.offsetY = e.clientY - this.dragStartY;
+        this.offsetX = mouseX - this.dragStartX;
+        this.offsetY = mouseY - this.dragStartY;
+        this.clampCamera();
       } else {
-        const rect = this.canvas.getBoundingClientRect();
-        const mouseX = (e.clientX - rect.left) * (this.canvas.width / rect.width);
-        const mouseY = (e.clientY - rect.top) * (this.canvas.height / rect.height);
         this.hoverCell = this.screenToWorldCell(mouseX, mouseY);
       }
     });
 
+    window.addEventListener("mouseleave", () => {
+      this.isMouseInWindow = false;
+    });
+
+    this.canvas.addEventListener("mousedown", (e) => {
+      const rect = this.canvas.getBoundingClientRect();
+      const mouseX = (e.clientX - rect.left) * (this.canvas.width / rect.width);
+      const mouseY = (e.clientY - rect.top) * (this.canvas.height / rect.height);
+
+      // Clic sur la minimap pour téléporter la vue
+      if (this.checkMinimapClick(mouseX, mouseY)) {
+        return;
+      }
+
+      // Clic droit : préparer détection drag ou ordre
+      if (e.button === 2) {
+        this.isRightMouseDown = true;
+        this.hasRightDragged = false;
+        this.rightDragStartX = e.clientX;
+        this.rightDragStartY = e.clientY;
+        this.dragStartX = mouseX - this.offsetX;
+        this.dragStartY = mouseY - this.offsetY;
+      }
+
+      // Clic molette (1) ou Espace + Clic gauche (0)
+      if (e.button === 1 || (e.button === 0 && this.isSpacePressed)) {
+        this.isDragging = true;
+        this.dragStartX = mouseX - this.offsetX;
+        this.dragStartY = mouseY - this.offsetY;
+      }
+    });
+
     window.addEventListener("mouseup", (e) => {
+      if (e.button === 2) {
+        this.isRightMouseDown = false;
+      }
       if (this.isDragging) {
         this.isDragging = false;
       }
@@ -100,9 +229,23 @@ export class MapRenderer {
       this.offsetX = mouseX - (mouseX - this.offsetX) * (newScale / this.scale);
       this.offsetY = mouseY - (mouseY - this.offsetY) * (newScale / this.scale);
       this.scale = newScale;
+      this.clampCamera();
     }, { passive: false });
 
     this.canvas.addEventListener("contextmenu", (e) => e.preventDefault());
+  }
+
+  checkMinimapClick(screenX, screenY) {
+    const mb = this.minimapBounds;
+    if (screenX >= mb.x && screenX <= mb.x + mb.w && screenY >= mb.y && screenY <= mb.y + mb.h) {
+      const normX = (screenX - mb.x) / mb.w;
+      const normY = (screenY - mb.y) / mb.h;
+      const targetWorldX = normX * this.map.width * CONFIG.CELL_SIZE;
+      const targetWorldY = normY * this.map.height * CONFIG.CELL_SIZE;
+      this.centerCameraOnWorld(targetWorldX, targetWorldY);
+      return true;
+    }
+    return false;
   }
 
   screenToWorldCell(screenX, screenY) {
@@ -132,6 +275,8 @@ export class MapRenderer {
   }
 
   render() {
+    this.updateCamera();
+
     const ctx = this.ctx;
     const width = this.canvas.width;
     const height = this.canvas.height;
@@ -322,6 +467,17 @@ export class MapRenderer {
       ctx.arc(px + s * 0.5, py + s * 0.5, 4, 0, Math.PI * 2);
       ctx.arc(px + s * 0.7, py + s * 0.6, 4, 0, Math.PI * 2);
       ctx.fill();
+    } else if (t.id === "deep_water") {
+      // Mer et Océan : vaguelettes marines subtiles
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.22)";
+      ctx.lineWidth = 1.5;
+      const wOff = ((v * 7) % 18) * (s / 56);
+      ctx.beginPath();
+      ctx.arc(px + s * 0.35 + wOff, py + s * 0.45, 6 * this.scale, Math.PI, 0);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(px + s * 0.65 - wOff, py + s * 0.70, 7 * this.scale, Math.PI, 0);
+      ctx.stroke();
     }
 
     ctx.restore();
@@ -660,16 +816,19 @@ export class MapRenderer {
   }
 
   renderMinimap(ctx, screenWidth, screenHeight) {
-    const miniW = 160;
-    const miniH = 106;
-    const pad = 12;
+    const dpr = this.dpr || 1;
+    const miniW = 170 * dpr;
+    const miniH = 110 * dpr;
+    const pad = 12 * dpr;
     const miniX = screenWidth - miniW - pad;
-    const miniY = screenHeight - miniH - 126;
+    const miniY = screenHeight - miniH - 128 * dpr;
+
+    this.minimapBounds = { x: miniX, y: miniY, w: miniW, h: miniH };
 
     ctx.fillStyle = "#dec89b";
     ctx.fillRect(miniX, miniY, miniW, miniH);
     ctx.strokeStyle = "#78350f";
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 2 * dpr;
     ctx.strokeRect(miniX, miniY, miniW, miniH);
 
     const stepX = miniW / this.map.width;

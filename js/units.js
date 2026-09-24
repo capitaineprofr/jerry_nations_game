@@ -144,17 +144,47 @@ export class Unit {
       } else {
         const dist = Math.hypot(this.targetUnit.x - this.x, this.targetUnit.y - this.y);
 
-      const effectiveRange = this.getEffectiveRange(engine);
-      if (dist <= effectiveRange) {
-        // À portée : attaquer !
-        this.performAttack(this.targetUnit, engine, combatBuff);
-        return true;
-      } else {
-        // Hors de portée : s'approcher de l'ennemi
-        this.stepTowards(this.targetUnit.x, this.targetUnit.y, this.speed * moodBuff, engine);
-        return true;
+        const effectiveRange = this.getEffectiveRange(engine);
+        if (dist <= effectiveRange) {
+          // À portée : attaquer !
+          this.performAttack(this.targetUnit, engine, combatBuff);
+          return true;
+        } else {
+          // Hors de portée : s'approcher de l'ennemi
+          this.stepTowards(this.targetUnit.x, this.targetUnit.y, this.speed * moodBuff, engine);
+          return true;
+        }
       }
     }
+
+    // 2. Déplacement vers waypoint
+    if (this.targetX !== null && this.targetY !== null) {
+      const dist = Math.hypot(this.targetX - this.x, this.targetY - this.y);
+
+      if (dist < 0.25) {
+        this.x = this.targetX;
+        this.y = this.targetY;
+        this.targetX = null;
+        this.targetY = null;
+        this.state = "idle";
+        this.onReachedDestination(engine);
+      } else {
+        this.stepTowards(this.targetX, this.targetY, this.speed * moodBuff, engine);
+      }
+      return true;
+    }
+
+    // 3. Unité inactive (Idle) : auto-détection des cibles ennemies proches (Rayon d'Aggro)
+    if (this.state === "idle" && this.attack > 0) {
+      this.scanForNearbyEnemies(engine);
+    }
+
+    // 4. Capture territoriale continue si stationnée dans une zone
+    if (this.state === "idle") {
+      this.claimCurrentCell(engine);
+    }
+
+    return true;
   }
 
   getEffectiveRange(engine) {

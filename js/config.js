@@ -43,25 +43,25 @@ export const CONFIG = {
     DEEP_WATER: {
       id: "deep_water",
       name: "Mer Parchemin",
-      color: "#dec89b",
+      color: "#385868",
       traversable: false,
-      desc: "Océan infranchissable"
+      desc: "Océan et eaux profondes infranchissables"
     },
     RIVER: {
       id: "river",
-      name: "Rivière Navigable",
-      color: "#c8b382",
+      name: "Rivière Fluviale",
+      color: "#4e7b8f",
       traversable: false,
-      desc: "Obstacle naturel infranchissable"
+      desc: "Obstacle naturel infranchissable à pied"
     },
     FORD: {
       id: "ford",
-      name: "Gué de Rivière",
-      color: "#d8c499",
+      name: "Gué Fluvial",
+      color: "#8ca89c",
       traversable: true,
       moveCost: 1.8,
-      defenseBonus: -0.10,
-      desc: "Point de passage stratégique"
+      defenseBonus: -0.15,
+      desc: "Point de passage stratégique à pied"
     },
     PLAIN: {
       id: "plain",
@@ -232,5 +232,28 @@ export const CONFIG = {
     "§d": "#a21caf",
     "§e": "#854d0e",
     "§f": "#1c1917"
+  },
+
+  // Options de personnalisation de la Nation du joueur
+  BANNER_PRESETS: [
+    { id: "emerald", name: "Émeraude", color: "#1b7a63", border: "#22c55e", textCode: "§a" },
+    { id: "ruby",    name: "Rubis",    color: "#8a2424", border: "#ef4444", textCode: "§c" },
+    { id: "sapphire",name: "Saphir",   color: "#1d4ed8", border: "#06b6d4", textCode: "§b" },
+    { id: "amethyst",name: "Améthyste",color: "#6a2d9c", border: "#a855f7", textCode: "§d" },
+    { id: "amber",   name: "Ambre Or", color: "#b8860b", border: "#eab308", textCode: "§e" }
+  ],
+
+  // Modes de Jeu
+  GAME_MODES: {
+    STANDARD: { id: "standard", name: "Conquête Standard", startingFood: 150, startingWood: 100, startingStone: 75, startingGold: 100, freeBuild: false },
+    SANDBOX:  { id: "sandbox",  name: "Bac à Sable",       startingFood: 99999, startingWood: 99999, startingStone: 99999, startingGold: 99999, freeBuild: true }
+  },
+
+  // Difficulté des Bots
+  DIFFICULTIES: {
+    PEACEFUL: { id: "peaceful", name: "Paisible", intervalMultiplier: 1.8, aggression: 0.2, peacefulDays: 10 },
+    NORMAL:   { id: "normal",   name: "Équilibré", intervalMultiplier: 1.0, aggression: 0.6, peacefulDays: 3 },
+    HARD:     { id: "hard",     name: "Implacable", intervalMultiplier: 0.65, aggression: 1.0, peacefulDays: 0 }
   }
 };
+
