@@ -606,7 +606,11 @@ export class MapRenderer {
 
       ctx.fillStyle = "rgba(40, 30, 20, 0.35)";
       ctx.beginPath();
-      ctx.ellipse(px, py, 4 * this.scale, 2.5 * this.scale, 0, 0, Math.PI * 2);
+      if (ctx.ellipse) {
+        ctx.ellipse(px, py, 4 * this.scale, 2.5 * this.scale, 0, 0, Math.PI * 2);
+      } else {
+        ctx.arc(px, py, 3 * this.scale, 0, Math.PI * 2);
+      }
       ctx.fill();
 
       const flyingY = py - arcElevation;

@@ -1863,13 +1863,13 @@ class AIController {
     this.decideRecruitment(faction, myUnits, diff);
 
     // 2. DÉCISION DE CONSTRUCTION
-    this.decideConstruction(faction, myUnits);
+    this.decideConstruction(faction, myUnits, diff);
 
     // 3. COMMANDEMENT MILITAIRE DES UNITÉS INACTIVES
     this.commandUnits(faction, myUnits, diff);
   }
 
-  decideRecruitment(faction, myUnits) {
+  decideRecruitment(faction, myUnits, diff) {
     const fid = faction.id;
     if (myUnits.length >= 25) return; // Limite d'armée pour la performance
 
@@ -1902,7 +1902,7 @@ class AIController {
     }
   }
 
-  decideConstruction(faction, myUnits) {
+  decideConstruction(faction, myUnits, diff) {
     const fid = faction.id;
     const borders = this.map.getBorderCells(fid);
     if (borders.length === 0) return;
@@ -1952,7 +1952,7 @@ class AIController {
     }
   }
 
-  commandUnits(faction, myUnits) {
+  commandUnits(faction, myUnits, diff) {
     const fid = faction.id;
     const idleUnits = myUnits.filter((u) => u.state === "idle");
     if (idleUnits.length === 0) return;
@@ -1968,10 +1968,11 @@ class AIController {
 
     // B. Troupes militaires : patrouille ou raid offensif
     const idleMilitary = idleUnits.filter((u) => u.attack > 0);
-    const minSquad = diff && diff.id === "peaceful" ? 6 : (diff && diff.id === "hard" ? 2 : 3);
+    const effectiveDiff = diff || CONFIG.DIFFICULTIES.NORMAL;
+    const minSquad = effectiveDiff && effectiveDiff.id === "peaceful" ? 6 : (effectiveDiff && effectiveDiff.id === "hard" ? 2 : 3);
     if (idleMilitary.length >= minSquad) {
       // Former une escouade d'assaut
-      const targetEnemy = this.findEnemyTarget(fid, idleMilitary[0].x, idleMilitary[0].y, faction.personality === "aggressive", diff);
+      const targetEnemy = this.findEnemyTarget(fid, idleMilitary[0].x, idleMilitary[0].y, faction.personality === "aggressive", effectiveDiff);
       if (targetEnemy) {
         idleMilitary.slice(0, 6).forEach((u, idx) => {
           const ox = (idx % 2 - 0.5) * 1.0;
@@ -2944,7 +2945,11 @@ class MapRenderer {
 
       ctx.fillStyle = "rgba(40, 30, 20, 0.35)";
       ctx.beginPath();
-      ctx.ellipse(px, py, 4 * this.scale, 2.5 * this.scale, 0, 0, Math.PI * 2);
+      if (ctx.ellipse) {
+        ctx.ellipse(px, py, 4 * this.scale, 2.5 * this.scale, 0, 0, Math.PI * 2);
+      } else {
+        ctx.arc(px, py, 3 * this.scale, 0, Math.PI * 2);
+      }
       ctx.fill();
 
       const flyingY = py - arcElevation;
@@ -4432,15 +4437,22 @@ class GameApp {
   gameLoop(currentTime) {
     if (!this.isPlaying) return;
 
-    // Simulation (20 Hz géré en interne via le tick rate)
-    this.engine.update();
-    this.ai.update();
+    try {
+      // Simulation (20 Hz géré en interne via le tick rate)
+      this.engine.update();
+      this.ai.update();
 
-    // Rendu visuel 60 FPS
-    this.renderer.render();
+      // Rendu visuel 60 FPS
+      this.renderer.render();
 
-    // Mise à jour de l'affichage DOM
-    this.ui.updateHUD();
+      // Mise à jour de l'affichage DOM
+      this.ui.updateHUD();
+    } catch (err) {
+      console.error("[CRITICAL GAME LOOP ERROR]", err);
+      if (this.engine) {
+        this.engine.addLog(`§c[ERREUR] ${err.message || err}`);
+      }
+    }
 
     requestAnimationFrame((t) => this.gameLoop(t));
   }

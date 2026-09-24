@@ -550,15 +550,22 @@ class GameApp {
   gameLoop(currentTime) {
     if (!this.isPlaying) return;
 
-    // Simulation (20 Hz géré en interne via le tick rate)
-    this.engine.update();
-    this.ai.update();
+    try {
+      // Simulation (20 Hz géré en interne via le tick rate)
+      this.engine.update();
+      this.ai.update();
 
-    // Rendu visuel 60 FPS
-    this.renderer.render();
+      // Rendu visuel 60 FPS
+      this.renderer.render();
 
-    // Mise à jour de l'affichage DOM
-    this.ui.updateHUD();
+      // Mise à jour de l'affichage DOM
+      this.ui.updateHUD();
+    } catch (err) {
+      console.error("[CRITICAL GAME LOOP ERROR]", err);
+      if (this.engine) {
+        this.engine.addLog(`§c[ERREUR] ${err.message || err}`);
+      }
+    }
 
     requestAnimationFrame((t) => this.gameLoop(t));
   }
