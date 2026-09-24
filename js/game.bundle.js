@@ -3095,17 +3095,20 @@ class UIManager {
 
     this.selectedUnits = [];
     this.selectedBuildMode = null;
+    this.inspectedCell = null;
 
     this.bindDomElements();
     this.setupCameraAndMenuControls();
+    this.setupMinimizationControls();
     this.setupRTSMouseControls();
-    this.setupSpeedControls();
     this.setupRecruitmentControls();
     this.setupExpeditionControls();
     this.setupBuildControls();
   }
 
   bindDomElements() {
+    this.elPlayerName = document.getElementById("hud-player-name");
+    this.elPlayerAvatar = document.getElementById("hud-player-avatar");
     this.elNationName = document.getElementById("hud-nation-name");
     this.elStageBadge = document.getElementById("hud-stage-badge");
     this.elMoodValue = document.getElementById("hud-mood-value");
@@ -3120,11 +3123,28 @@ class UIManager {
     this.elTerritory = document.getElementById("res-territory");
 
     this.elDayDisplay = document.getElementById("hud-day-display");
-    this.elCombatLog = document.getElementById("combat-log-stream");
     this.elMuteBtn = document.getElementById("btn-toggle-sound");
+    this.elBtnPause = document.getElementById("btn-hud-pause");
 
     this.elSelectionInfo = document.getElementById("selection-info-text");
     this.elBtnHalt = document.getElementById("btn-order-halt");
+
+    // Éléments du panneau d'information de secteur
+    this.elSectorCoord = document.getElementById("sector-coord");
+    this.elSectorBiomeBadge = document.getElementById("sector-biome-badge");
+    this.elSectorOwner = document.getElementById("sector-owner");
+    this.elSectorInfra = document.getElementById("sector-infra");
+    this.elSectorDefense = document.getElementById("sector-defense");
+    this.elSectorYields = document.getElementById("sector-yields");
+    this.elSectorTacticalNote = document.getElementById("sector-tactical-note");
+
+    // Panneaux et poignées de réduction
+    this.topHud = document.getElementById("top-hud");
+    this.bottomDock = document.getElementById("bottom-dock");
+    this.sidebarBuildings = document.getElementById("sidebar-buildings");
+    this.btnToggleTopHud = document.getElementById("btn-toggle-top-hud");
+    this.btnToggleBottomDock = document.getElementById("btn-toggle-bottom-dock");
+    this.btnToggleBuildings = document.getElementById("btn-toggle-buildings-panel");
 
     // Bouton Ordre Halte
     if (this.elBtnHalt) {
@@ -3139,6 +3159,16 @@ class UIManager {
       });
     }
 
+    // Bouton Pause Directe In-Game
+    if (this.elBtnPause) {
+      this.elBtnPause.addEventListener("click", () => {
+        this.engine.isPaused = !this.engine.isPaused;
+        this.elBtnPause.textContent = this.engine.isPaused ? "REPRENDRE" : "PAUSE";
+        this.elBtnPause.classList.toggle("btn-gold", this.engine.isPaused);
+        SOUND.playClick();
+      });
+    }
+
     // Bouton Son On/Off
     if (this.elMuteBtn) {
       this.elMuteBtn.addEventListener("click", () => {
@@ -3149,18 +3179,42 @@ class UIManager {
     }
   }
 
-  setupSpeedControls() {
-    document.querySelectorAll(".btn-speed-ctrl").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const speed = parseInt(btn.dataset.speed, 10);
-        this.engine.timeScale = speed;
-        this.engine.isPaused = speed === 0;
-
-        document.querySelectorAll(".btn-speed-ctrl").forEach((b) => b.classList.remove("active"));
-        btn.classList.add("active");
+  // Configuration des contrôles de minimisation / réduction des interfaces
+  setupMinimizationControls() {
+    // 1. Réduction du Top HUD
+    if (this.btnToggleTopHud && this.topHud) {
+      this.btnToggleTopHud.addEventListener("click", () => {
+        this.topHud.classList.toggle("collapsed");
+        const isCollapsed = this.topHud.classList.contains("collapsed");
+        this.btnToggleTopHud.textContent = isCollapsed ? "▼" : "▲";
         SOUND.playClick();
       });
-    });
+    }
+
+    // 2. Réduction du Volet Inférieur de Commandement
+    if (this.btnToggleBottomDock && this.bottomDock) {
+      this.btnToggleBottomDock.addEventListener("click", () => {
+        this.bottomDock.classList.toggle("collapsed");
+        const isCollapsed = this.bottomDock.classList.contains("collapsed");
+        this.btnToggleBottomDock.innerHTML = isCollapsed
+          ? `<span class="toggle-icon">▲</span> <span class="toggle-text">COMMANDEMENT & SECTEUR</span>`
+          : `<span class="toggle-icon">▼</span> <span class="toggle-text">COMMANDEMENT & SECTEUR</span>`;
+        SOUND.playClick();
+      });
+    }
+
+    // 3. Réduction / Déploiement du Tiroir Latéral des Bâtiments
+    if (this.btnToggleBuildings && this.sidebarBuildings) {
+      this.btnToggleBuildings.addEventListener("click", () => {
+        this.sidebarBuildings.classList.toggle("collapsed");
+        const isCollapsed = this.sidebarBuildings.classList.contains("collapsed");
+        const icon = this.btnToggleBuildings.querySelector(".toggle-icon");
+        if (icon) {
+          icon.textContent = isCollapsed ? "◀" : "▶";
+        }
+        SOUND.playClick();
+      });
+    }
   }
 
   setupCameraAndMenuControls() {
@@ -3402,7 +3456,7 @@ class UIManager {
         return;
       }
 
-      // 3. Clic simple gauche : Sélection d'une seule unité
+      // 3. Clic simple gauche : Sélection d'une seule unité ou inspection de secteur
       const cell = this.renderer.screenToWorldCell(mouseX, mouseY);
       if (!cell) return;
 
@@ -3414,6 +3468,9 @@ class UIManager {
         this.selectSingleUnit(clickedUnit);
       } else {
         this.deselectAll();
+        // Mémoriser le secteur inspecté
+        this.inspectedCell = cell;
+        this.updateSectorInfoDisplay();
       }
 
       this.updateSelectionDisplay();
@@ -3581,32 +3638,103 @@ class UIManager {
       `;
     }
 
-    this.renderCombatLog();
+    // Mise à jour du panneau de détails du secteur inspecté
+    this.updateSectorInfoDisplay();
   }
 
-  renderCombatLog() {
-    if (!this.elCombatLog) return;
-    const msgs = this.engine.logMessages.slice(0, 15);
-    const html = msgs
-      .map((msg) => `<div class="log-entry">${this.parseMinecraftColors(msg.text)}</div>`)
-      .join("");
-    this.elCombatLog.innerHTML = html;
-  }
+  // Remplissage dynamique des informations du secteur sélectionné
+  updateSectorInfoDisplay() {
+    if (!this.elSectorCoord) return;
+    const myPlayerId = this.network.myPlayerId;
 
-  parseMinecraftColors(text) {
-    if (!text) return "";
-    let safe = text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    const regex = /§([0-9a-fklmnor])/g;
+    // Prendre le secteur cliqué, ou survolé, ou la capitale du joueur
+    let cell = this.inspectedCell || this.renderer.hoverCell;
+    if (!cell) {
+      const cap = this.engine.map.capitals.find((c) => c.factionId === myPlayerId);
+      if (cap) cell = this.engine.map.getCell(cap.x, cap.y);
+    }
+    if (!cell) return;
 
-    safe = safe.replace(regex, (match, code) => {
-      const hex = CONFIG.MC_COLORS[`§${code}`];
-      if (hex) {
-        return `</span><span style="color: ${hex}">`;
+    // 1. Coordonnées et Biome
+    const isCap = cell.isCapital ? " (Capitale)" : "";
+    this.elSectorCoord.textContent = `Secteur (${cell.x}, ${cell.y})${isCap}`;
+
+    if (this.elSectorBiomeBadge) {
+      this.elSectorBiomeBadge.textContent = cell.terrain.name;
+      this.elSectorBiomeBadge.style.color = cell.terrain.color || "#78350f";
+      this.elSectorBiomeBadge.style.borderColor = cell.terrain.color || "#78350f";
+    }
+
+    // 2. Contrôle territorial
+    if (this.elSectorOwner) {
+      const ownerFac = cell.owner > 0 ? this.engine.factions.get(cell.owner) : null;
+      if (ownerFac) {
+        this.elSectorOwner.textContent = ownerFac.name;
+        this.elSectorOwner.style.color = ownerFac.border || "#55FF55";
+      } else {
+        this.elSectorOwner.textContent = "Terre Sauvage (Libre)";
+        this.elSectorOwner.style.color = "#78350f";
       }
-      return "</span>";
-    });
+    }
 
-    return `<span>${safe}</span>`;
+    // 3. Infrastructure & Fortification
+    if (this.elSectorInfra) {
+      if (cell.isCapital) {
+        this.elSectorInfra.textContent = "Cité Royale (Bastion)";
+        this.elSectorInfra.style.color = "#b45309";
+      } else if (cell.infrastructure) {
+        const proto = CONFIG.INFRASTRUCTURES[cell.infrastructure.toUpperCase()];
+        this.elSectorInfra.textContent = proto ? proto.name : cell.infrastructure;
+        this.elSectorInfra.style.color = "#b45309";
+      } else {
+        this.elSectorInfra.textContent = "Aucun aménagement";
+        this.elSectorInfra.style.color = "#78350f";
+      }
+    }
+
+    // 4. Défense & Résistance
+    if (this.elSectorDefense) {
+      let defPts = 100;
+      if (cell.isCapital) {
+        defPts = 500;
+      } else if (cell.infrastructure) {
+        const proto = CONFIG.INFRASTRUCTURES[cell.infrastructure.toUpperCase()];
+        if (proto && proto.hp) defPts = proto.hp;
+      }
+      this.elSectorDefense.textContent = `${defPts} pts`;
+      this.elSectorDefense.style.color = "#2b1d0c";
+    }
+
+    // 5. Rendement Économique
+    if (this.elSectorYields) {
+      let food = (cell.terrain.baseFood || 0) * 3;
+      let wood = (cell.terrain.baseWood || 0) * 3;
+      let stone = (cell.terrain.baseStone || 0) * 3;
+      let gold = (cell.terrain.baseGold || 0) * 2;
+
+      if (cell.infrastructure) {
+        const proto = CONFIG.INFRASTRUCTURES[cell.infrastructure.toUpperCase()];
+        if (proto) {
+          if (proto.foodBonus) food += proto.foodBonus * 2;
+          if (proto.woodBonus) wood += proto.woodBonus * 2;
+          if (proto.stoneBonus) stone += proto.stoneBonus * 2;
+          if (proto.goldBonus) gold += (proto.goldBonus || 0) * 2;
+        }
+      }
+
+      const yields = [];
+      if (food > 0) yields.push(`+${food.toFixed(0)} Pain`);
+      if (wood > 0) yields.push(`+${wood.toFixed(0)} Bois`);
+      if (stone > 0) yields.push(`+${stone.toFixed(0)} Pierre`);
+      if (gold > 0) yields.push(`+${gold.toFixed(0)} Or`);
+
+      this.elSectorYields.textContent = yields.length > 0 ? `${yields.join(", ")} /j` : "Aucun revenu";
+    }
+
+    // 6. Note Tactique
+    if (this.elSectorTacticalNote) {
+      this.elSectorTacticalNote.textContent = cell.terrain.desc || "Secteur stratégique";
+    }
   }
 }
 
@@ -3639,9 +3767,15 @@ class GameApp {
     this.lastTime = 0;
 
     // Paramètres de partie par défaut
+    let savedAvatar = null;
+    try {
+      savedAvatar = localStorage.getItem("jerry_nations_skin_avatar");
+    } catch (e) {}
+
     this.settings = {
       playerName: "Jerry",
       nationName: "Empire d'Émeraude",
+      playerAvatarUrl: savedAvatar || "textures/ui/me.gif",
       bannerPreset: "emerald",
       bannerColor: "#1b7a63",
       bannerBorder: "#22c55e",
@@ -3653,6 +3787,97 @@ class GameApp {
     };
 
     this.initLobbyEvents();
+    this.initSkinImporter();
+  }
+
+  // Gestionnaire d'importation de skin Minecraft (.PNG)
+  initSkinImporter() {
+    const btnUpload = document.getElementById("btn-upload-skin");
+    const inputSkinFile = document.getElementById("setup-skin-file");
+    const btnReset = document.getElementById("btn-reset-skin");
+    const previewImg = document.getElementById("setup-avatar-preview");
+
+    if (previewImg && this.settings.playerAvatarUrl) {
+      previewImg.src = this.settings.playerAvatarUrl;
+    }
+
+    if (btnUpload && inputSkinFile) {
+      btnUpload.addEventListener("click", () => {
+        inputSkinFile.click();
+      });
+
+      inputSkinFile.addEventListener("change", (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const img = new Image();
+          img.onload = () => {
+            // Création de l'icône / buste du joueur sur canvas à partir du skin Minecraft
+            const cvs = document.createElement("canvas");
+            cvs.width = 64;
+            cvs.height = 64;
+            const ctx = cvs.getContext("2d");
+            ctx.imageSmoothingEnabled = false;
+
+            const isLegacy = img.height === 32;
+
+            // 1. Torse supérieur
+            ctx.drawImage(img, 20, 20, 8, 7, 18, 36, 28, 26);
+            if (!isLegacy) {
+              ctx.drawImage(img, 20, 36, 8, 7, 18, 36, 28, 26);
+            }
+
+            // 2. Bras Droit
+            ctx.drawImage(img, 44, 20, 4, 7, 6, 36, 12, 26);
+            if (!isLegacy) {
+              ctx.drawImage(img, 44, 36, 4, 7, 6, 36, 12, 26);
+            }
+
+            // 3. Bras Gauche
+            if (!isLegacy) {
+              ctx.drawImage(img, 36, 52, 4, 7, 46, 36, 12, 26);
+              ctx.drawImage(img, 52, 52, 4, 7, 46, 36, 12, 26);
+            } else {
+              ctx.save();
+              ctx.scale(-1, 1);
+              ctx.drawImage(img, 44, 20, 4, 7, -58, 36, 12, 26);
+              ctx.restore();
+            }
+
+            // 4. Visage de base UV [8, 8, 8, 8]
+            ctx.drawImage(img, 8, 8, 8, 8, 16, 4, 32, 32);
+
+            // 5. Casque / Chapeau / Reliefs UV [40, 8, 8, 8]
+            ctx.drawImage(img, 40, 8, 8, 8, 14, 2, 36, 36);
+
+            const avatarDataUrl = cvs.toDataURL("image/png");
+            this.settings.playerAvatarUrl = avatarDataUrl;
+            if (previewImg) previewImg.src = avatarDataUrl;
+
+            try {
+              localStorage.setItem("jerry_nations_skin_avatar", avatarDataUrl);
+            } catch (err) {}
+
+            SOUND.playClick();
+          };
+          img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    if (btnReset) {
+      btnReset.addEventListener("click", () => {
+        this.settings.playerAvatarUrl = "textures/ui/me.gif";
+        if (previewImg) previewImg.src = "textures/ui/me.gif";
+        try {
+          localStorage.removeItem("jerry_nations_skin_avatar");
+        } catch (err) {}
+        SOUND.playClick();
+      });
+    }
   }
 
   initLobbyEvents() {
@@ -3777,6 +4002,16 @@ class GameApp {
 
     if (lobbyOverlay) lobbyOverlay.classList.add("hidden");
     if (gameContainer) gameContainer.classList.remove("in-lobby");
+
+    // Mettre à jour l'avatar et le profil du joueur dans le HUD In-Game
+    const hudAvatar = document.getElementById("hud-player-avatar");
+    if (hudAvatar && this.settings.playerAvatarUrl) {
+      hudAvatar.src = this.settings.playerAvatarUrl;
+    }
+    const hudPlayer = document.getElementById("hud-player-name");
+    if (hudPlayer && this.settings.playerName) {
+      hudPlayer.textContent = this.settings.playerName;
+    }
 
     // 1. Définir la liste des factions actives selon les réglages
     const activeFactions = [];

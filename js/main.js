@@ -26,9 +26,15 @@ class GameApp {
     this.lastTime = 0;
 
     // Paramètres de partie par défaut
+    let savedAvatar = null;
+    try {
+      savedAvatar = localStorage.getItem("jerry_nations_skin_avatar");
+    } catch (e) {}
+
     this.settings = {
       playerName: "Jerry",
       nationName: "Empire d'Émeraude",
+      playerAvatarUrl: savedAvatar || "textures/ui/me.gif",
       bannerPreset: "emerald",
       bannerColor: "#1b7a63",
       bannerBorder: "#22c55e",
@@ -40,6 +46,97 @@ class GameApp {
     };
 
     this.initLobbyEvents();
+    this.initSkinImporter();
+  }
+
+  // Gestionnaire d'importation de skin Minecraft (.PNG)
+  initSkinImporter() {
+    const btnUpload = document.getElementById("btn-upload-skin");
+    const inputSkinFile = document.getElementById("setup-skin-file");
+    const btnReset = document.getElementById("btn-reset-skin");
+    const previewImg = document.getElementById("setup-avatar-preview");
+
+    if (previewImg && this.settings.playerAvatarUrl) {
+      previewImg.src = this.settings.playerAvatarUrl;
+    }
+
+    if (btnUpload && inputSkinFile) {
+      btnUpload.addEventListener("click", () => {
+        inputSkinFile.click();
+      });
+
+      inputSkinFile.addEventListener("change", (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const img = new Image();
+          img.onload = () => {
+            // Création de l'icône / buste du joueur sur canvas à partir du skin Minecraft
+            const cvs = document.createElement("canvas");
+            cvs.width = 64;
+            cvs.height = 64;
+            const ctx = cvs.getContext("2d");
+            ctx.imageSmoothingEnabled = false;
+
+            const isLegacy = img.height === 32;
+
+            // 1. Torse supérieur
+            ctx.drawImage(img, 20, 20, 8, 7, 18, 36, 28, 26);
+            if (!isLegacy) {
+              ctx.drawImage(img, 20, 36, 8, 7, 18, 36, 28, 26);
+            }
+
+            // 2. Bras Droit
+            ctx.drawImage(img, 44, 20, 4, 7, 6, 36, 12, 26);
+            if (!isLegacy) {
+              ctx.drawImage(img, 44, 36, 4, 7, 6, 36, 12, 26);
+            }
+
+            // 3. Bras Gauche
+            if (!isLegacy) {
+              ctx.drawImage(img, 36, 52, 4, 7, 46, 36, 12, 26);
+              ctx.drawImage(img, 52, 52, 4, 7, 46, 36, 12, 26);
+            } else {
+              ctx.save();
+              ctx.scale(-1, 1);
+              ctx.drawImage(img, 44, 20, 4, 7, -58, 36, 12, 26);
+              ctx.restore();
+            }
+
+            // 4. Visage de base UV [8, 8, 8, 8]
+            ctx.drawImage(img, 8, 8, 8, 8, 16, 4, 32, 32);
+
+            // 5. Casque / Chapeau / Reliefs UV [40, 8, 8, 8]
+            ctx.drawImage(img, 40, 8, 8, 8, 14, 2, 36, 36);
+
+            const avatarDataUrl = cvs.toDataURL("image/png");
+            this.settings.playerAvatarUrl = avatarDataUrl;
+            if (previewImg) previewImg.src = avatarDataUrl;
+
+            try {
+              localStorage.setItem("jerry_nations_skin_avatar", avatarDataUrl);
+            } catch (err) {}
+
+            SOUND.playClick();
+          };
+          img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    if (btnReset) {
+      btnReset.addEventListener("click", () => {
+        this.settings.playerAvatarUrl = "textures/ui/me.gif";
+        if (previewImg) previewImg.src = "textures/ui/me.gif";
+        try {
+          localStorage.removeItem("jerry_nations_skin_avatar");
+        } catch (err) {}
+        SOUND.playClick();
+      });
+    }
   }
 
   initLobbyEvents() {
@@ -164,6 +261,16 @@ class GameApp {
 
     if (lobbyOverlay) lobbyOverlay.classList.add("hidden");
     if (gameContainer) gameContainer.classList.remove("in-lobby");
+
+    // Mettre à jour l'avatar et le profil du joueur dans le HUD In-Game
+    const hudAvatar = document.getElementById("hud-player-avatar");
+    if (hudAvatar && this.settings.playerAvatarUrl) {
+      hudAvatar.src = this.settings.playerAvatarUrl;
+    }
+    const hudPlayer = document.getElementById("hud-player-name");
+    if (hudPlayer && this.settings.playerName) {
+      hudPlayer.textContent = this.settings.playerName;
+    }
 
     // 1. Définir la liste des factions actives selon les réglages
     const activeFactions = [];

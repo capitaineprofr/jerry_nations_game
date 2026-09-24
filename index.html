@@ -30,6 +30,20 @@
           <!-- Colonne 1 : Identité de la Nation & du Dirigeant -->
           <div class="setup-col">
             <div class="setup-section-title">1. IDENTITÉ DE LA NATION</div>
+
+            <!-- Avatar & Skin Minecraft -->
+            <label class="setup-label">Avatar & Skin du Dirigeant :</label>
+            <div class="avatar-setup-row">
+              <div class="avatar-preview-frame">
+                <img id="setup-avatar-preview" src="textures/ui/me.gif" alt="Avatar Dirigeant">
+              </div>
+              <div class="avatar-setup-actions">
+                <input type="file" id="setup-skin-file" accept="image/png" style="display:none;">
+                <button type="button" id="btn-upload-skin" class="btn-mc" style="font-size: 10px; width: 100%;">IMPORTER SKIN (.PNG)</button>
+                <button type="button" id="btn-reset-skin" class="btn-mc" style="font-size: 10px; width: 100%; margin-top: 4px;">DÉFAUT (ME.GIF)</button>
+              </div>
+            </div>
+            <div class="avatar-hint-subtext">Supporte les fichiers skins Minecraft 64x64 PNG avec reliefs.</div>
             
             <label class="setup-label" for="setup-player-name">Pseudo du Dirigeant :</label>
             <input type="text" id="setup-player-name" class="setup-input" value="Jerry" maxlength="20" placeholder="Votre Nom ou Pseudo">
@@ -130,11 +144,19 @@
 
     <!-- Bandeau Supérieur : HUD & Ressources -->
     <header id="top-hud" class="panel-slate">
-      <!-- Section Faction & Stade -->
+      <!-- Section Faction, Avatar & Profil -->
       <div class="hud-section-left">
+        <!-- Cadre Avatar Joueur Minecraft / me.gif -->
+        <div class="hud-avatar-frame" title="Profil du Dirigeant">
+          <img id="hud-player-avatar" src="textures/ui/me.gif" alt="Avatar Dirigeant">
+        </div>
+
         <div class="nation-flag-badge">
+          <div class="hud-player-title-row">
+            <span id="hud-player-name">Jerry</span>
+            <span id="hud-stage-badge">[T0] Campement</span>
+          </div>
           <span id="hud-nation-name">Empire d'Émeraude</span>
-          <span id="hud-stage-badge">[T0] Campement</span>
         </div>
 
         <!-- Jauge Scoreboard Mood (jn_mood) -->
@@ -149,7 +171,7 @@
         </div>
       </div>
 
-      <!-- Compteurs de Ressources Principales -->
+      <!-- Compteurs de Ressources Principales (DONNÉES DE NATION) -->
       <div class="hud-resources-group">
         <div class="res-item" title="Nourriture en réserve (Banquet du crépuscule)">
           <span class="res-label">PAIN:</span>
@@ -177,28 +199,126 @@
         </div>
       </div>
 
-      <!-- Section Droite : Temps, Vitesse, Centrage & Menu -->
+      <!-- Section Droite : Temps & Contrôles (Accélération retirée comme demandé) -->
       <div class="hud-section-right">
         <div id="hud-day-display">JOUR 1</div>
-        <div class="speed-ctrl-group">
-          <button class="btn-mc btn-speed-ctrl" data-speed="0">PAUSE</button>
-          <button class="btn-mc btn-speed-ctrl active" data-speed="1">x1</button>
-          <button class="btn-mc btn-speed-ctrl" data-speed="2">x2</button>
-          <button class="btn-mc btn-speed-ctrl" data-speed="5">x5</button>
-        </div>
+        <button type="button" id="btn-hud-pause" class="btn-mc" title="Mettre en pause ou reprendre la simulation">PAUSE</button>
         <button type="button" id="btn-center-camera" class="btn-mc" title="Recentrer la caméra sur la Capitale (Touche C)">CENTRER</button>
         <button type="button" id="btn-open-menu" class="btn-mc" title="Menu de pause et options">MENU</button>
         <button type="button" id="btn-toggle-sound" class="btn-mc" style="font-size: 11px; padding: 6px 10px;">[SON : ACTIF]</button>
       </div>
+
+      <!-- Bouton Réduire / Agrandir le bandeau supérieur -->
+      <button type="button" id="btn-toggle-top-hud" class="hud-collapse-tab" title="Réduire ou Agrandir le bandeau supérieur">▲</button>
     </header>
 
-    <!-- Bandeau Inférieur : Commandement Militaire Tactique -->
+    <!-- Tiroir Latéral Droit : Bâtiments & Avant-postes (Réductible) -->
+    <aside id="sidebar-buildings" class="panel-slate">
+      <!-- Onglet de Réduction / Ouverture -->
+      <button type="button" id="btn-toggle-buildings-panel" class="sidebar-toggle-handle" title="Réduire ou Ouvrir les Bâtiments">
+        <span class="toggle-icon">▶</span>
+        <span class="toggle-text">BÂTIMENTS</span>
+      </button>
+
+      <div class="sidebar-buildings-content">
+        <div class="sidebar-title">BÂTIMENTS & AVANT-POSTES</div>
+        <div class="sidebar-subtext">Sélectionnez une structure puis cliquez sur un secteur éligible :</div>
+
+        <div class="buildings-cards-list">
+          <button class="btn-mc btn-build-action" data-build-type="farm" title="Produit du pain (Coût: 40 Bois, 10 Pierre) - Plaine obligatoire">
+            <div class="build-card-row">
+              <span class="build-name">+ FERME</span>
+              <span class="build-cost">40B 10P</span>
+            </div>
+            <div class="build-card-desc">Plaine | +5.0 Pain/jour</div>
+          </button>
+
+          <button class="btn-mc btn-build-action" data-build-type="lumber_camp" title="Scierie : récolte de bois (Coût: 30 Bois, 10 Pierre) - Forêt obligatoire">
+            <div class="build-card-row">
+              <span class="build-name">+ SCIERIE</span>
+              <span class="build-cost">30B 10P</span>
+            </div>
+            <div class="build-card-desc">Forêt | +4.5 Bois/jour</div>
+          </button>
+
+          <button class="btn-mc btn-build-action" data-build-type="quarry" title="Carrière : extraction de pierre et filons d'or (Coût: 40 Bois, 20 Pierre) - Collines obligatoires">
+            <div class="build-card-row">
+              <span class="build-name">+ CARRIÈRE</span>
+              <span class="build-cost">40B 20P</span>
+            </div>
+            <div class="build-card-desc">Collines | +3.5 Pierre +1.5 Or/jour</div>
+          </button>
+
+          <button class="btn-mc btn-build-action" data-build-type="barracks" title="Caserne d'armes : formation militaire (Coût: 60 Bois, 35 Pierre, 20 Or)">
+            <div class="build-card-row">
+              <span class="build-name">+ CASERNE</span>
+              <span class="build-cost">60B 35P 20O</span>
+            </div>
+            <div class="build-card-desc">Tout secteur | Caserne militaire</div>
+          </button>
+
+          <button class="btn-mc btn-build-action" data-build-type="outpost" title="Avant-poste : étend le territoire et repousse les frontières (Coût: 50 Bois, 30 Pierre, 15 Or)">
+            <div class="build-card-row">
+              <span class="build-name">+ AVANT-POSTE</span>
+              <span class="build-cost">50B 30P 15O</span>
+            </div>
+            <div class="build-card-desc">Étend les frontières de +2 cases</div>
+          </button>
+
+          <button class="btn-mc btn-build-action" data-build-type="watchtower" title="Tour de guet défensive avec tirs automatiques (Coût: 60 Bois, 50 Pierre)">
+            <div class="build-card-row">
+              <span class="build-name">+ TOUR</span>
+              <span class="build-cost">60B 50P</span>
+            </div>
+            <div class="build-card-desc">Tirs défensifs (portée accrue sur colline)</div>
+          </button>
+
+          <button class="btn-mc btn-build-action" data-build-type="citadel" title="Bastion impérial : citadelle imprenable (Coût: 150 Bois, 200 Pierre, 100 Or)">
+            <div class="build-card-row">
+              <span class="build-name">+ BASTION</span>
+              <span class="build-cost">150B 200P 100O</span>
+            </div>
+            <div class="build-card-desc">Forteresse suprême & +150% défense</div>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Bandeau Inférieur : Commandement Militaire Tactique (Réductible) -->
     <footer id="bottom-dock">
-      <!-- Volet Gauche : Flux du Journal de Combat -->
-      <div id="combat-log-panel" class="panel-slate">
-        <div class="log-title">JOURNAL MILITAIRE & ÉVÉNEMENTS</div>
-        <div id="combat-log-stream">
-          <div class="log-entry mc-gray">En attente d'ordres...</div>
+      <!-- Onglet Réduire / Agrandir le volet inférieur -->
+      <button type="button" id="btn-toggle-bottom-dock" class="dock-collapse-tab" title="Réduire ou Agrandir le volet de commandement">
+        <span class="toggle-icon">▼</span>
+        <span class="toggle-text">COMMANDEMENT & SECTEUR</span>
+      </button>
+
+      <!-- Volet Gauche : Informations du Secteur Sélectionné (Remplace l'ancien journal) -->
+      <div id="sector-info-panel" class="panel-slate">
+        <div class="log-title">SECTEUR SÉLECTIONNÉ</div>
+        <div id="sector-details-content">
+          <div class="sector-coord-row">
+            <span id="sector-coord" class="mc-gold">Secteur (Capitale)</span>
+            <span id="sector-biome-badge" class="biome-badge">Plaine</span>
+          </div>
+          <div class="sector-stat-row">
+            <span class="sector-lbl">Contrôle :</span>
+            <span id="sector-owner" class="mc-green">Empire d'Émeraude</span>
+          </div>
+          <div class="sector-stat-row">
+            <span class="sector-lbl">Bâtiment :</span>
+            <span id="sector-infra" class="mc-yellow">Aucun</span>
+          </div>
+          <div class="sector-stat-row">
+            <span class="sector-lbl">Défense :</span>
+            <span id="sector-defense">100 / 100</span>
+          </div>
+          <div class="sector-stat-row">
+            <span class="sector-lbl">Rendement :</span>
+            <span id="sector-yields" class="mc-aqua">+0 Pain, +0 Bois</span>
+          </div>
+          <div class="sector-tactical-note" id="sector-tactical-note">
+            Survolez ou cliquez sur un secteur pour afficher ses propriétés.
+          </div>
         </div>
       </div>
 
@@ -225,19 +345,6 @@
           <button id="btn-expedition-colo" class="btn-mc btn-gold btn-expedition" title="Dépêche un pionnier et une escorte pour coloniser un secteur">[EXPÉDITION COLONISATION]</button>
           <button id="btn-expedition-def" class="btn-mc btn-expedition" title="Rallie toutes les troupes disponibles vers le secteur menacé">[DÉFENSE FRONTIÈRE]</button>
           <button id="btn-expedition-assault" class="btn-mc btn-red btn-expedition" title="Mobilise une force d'attaque combinée vers l'ennemi">[ASSAUT GÉNÉRAL]</button>
-        </div>
-      </div>
-
-      <!-- Volet Droit : Actions d'Infrastructures & Avant-postes -->
-      <div id="infrastructure-panel" class="panel-slate">
-        <div class="log-title" style="margin-bottom: 2px;">BÂTIMENTS & AVANT-POSTES</div>
-        <div class="infrastructure-buttons-grid">
-          <button class="btn-mc btn-build-action" data-build-type="farm" title="Produit du pain (Coût: 40 Bois, 10 Pierre)">+ FERME</button>
-          <button class="btn-mc btn-build-action" data-build-type="barracks" title="Caserne d'armes (Coût: 60 Bois, 35 Pierre, 20 Or)">+ CASERNE</button>
-          <button class="btn-mc btn-build-action" data-build-type="outpost" title="Avant-poste : étend le territoire (Coût: 50 Bois, 30 Pierre, 15 Or)">+ AVANT-POSTE</button>
-          <button class="btn-mc btn-build-action" data-build-type="lumber_camp" title="Scierie : récolte de bois (Coût: 30 Bois, 10 Pierre)">+ SCIERIE</button>
-          <button class="btn-mc btn-build-action" data-build-type="watchtower" title="Tour de guet défensive (Coût: 60 Bois, 50 Pierre)">+ TOUR</button>
-          <button class="btn-mc btn-build-action" data-build-type="citadel" title="Bastion impérial (Coût: 150 Bois, 200 Pierre, 100 Or)">+ BASTION</button>
         </div>
       </div>
     </footer>

@@ -29,15 +29,19 @@
   display: block;
 }
 
-/* Masquage du HUD en phase de lobby */
+/* Masquage du HUD et tiroir en phase de lobby */
 .in-lobby #top-hud,
-.in-lobby #bottom-dock {
+.in-lobby #bottom-dock,
+.in-lobby #sidebar-buildings {
   opacity: 0;
   pointer-events: none;
   transform: translateY(-10px);
 }
 .in-lobby #bottom-dock {
   transform: translateY(10px);
+}
+.in-lobby #sidebar-buildings {
+  transform: translateX(100%);
 }
 
 /* ==================== BANDEAU SUPÉRIEUR (TOP HUD PARCHEMIN) ==================== */
@@ -51,20 +55,99 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  transition: opacity 0.4s ease, transform 0.4s ease;
+  transition: opacity 0.4s ease, transform 0.35s cubic-bezier(0.2, 0.8, 0.3, 1);
   padding: 0 14px;
   gap: 14px;
+}
+
+#top-hud.collapsed {
+  transform: translateY(calc(-100% + 14px));
+}
+
+#top-hud.collapsed .hud-section-left,
+#top-hud.collapsed .hud-resources-group,
+#top-hud.collapsed .hud-section-right {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Onglet de réduction du Top HUD */
+.hud-collapse-tab {
+  position: absolute;
+  bottom: -18px;
+  right: 24px;
+  width: 32px;
+  height: 18px;
+  background: #ecd4ab;
+  border: 2px solid #78350f;
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-family: var(--font-mono);
+  font-weight: 900;
+  color: #4a2810;
+  box-shadow: 0 3px 5px rgba(0, 0, 0, 0.35);
+  transition: background 0.15s ease, transform 0.15s ease;
+  z-index: 12;
+}
+
+.hud-collapse-tab:hover {
+  background: #fdf2d8;
+  transform: translateY(2px);
 }
 
 .hud-section-left {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
+}
+
+/* Cadre Avatar Joueur Minecraft / me.gif */
+.hud-avatar-frame {
+  width: 46px;
+  height: 46px;
+  min-width: 46px;
+  border: 2px solid #b45309;
+  background: #1a1208;
+  border-radius: 3px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.8), 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+#hud-player-avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  display: block;
 }
 
 .nation-flag-badge {
   display: flex;
   flex-direction: column;
+  gap: 1px;
+}
+
+.hud-player-title-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+#hud-player-name {
+  font-family: var(--font-title);
+  font-size: 13px;
+  font-weight: 900;
+  color: #78350f;
+  letter-spacing: 0.3px;
 }
 
 #hud-nation-name {
@@ -78,11 +161,11 @@
 
 #hud-stage-badge {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   color: #78350f;
   background: rgba(180, 83, 9, 0.12);
-  padding: 1px 6px;
+  padding: 1px 5px;
   border: 1px solid #b45309;
   border-radius: 2px;
 }
@@ -92,7 +175,7 @@
   display: flex;
   flex-direction: column;
   gap: 3px;
-  min-width: 160px;
+  min-width: 150px;
   background: rgba(0, 0, 0, 0.08);
   padding: 4px 8px;
   border: 1px solid #a88965;
@@ -129,7 +212,7 @@
 .hud-resources-group {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
   background: rgba(0, 0, 0, 0.06);
   padding: 4px 12px;
   border: 1px solid #a88965;
@@ -151,7 +234,7 @@
   font-weight: 700;
 }
 
-/* Section Droite : Temps & Vitesse */
+/* Section Droite : Temps & Contrôles */
 .hud-section-right {
   display: flex;
   align-items: center;
@@ -168,15 +251,128 @@
   border: 1px solid #b45309;
 }
 
-.speed-ctrl-group {
+/* ==================== TIROIR LATÉRAL DROIT : BÂTIMENTS (RÉDUCTIBLE) ==================== */
+#sidebar-buildings {
+  position: absolute;
+  top: 90px;
+  right: 10px;
+  width: 250px;
+  max-height: calc(100vh - 230px);
+  z-index: 15;
   display: flex;
-  gap: 2px;
+  flex-direction: column;
+  padding: 10px 12px;
+  transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.3, 1), opacity 0.3s ease;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
 }
 
-.btn-speed-ctrl {
-  padding: 4px 8px;
+#sidebar-buildings.collapsed {
+  transform: translateX(calc(100% + 4px));
+}
+
+/* Poignée / Onglet de Réduction du Tiroir Bâtiments */
+.sidebar-toggle-handle {
+  position: absolute;
+  left: -32px;
+  top: 14px;
+  width: 32px;
+  height: 96px;
+  background: #ecd4ab;
+  border: 2px solid #78350f;
+  border-right: none;
+  border-radius: 6px 0 0 6px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-shadow: -3px 2px 6px rgba(0, 0, 0, 0.35);
+  transition: background 0.15s ease, transform 0.15s ease;
+  padding: 4px 2px;
+  pointer-events: auto;
+}
+
+.sidebar-toggle-handle:hover {
+  background: #fdf2d8;
+  transform: translateX(-2px);
+}
+
+.sidebar-toggle-handle .toggle-icon {
+  font-size: 11px;
+  font-weight: 900;
+  color: #78350f;
+}
+
+.sidebar-toggle-handle .toggle-text {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  font-family: var(--font-title);
   font-size: 10px;
-  min-width: 28px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  color: #4a2810;
+}
+
+.sidebar-buildings-content {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow-y: auto;
+  max-height: 100%;
+}
+
+.sidebar-title {
+  font-family: var(--font-title);
+  font-size: 12px;
+  font-weight: 900;
+  color: var(--parchment-title);
+  border-bottom: 2px solid rgba(124, 45, 18, 0.35);
+  padding-bottom: 3px;
+  letter-spacing: 0.5px;
+}
+
+.sidebar-subtext {
+  font-family: var(--font-retro);
+  font-size: 10px;
+  color: #57442d;
+  line-height: 1.25;
+}
+
+.buildings-cards-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 4px;
+}
+
+.build-card-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.build-name {
+  font-weight: 900;
+}
+
+.build-cost {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: #78350f;
+  background: rgba(0, 0, 0, 0.08);
+  padding: 1px 4px;
+  border-radius: 2px;
+}
+
+.build-card-desc {
+  font-family: var(--font-retro);
+  font-size: 9px;
+  color: #4a2810;
+  text-align: left;
+  margin-top: 2px;
+  opacity: 0.85;
 }
 
 /* ==================== BANDEAU INFÉRIEUR (TACTICAL COMMAND DOCK) ==================== */
@@ -185,27 +381,70 @@
   bottom: 8px;
   left: 10px;
   right: 10px;
-  height: 114px;
+  height: 120px;
   z-index: 10;
   display: flex;
   align-items: stretch;
   justify-content: space-between;
   gap: 10px;
   pointer-events: none;
-  transition: opacity 0.4s ease, transform 0.4s ease;
+  transition: opacity 0.4s ease, transform 0.35s cubic-bezier(0.2, 0.8, 0.3, 1);
 }
 
 #bottom-dock > * {
   pointer-events: auto;
 }
 
-/* Volet de gauche : Journal de Combat */
-#combat-log-panel {
-  width: 270px;
-  padding: 6px 10px;
+#bottom-dock.collapsed {
+  transform: translateY(calc(100% - 24px));
+}
+
+#bottom-dock.collapsed #sector-info-panel,
+#bottom-dock.collapsed #military-command-panel {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Onglet de réduction du Dock */
+.dock-collapse-tab {
+  position: absolute;
+  top: -22px;
+  left: 20px;
+  height: 22px;
+  padding: 2px 14px;
+  background: #ecd4ab;
+  border: 2px solid #78350f;
+  border-bottom: none;
+  border-radius: 4px 4px 0 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-family: var(--font-title);
+  font-weight: 900;
+  color: #4a2810;
+  box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.25);
+  pointer-events: auto;
+  transition: background 0.15s ease, transform 0.15s ease;
+  z-index: 12;
+}
+
+.dock-collapse-tab:hover {
+  background: #fdf2d8;
+  transform: translateY(-2px);
+}
+
+/* Volet de gauche : Informations du Secteur Sélectionné */
+#sector-info-panel {
+  width: 320px;
+  min-width: 320px;
+  padding: 6px 12px;
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
   overflow: hidden;
+  font-family: var(--font-title);
 }
 
 .log-title {
@@ -219,22 +458,59 @@
   letter-spacing: 0.5px;
 }
 
-#combat-log-stream {
-  flex: 1;
-  overflow-y: auto;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  line-height: 1.35;
+#sector-details-content {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  color: #2b1d0c;
+  margin-top: 1px;
 }
 
-.log-entry {
+.sector-coord-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 900;
+  padding-bottom: 2px;
+  border-bottom: 1px solid rgba(124, 45, 18, 0.25);
+}
+
+.biome-badge {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  background: rgba(120, 53, 15, 0.15);
+  border: 1px solid #78350f;
+  color: #78350f;
+  padding: 1px 6px;
+  border-radius: 2px;
+}
+
+.sector-stat-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+}
+
+.sector-lbl {
+  color: #57442d;
+  font-weight: 700;
+}
+
+.sector-tactical-note {
+  font-family: var(--font-retro);
+  font-size: 10px;
+  color: #3b2a1a;
+  background: rgba(0, 0, 0, 0.05);
+  padding: 3px 6px;
+  border: 1px dashed rgba(124, 45, 18, 0.3);
+  border-radius: 2px;
+  line-height: 1.25;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  margin-top: 2px;
 }
 
 /* Centre : Commandement Militaire Tactique RTS */
@@ -295,28 +571,5 @@
   font-family: var(--font-title);
   font-weight: 900;
   letter-spacing: 0.3px;
-}
-
-/* Volet de droite : Actions d'Infrastructures */
-#infrastructure-panel {
-  width: 320px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 6px 10px;
-}
-
-.infrastructure-buttons-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 4px;
-  width: 100%;
-}
-
-.btn-build-action {
-  font-size: 10px;
-  padding: 5px 3px;
-  white-space: nowrap;
-  text-align: center;
 }
 
