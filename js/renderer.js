@@ -34,7 +34,7 @@ export class MapRenderer {
     this.mouseScreenY = -1;
     this.isMouseInWindow = false;
     this.isSpacePressed = false;
-    this.edgeScrollEnabled = true;
+    this.edgeScrollEnabled = false; // Désactivé par défaut pour éviter les mouvements intempestifs
     this.minimapBounds = { x: 0, y: 0, w: 160, h: 106 };
 
     // Box Selection (Rectangle de sélection RTS à la souris)
@@ -62,7 +62,7 @@ export class MapRenderer {
   }
 
   updateCamera() {
-    const panSpeed = 14 * this.dpr;
+    const panSpeed = 10 * this.dpr;
 
     // 1. Déplacement Clavier (ZQSD / WASD / Flèches)
     if (this.keysDown["KeyW"] || this.keysDown["KeyZ"] || this.keysDown["ArrowUp"]) {
@@ -78,21 +78,21 @@ export class MapRenderer {
       this.offsetX -= panSpeed;
     }
 
-    // 2. Défilement aux bords de l'écran (Edge Scrolling via le curseur)
+    // 2. Défilement aux bords de l'écran (si activé explicitement par le joueur)
     if (this.edgeScrollEnabled && this.isMouseInWindow && !this.isBoxSelecting && !this.isDragging) {
-      const edge = 32;
-      const bottomLimit = window.innerHeight - 130; // Laisser le dock inférieur libre pour les clics
+      const edge = 8;
+      const scrollSpeed = 6 * this.dpr;
 
       if (this.mouseScreenX >= 0 && this.mouseScreenX < edge) {
-        this.offsetX += panSpeed;
+        this.offsetX += scrollSpeed;
       } else if (this.mouseScreenX > window.innerWidth - edge && this.mouseScreenX <= window.innerWidth) {
-        this.offsetX -= panSpeed;
+        this.offsetX -= scrollSpeed;
       }
 
       if (this.mouseScreenY >= 0 && this.mouseScreenY < edge) {
-        this.offsetY += panSpeed;
-      } else if (this.mouseScreenY > bottomLimit - edge && this.mouseScreenY < bottomLimit) {
-        this.offsetY -= panSpeed;
+        this.offsetY += scrollSpeed;
+      } else if (this.mouseScreenY > window.innerHeight - edge && this.mouseScreenY <= window.innerHeight) {
+        this.offsetY -= scrollSpeed;
       }
     }
 
@@ -118,15 +118,23 @@ export class MapRenderer {
   clampCamera() {
     const totalW = this.map.width * CONFIG.CELL_SIZE * this.scale;
     const totalH = this.map.height * CONFIG.CELL_SIZE * this.scale;
-    const margin = 160 * this.dpr;
+    const margin = 100 * this.dpr;
 
-    const minOffsetX = this.canvas.width - totalW - margin;
-    const maxOffsetX = margin;
-    const minOffsetY = this.canvas.height - totalH - margin;
-    const maxOffsetY = margin;
+    if (totalW + margin * 2 <= this.canvas.width) {
+      this.offsetX = (this.canvas.width - totalW) / 2;
+    } else {
+      const minOffsetX = this.canvas.width - totalW - margin;
+      const maxOffsetX = margin;
+      this.offsetX = Math.min(maxOffsetX, Math.max(minOffsetX, this.offsetX));
+    }
 
-    this.offsetX = Math.min(maxOffsetX, Math.max(minOffsetX, this.offsetX));
-    this.offsetY = Math.min(maxOffsetY, Math.max(minOffsetY, this.offsetY));
+    if (totalH + margin * 2 <= this.canvas.height) {
+      this.offsetY = (this.canvas.height - totalH) / 2;
+    } else {
+      const minOffsetY = this.canvas.height - totalH - margin;
+      const maxOffsetY = margin;
+      this.offsetY = Math.min(maxOffsetY, Math.max(minOffsetY, this.offsetY));
+    }
   }
 
   setupEventListeners() {

@@ -347,3 +347,174 @@
   flex-direction: column;
   gap: 8px;
 }
+
+/* ==================== SALON MULTIJOUEUR (LOBBY D'ATTENTE) ==================== */
+.mp-lobby-dialog {
+  max-width: 580px;
+  width: 95%;
+}
+
+.mp-room-code-box {
+  background: rgba(0, 0, 0, 0.08);
+  border: 1px solid #78350f;
+  padding: 8px 12px;
+  border-radius: 3px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mp-code-label {
+  font-family: var(--font-title);
+  font-size: 10px;
+  font-weight: 700;
+  color: #4a2810;
+}
+
+.mp-code-display-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+#mp-room-code-text {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 900;
+  color: #15803d;
+  background: rgba(255, 255, 255, 0.4);
+  padding: 3px 10px;
+  border: 1px dashed #15803d;
+  border-radius: 2px;
+  letter-spacing: 1px;
+}
+
+.mp-hint-text {
+  font-family: var(--font-retro);
+  font-size: 10px;
+  color: #78350f;
+}
+
+.mp-slots-title {
+  font-family: var(--font-title);
+  font-size: 11px;
+  font-weight: 900;
+  color: var(--parchment-title);
+  margin-top: 10px;
+  margin-bottom: 6px;
+}
+
+.mp-slots-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.mp-slot-card {
+  background: rgba(0, 0, 0, 0.06);
+  border: 2px solid #a88965;
+  border-radius: 3px;
+  padding: 6px 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+}
+
+.mp-slot-card.occupied {
+  border-color: #15803d;
+  background: rgba(21, 128, 61, 0.08);
+}
+
+.mp-slot-card.empty {
+  border-style: dashed;
+  opacity: 0.7;
+}
+
+.mp-slot-avatar {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  border: 1px solid #78350f;
+  background: #1a1208;
+  border-radius: 2px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mp-slot-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+.mp-slot-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+}
+
+.mp-slot-player-name {
+  font-family: var(--font-title);
+  font-size: 12px;
+  font-weight: 900;
+  color: #2b1d0c;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mp-slot-faction-name {
+  font-family: var(--font-retro);
+  font-size: 10px;
+  color: #57442d;
+}
+
+.mp-slot-badge {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 4px;
+  border-radius: 2px;
+  display: inline-block;
+  align-self: flex-start;
+}
+
+.mp-slot-badge.host {
+  background: #fef08a;
+  color: #854d0e;
+  border: 1px solid #ca8a04;
+}
+
+.mp-slot-badge.ready {
+  background: #bbf7d0;
+  color: #15803d;
+  border: 1px solid #22c55e;
+}
+
+.mp-rules-recap {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: #4a2810;
+  background: rgba(0, 0, 0, 0.05);
+  padding: 4px 8px;
+  border-radius: 2px;
+  text-align: center;
+  margin-top: 8px;
+}
+
+.mp-actions-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.mp-actions-row button {
+  flex: 1;
+}

@@ -209,17 +209,86 @@ class GameApp {
       });
     }
 
-    // 4. Multijoueur P2P WebRTC
+    // 4. Multijoueur P2P WebRTC & Salon d'Attente
+    this.initMultiplayerLobbyEvents();
+
+    // Instanciation réseau précoce
+    this.network = new NetworkManager({ factions: new Map(), addLog: () => {} });
+  }
+
+  // Initialisation du Salon d'Attente Multijoueur
+  initMultiplayerLobbyEvents() {
+    const btnHost = document.getElementById("btn-create-room");
+    const btnJoin = document.getElementById("btn-join-room");
+    const inputRoom = document.getElementById("input-room-code");
+    const p2pStatus = document.getElementById("p2p-status-msg");
+
+    const mpModal = document.getElementById("multiplayer-lobby-modal");
+    const btnMpStart = document.getElementById("btn-mp-start-game");
+    const btnMpLeave = document.getElementById("btn-mp-leave-room");
+    const btnCopyCode = document.getElementById("btn-copy-room-code");
+    const mpCopyFeedback = document.getElementById("mp-copy-feedback");
+
+    // Bouton Copier le code du salon
+    if (btnCopyCode) {
+      btnCopyCode.addEventListener("click", () => {
+        if (this.network.roomId) {
+          navigator.clipboard.writeText(this.network.roomId);
+          if (mpCopyFeedback) {
+            mpCopyFeedback.textContent = "Code copié dans le presse-papiers ! Partagez-le avec vos alliés.";
+            mpCopyFeedback.style.color = "#15803d";
+          }
+          SOUND.playClick();
+        }
+      });
+    }
+
+    // Bouton Quitter le salon
+    if (btnMpLeave) {
+      btnMpLeave.addEventListener("click", () => {
+        this.network.leaveRoom();
+        if (mpModal) mpModal.classList.add("hidden");
+        SOUND.playClick();
+      });
+    }
+
+    // Bouton Lancer la partie pour tous (Hôte uniquement)
+    if (btnMpStart) {
+      btnMpStart.addEventListener("click", () => {
+        if (!this.network.isHost) return;
+        SOUND.playFanfare();
+        const payload = this.network.broadcastStartGame(this.settings);
+        this.onMultiplayerGameStart(payload);
+      });
+    }
+
+    // Hôte : Création d'un nouveau salon P2P
     if (btnHost) {
       btnHost.addEventListener("click", () => {
         SOUND.playClick();
-        if (p2pStatus) p2pStatus.textContent = "Création du salon P2P...";
+        const inputPlayer = document.getElementById("setup-player-name");
+        const inputNation = document.getElementById("setup-nation-name");
+        if (inputPlayer && inputPlayer.value.trim()) this.settings.playerName = inputPlayer.value.trim();
+        if (inputNation && inputNation.value.trim()) this.settings.nationName = inputNation.value.trim();
+
+        if (p2pStatus) p2pStatus.textContent = "Création du salon P2P en cours...";
+
+        const hostInfo = {
+          name: this.settings.playerName,
+          nationName: this.settings.nationName,
+          color: this.settings.bannerColor,
+          border: this.settings.bannerBorder,
+          avatarUrl: this.settings.playerAvatarUrl
+        };
+
         this.network.createRoom(
-          (roomId) => {
-            if (p2pStatus) {
-              p2pStatus.innerHTML = `Salon hébergé ! Code : <strong style="color:#55FF55">${roomId}</strong> (partagez ce code)`;
-            }
-            setTimeout(() => this.startGameSession(true), 1200);
+          hostInfo,
+          (roomId, players) => {
+            if (p2pStatus) p2pStatus.textContent = "";
+            this.openMultiplayerRoomLobby(true, roomId, players);
+          },
+          (players) => {
+            this.updateMultiplayerSlots(players);
           },
           (err) => {
             if (p2pStatus) p2pStatus.textContent = `Erreur : ${err}`;
@@ -228,21 +297,46 @@ class GameApp {
       });
     }
 
+    // Client : Rejoindre un salon existant
     if (btnJoin) {
       btnJoin.addEventListener("click", () => {
         SOUND.playClick();
+        const inputPlayer = document.getElementById("setup-player-name");
+        const inputNation = document.getElementById("setup-nation-name");
+        if (inputPlayer && inputPlayer.value.trim()) this.settings.playerName = inputPlayer.value.trim();
+        if (inputNation && inputNation.value.trim()) this.settings.nationName = inputNation.value.trim();
+
         const code = inputRoom ? inputRoom.value.trim() : "";
         if (!code) {
           if (p2pStatus) p2pStatus.textContent = "Veuillez entrer un code de salon valide.";
           return;
         }
 
-        if (p2pStatus) p2pStatus.textContent = "Connexion au salon...";
+        if (p2pStatus) p2pStatus.textContent = "Connexion au salon de l'hôte...";
+
+        const clientInfo = {
+          name: this.settings.playerName,
+          nationName: this.settings.nationName,
+          color: this.settings.bannerColor,
+          border: this.settings.bannerBorder,
+          avatarUrl: this.settings.playerAvatarUrl
+        };
+
         this.network.joinRoom(
           code,
+          clientInfo,
           (roomId) => {
-            if (p2pStatus) p2pStatus.textContent = "Connecté avec succès !";
-            setTimeout(() => this.startGameSession(true), 1000);
+            if (p2pStatus) p2pStatus.textContent = "";
+            this.openMultiplayerRoomLobby(false, roomId, [
+              { id: 1, name: "Hôte du Royaume", nationName: "Empire Hôte", isHost: true, avatarUrl: "textures/ui/me.gif" },
+              { id: 2, ...clientInfo, isHost: false }
+            ]);
+          },
+          (players) => {
+            this.updateMultiplayerSlots(players);
+          },
+          (gameStartPayload) => {
+            this.onMultiplayerGameStart(gameStartPayload);
           },
           (err) => {
             if (p2pStatus) p2pStatus.textContent = `Échec de connexion : ${err}`;
@@ -250,12 +344,95 @@ class GameApp {
         );
       });
     }
-
-    // Instanciation réseau précoce
-    this.network = new NetworkManager({ factions: new Map(), addLog: () => {} });
   }
 
-  startGameSession(isMultiplayer = false) {
+  // Ouverture visuelle de la Salle d'Attente Multijoueur
+  openMultiplayerRoomLobby(isHost, roomId, players) {
+    const mpModal = document.getElementById("multiplayer-lobby-modal");
+    const mpRoomCode = document.getElementById("mp-room-code-text");
+    const mpStatus = document.getElementById("mp-lobby-status");
+    const btnMpStart = document.getElementById("btn-mp-start-game");
+    const mpCopyFeedback = document.getElementById("mp-copy-feedback");
+
+    if (mpModal) mpModal.classList.remove("hidden");
+    if (mpRoomCode) mpRoomCode.textContent = roomId;
+    if (mpCopyFeedback) {
+      mpCopyFeedback.textContent = "Transmettez ce code à vos amis pour qu'ils rejoignent votre royaume.";
+      mpCopyFeedback.style.color = "#78350f";
+    }
+
+    if (isHost) {
+      if (mpStatus) mpStatus.textContent = "Salon ouvert ! En attente d'autres souverains...";
+      if (btnMpStart) {
+        btnMpStart.style.display = "block";
+        btnMpStart.textContent = "LANCER LA PARTIE POUR TOUS";
+        btnMpStart.disabled = false;
+        btnMpStart.classList.add("btn-gold");
+      }
+    } else {
+      if (mpStatus) mpStatus.textContent = "Connecté au salon ! En attente du lancement par l'Hôte...";
+      if (btnMpStart) {
+        btnMpStart.style.display = "block";
+        btnMpStart.textContent = "EN ATTENTE DU SIGNAL DE L'HÔTE...";
+        btnMpStart.disabled = true;
+        btnMpStart.classList.remove("btn-gold");
+      }
+    }
+
+    this.updateMultiplayerSlots(players);
+  }
+
+  // Mise à jour des 4 cartes d'emplacements joueurs dans le salon
+  updateMultiplayerSlots(players) {
+    const container = document.getElementById("mp-slots-container");
+    if (!container) return;
+
+    let html = "";
+    for (let i = 0; i < 4; i++) {
+      const p = players && players[i];
+      if (p) {
+        const badgeClass = p.isHost ? "host" : "ready";
+        const badgeLabel = p.isHost ? "[HÔTE]" : "[PRÊT]";
+        html += `
+          <div class="mp-slot-card occupied" style="border-color:${p.border || '#15803d'}">
+            <div class="mp-slot-avatar" style="border-color:${p.border || '#78350f'}">
+              <img src="${p.avatarUrl || 'textures/ui/me.gif'}" alt="Avatar">
+            </div>
+            <div class="mp-slot-info">
+              <div class="mp-slot-player-name" style="color:${p.border || '#2b1d0c'}">${p.name}</div>
+              <div class="mp-slot-faction-name">${p.nationName || 'Royaume'}</div>
+              <div class="mp-slot-badge ${badgeClass}">${badgeLabel}</div>
+            </div>
+          </div>
+        `;
+      } else {
+        html += `
+          <div class="mp-slot-card empty">
+            <div class="mp-slot-avatar" style="opacity:0.4;">
+              <span style="font-size:16px; color:#78350f;">?</span>
+            </div>
+            <div class="mp-slot-info">
+              <div class="mp-slot-player-name" style="color:#78350f;">Emplacement ${i + 1}</div>
+              <div class="mp-slot-faction-name">En attente d'un joueur ou Bot IA</div>
+              <div class="mp-slot-badge">[LIBRE]</div>
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    container.innerHTML = html;
+  }
+
+  // Lancement synchronisé de la partie multijoueur
+  onMultiplayerGameStart(payload) {
+    const mpModal = document.getElementById("multiplayer-lobby-modal");
+    if (mpModal) mpModal.classList.add("hidden");
+
+    this.startGameSession(true, payload);
+  }
+
+  startGameSession(isMultiplayer = false, mpData = null) {
     const lobbyOverlay = document.getElementById("lobby-overlay");
     const gameContainer = document.getElementById("game-container");
 
@@ -274,33 +451,64 @@ class GameApp {
 
     // 1. Définir la liste des factions actives selon les réglages
     const activeFactions = [];
-    const playerBanner = CONFIG.BANNER_PRESETS.find((b) => b.id === this.settings.bannerPreset) || CONFIG.BANNER_PRESETS[0];
+    const myPlayerId = isMultiplayer && this.network ? this.network.myPlayerId : 1;
 
-    activeFactions.push({
-      id: 1,
-      name: this.settings.nationName,
-      color: playerBanner.color,
-      border: playerBanner.border,
-      textCode: playerBanner.textCode,
-      isPlayer: true
-    });
+    if (isMultiplayer && mpData && mpData.players) {
+      // Configuration multijoueur avec les vrais joueurs
+      mpData.players.forEach((p, idx) => {
+        activeFactions.push({
+          id: p.id,
+          name: p.nationName || `Royaume ${idx + 1}`,
+          color: p.color || CONFIG.BANNER_PRESETS[idx % CONFIG.BANNER_PRESETS.length].color,
+          border: p.border || CONFIG.BANNER_PRESETS[idx % CONFIG.BANNER_PRESETS.length].border,
+          textCode: "§a",
+          isPlayer: p.id === myPlayerId,
+          isAI: false
+        });
+      });
 
-    const botCount = this.settings.botCount;
-    const botCandidates = [];
-    if (this.settings.enableMarauders) {
-      botCandidates.push(CONFIG.FACTIONS[1]); // Maraudeurs
+      // Compléter avec des bots si moins de 4 factions
+      const botCandidates = [CONFIG.FACTIONS[1], CONFIG.FACTIONS[2], CONFIG.FACTIONS[3], CONFIG.FACTIONS[4]];
+      for (let i = activeFactions.length; i < 4; i++) {
+        const candidate = botCandidates[i % botCandidates.length];
+        activeFactions.push({
+          ...candidate,
+          id: i + 1,
+          isPlayer: false,
+          isAI: true
+        });
+      }
+    } else {
+      // Solo standard
+      const playerBanner = CONFIG.BANNER_PRESETS.find((b) => b.id === this.settings.bannerPreset) || CONFIG.BANNER_PRESETS[0];
+
+      activeFactions.push({
+        id: 1,
+        name: this.settings.nationName,
+        color: playerBanner.color,
+        border: playerBanner.border,
+        textCode: playerBanner.textCode,
+        isPlayer: true
+      });
+
+      const botCount = this.settings.botCount;
+      const botCandidates = [];
+      if (this.settings.enableMarauders) {
+        botCandidates.push(CONFIG.FACTIONS[1]); // Maraudeurs
+      }
+      botCandidates.push(CONFIG.FACTIONS[2]);
+      botCandidates.push(CONFIG.FACTIONS[3]);
+      botCandidates.push(CONFIG.FACTIONS[4]);
+
+      for (let i = 0; i < botCount && i < botCandidates.length; i++) {
+        activeFactions.push(botCandidates[i]);
+      }
     }
-    botCandidates.push(CONFIG.FACTIONS[2]);
-    botCandidates.push(CONFIG.FACTIONS[3]);
-    botCandidates.push(CONFIG.FACTIONS[4]);
 
-    for (let i = 0; i < botCount && i < botCandidates.length; i++) {
-      activeFactions.push(botCandidates[i]);
-    }
-
-    // 2. Génération de la carte de monde avec les factions actives
+    // 2. Génération de la carte de monde avec les factions actives (Seed synchronisée en multijoueur)
+    const mapSeed = (isMultiplayer && mpData && mpData.seed) ? mpData.seed : Date.now();
     this.map = new WorldMap();
-    this.map.generate(Date.now(), activeFactions);
+    this.map.generate(mapSeed, activeFactions);
 
     // 3. Moteur de simulation
     this.engine = new GameEngine(this.map, this.settings);
@@ -319,7 +527,8 @@ class GameApp {
 
     this.isPlaying = true;
     const modeName = this.settings.gameMode === "sandbox" ? "Bac à Sable" : "Conquête";
-    this.engine.addLog(`§a[${modeName}] Gloire à ${this.settings.playerName}, souverain de l'${this.settings.nationName} !`);
+    const netPrefix = isMultiplayer ? "[MULTIJOUEUR P2P] " : "";
+    this.engine.addLog(`§a${netPrefix}[${modeName}] Gloire à ${this.settings.playerName}, souverain de l'${this.settings.nationName} !`);
 
     // Lancer la boucle de jeu
     requestAnimationFrame((t) => this.gameLoop(t));
@@ -330,8 +539,10 @@ class GameApp {
     const lobbyOverlay = document.getElementById("lobby-overlay");
     const gameContainer = document.getElementById("game-container");
     const pauseModal = document.getElementById("pause-modal");
+    const mpModal = document.getElementById("multiplayer-lobby-modal");
 
     if (pauseModal) pauseModal.classList.add("hidden");
+    if (mpModal) mpModal.classList.add("hidden");
     if (lobbyOverlay) lobbyOverlay.classList.remove("hidden");
     if (gameContainer) gameContainer.classList.add("in-lobby");
   }

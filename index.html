@@ -350,6 +350,48 @@
     </footer>
   </div>
 
+  <!-- ==================== SALON D'ATTENTE MULTIJOUEUR P2P ==================== -->
+  <div id="multiplayer-lobby-modal" class="modal-overlay hidden">
+    <div class="modal-dialog panel-slate mp-lobby-dialog">
+      <div class="modal-header">
+        <h2 class="modal-title">SALON MULTIJOUEUR - SALLE D'ATTENTE</h2>
+        <div id="mp-lobby-status" class="mc-gold" style="font-size: 11px; margin-top: 2px;">En attente de connexion...</div>
+      </div>
+      <div class="modal-content">
+        <!-- Bloc Code de Salon & Partage -->
+        <div class="mp-room-code-box">
+          <div class="mp-code-label">CODE DU SALON À PARTAGER :</div>
+          <div class="mp-code-display-row">
+            <span id="mp-room-code-text" class="mc-green">jerry-realm-XXXX</span>
+            <button type="button" id="btn-copy-room-code" class="btn-mc" style="font-size: 10px; padding: 4px 8px;">COPIER LE CODE</button>
+          </div>
+          <div id="mp-copy-feedback" class="mp-hint-text">Transmettez ce code à vos amis pour qu'ils rejoignent votre royaume.</div>
+        </div>
+
+        <!-- Liste des Factions / Joueurs dans le Salon -->
+        <div class="mp-slots-title">ROYAUMES & SOUVERAINS DANS LE SALON (1 à 4 JOUEURS) :</div>
+        <div class="mp-slots-grid" id="mp-slots-container">
+          <!-- Injecté dynamiquement par JS -->
+        </div>
+
+        <!-- Récapitulatif des paramètres -->
+        <div class="mp-rules-recap" id="mp-rules-recap-text">
+          Mode : Conquête | Carte : 50x30 Secteurs | Vitesse : Temps Réel RTS
+        </div>
+
+        <!-- Actions du Salon -->
+        <div class="mp-actions-row">
+          <button type="button" id="btn-mp-start-game" class="btn-mc btn-gold" style="padding: 10px 18px; font-size: 12px;">
+            LANCER LA PARTIE POUR TOUS
+          </button>
+          <button type="button" id="btn-mp-leave-room" class="btn-mc btn-red" style="padding: 10px 18px; font-size: 12px;">
+            QUITTER LE SALON
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ==================== MODAL DE PAUSE & OPTIONS ==================== -->
   <div id="pause-modal" class="modal-overlay hidden">
     <div class="modal-dialog panel-slate">

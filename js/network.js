@@ -1,6 +1,7 @@
 /**
- * Jerry's Nations: Frontline Realms - P2P WebRTC Multiplayer (PeerJS)
- * Synchronisation des ordres de déplacement, recrutement et construction en P2P.
+ * Jerry's Nations: Frontline Realms - P2P WebRTC Multiplayer & Room Lobby (PeerJS)
+ * Synchronisation du salon d'attente (souverains connectés, slots, bannières),
+ * diffusion du lancement de partie (seed et factions) et synchronisation des ordres RTS.
  */
 
 export class NetworkManager {
@@ -11,16 +12,22 @@ export class NetworkManager {
     this.hostConn = null;
     this.isHost = false;
     this.isConnected = false;
-    this.myPlayerId = 1; // 1 = Faction joueur
+    this.myPlayerId = 1; // 1 = Faction joueur hôte
     this.roomId = null;
+
+    this.lobbyPlayers = [];
+    this.onPlayerUpdated = null;
+    this.onStartGameCallback = null;
   }
 
-  createRoom(onSuccess, onError) {
+  // Création d'un salon multijoueur par l'Hôte
+  createRoom(hostPlayerInfo, onRoomCreated, onPlayerUpdated, onError) {
     if (typeof window.Peer === "undefined") {
-      if (onError) onError("PeerJS non chargé. Mode Solo actif.");
+      if (onError) onError("PeerJS non chargé. Vérifiez votre connexion Internet.");
       return;
     }
 
+    this.onPlayerUpdated = onPlayerUpdated;
     const randomSuffix = Math.floor(1000 + Math.random() * 9000);
     const peerId = `jerry-realm-${randomSuffix}`;
 
@@ -32,7 +39,23 @@ export class NetworkManager {
         this.isConnected = true;
         this.roomId = id;
         this.myPlayerId = 1;
-        if (onSuccess) onSuccess(id);
+
+        // Slot 1 : L'Hôte
+        this.lobbyPlayers = [
+          {
+            id: 1,
+            name: hostPlayerInfo.name || "Jerry",
+            nationName: hostPlayerInfo.nationName || "Empire d'Émeraude",
+            color: hostPlayerInfo.color || "#1b7a63",
+            border: hostPlayerInfo.border || "#22c55e",
+            avatarUrl: hostPlayerInfo.avatarUrl || "textures/ui/me.gif",
+            isHost: true,
+            isReady: true
+          }
+        ];
+
+        if (onRoomCreated) onRoomCreated(id, this.lobbyPlayers);
+        if (this.onPlayerUpdated) this.onPlayerUpdated(this.lobbyPlayers);
       });
 
       this.peer.on("connection", (conn) => {
@@ -48,32 +71,42 @@ export class NetworkManager {
     }
   }
 
-  joinRoom(targetRoomId, onSuccess, onError) {
+  // Connexion d'un Client à un salon existant
+  joinRoom(targetRoomId, clientPlayerInfo, onJoined, onPlayerUpdated, onStartGame, onError) {
     if (typeof window.Peer === "undefined") {
-      if (onError) onError("PeerJS non chargé.");
+      if (onError) onError("PeerJS non chargé. Vérifiez votre connexion Internet.");
       return;
     }
+
+    this.onPlayerUpdated = onPlayerUpdated;
+    this.onStartGameCallback = onStartGame;
 
     try {
       this.peer = new window.Peer();
 
       this.peer.on("open", () => {
-        const conn = this.peer.connect(targetRoomId.trim());
+        const cleanRoomId = targetRoomId.trim();
+        const conn = this.peer.connect(cleanRoomId);
 
         conn.on("open", () => {
           this.hostConn = conn;
           this.isHost = false;
           this.isConnected = true;
-          this.roomId = targetRoomId;
+          this.roomId = cleanRoomId;
 
-          this.myPlayerId = 3;
-          const myFaction = this.engine.factions.get(this.myPlayerId);
-          if (myFaction) {
-            myFaction.isAI = false;
-            myFaction.isPlayer = true;
-          }
+          // Présentation du joueur à l'hôte
+          conn.send({
+            type: "PLAYER_HELLO",
+            player: {
+              name: clientPlayerInfo.name || "Souverain Allié",
+              nationName: clientPlayerInfo.nationName || "Royaume Saphir",
+              color: clientPlayerInfo.color || "#1d4ed8",
+              border: clientPlayerInfo.border || "#06b6d4",
+              avatarUrl: clientPlayerInfo.avatarUrl || "textures/ui/me.gif"
+            }
+          });
 
-          if (onSuccess) onSuccess(targetRoomId);
+          if (onJoined) onJoined(cleanRoomId);
         });
 
         conn.on("data", (data) => {
@@ -81,12 +114,17 @@ export class NetworkManager {
         });
 
         conn.on("error", () => {
-          if (onError) onError("Échec de connexion au salon.");
+          if (onError) onError("Échec de connexion au salon de l'hôte.");
+        });
+
+        conn.on("close", () => {
+          this.isConnected = false;
+          if (this.onPlayerUpdated) this.onPlayerUpdated([]);
         });
       });
 
       this.peer.on("error", (err) => {
-        if (onError) onError(err.message || "Erreur de liaison Peer.");
+        if (onError) onError(err.message || "Erreur de liaison P2P.");
       });
     } catch (e) {
       if (onError) onError(e.message);
@@ -95,55 +133,124 @@ export class NetworkManager {
 
   handleIncomingClient(conn) {
     this.connections.push(conn);
-    const assignedFactionId = this.connections.length + 2;
-
-    const clientFaction = this.engine.factions.get(assignedFactionId);
-    if (clientFaction) {
-      clientFaction.isAI = false;
-      clientFaction.isPlayer = true;
-    }
-
-    conn.on("open", () => {
-      conn.send({
-        type: "WELCOME",
-        assignedFactionId,
-        seed: Date.now()
-      });
-      this.engine.addLog(`§aUn joueur a rejoint la partie sous la bannière ${clientFaction ? clientFaction.name : "alliée"} !`);
-    });
 
     conn.on("data", (data) => {
-      this.handleClientCommand(data);
+      if (data.type === "PLAYER_HELLO") {
+        const assignedId = this.lobbyPlayers.length + 1;
+        const newPlayer = {
+          id: assignedId,
+          name: data.player.name,
+          nationName: data.player.nationName,
+          color: data.player.color,
+          border: data.player.border,
+          avatarUrl: data.player.avatarUrl,
+          isHost: false,
+          isReady: true,
+          conn
+        };
+
+        this.lobbyPlayers.push(newPlayer);
+
+        // Diffuser la mise à jour des slots à tous les joueurs connectés
+        this.broadcastRoomSync();
+        if (this.onPlayerUpdated) this.onPlayerUpdated(this.lobbyPlayers);
+      } else {
+        this.handleClientCommand(data);
+      }
     });
+
+    conn.on("close", () => {
+      this.connections = this.connections.filter((c) => c !== conn);
+      this.lobbyPlayers = this.lobbyPlayers.filter((p) => p.conn !== conn);
+      this.broadcastRoomSync();
+      if (this.onPlayerUpdated) this.onPlayerUpdated(this.lobbyPlayers);
+    });
+  }
+
+  broadcastRoomSync() {
+    const serializedPlayers = this.lobbyPlayers.map((p) => ({
+      id: p.id,
+      name: p.name,
+      nationName: p.nationName,
+      color: p.color,
+      border: p.border,
+      avatarUrl: p.avatarUrl,
+      isHost: p.isHost,
+      isReady: p.isReady
+    }));
+
+    this.connections.forEach((conn) => {
+      if (conn.open) {
+        conn.send({
+          type: "ROOM_SYNC",
+          players: serializedPlayers
+        });
+      }
+    });
+  }
+
+  // Lancement de la partie par l'Hôte
+  broadcastStartGame(gameConfig) {
+    const seed = Date.now();
+    const serializedPlayers = this.lobbyPlayers.map((p) => ({
+      id: p.id,
+      name: p.name,
+      nationName: p.nationName,
+      color: p.color,
+      border: p.border,
+      avatarUrl: p.avatarUrl,
+      isHost: p.isHost
+    }));
+
+    const payload = {
+      type: "START_GAME",
+      seed,
+      gameConfig,
+      players: serializedPlayers
+    };
+
+    this.connections.forEach((conn) => {
+      if (conn.open) conn.send(payload);
+    });
+
+    return payload;
+  }
+
+  handleHostData(data) {
+    if (data.type === "ROOM_SYNC") {
+      this.lobbyPlayers = data.players;
+      // Déterminer son propre ID parmi la liste
+      const me = this.lobbyPlayers.find((p) => !p.isHost && p.name === this.engine?.settings?.playerName) || this.lobbyPlayers[this.lobbyPlayers.length - 1];
+      if (me) {
+        this.myPlayerId = me.id;
+      }
+      if (this.onPlayerUpdated) this.onPlayerUpdated(this.lobbyPlayers);
+    } else if (data.type === "START_GAME") {
+      if (this.onStartGameCallback) {
+        this.onStartGameCallback(data);
+      }
+    } else if (data.type === "MOVE_SYNC") {
+      data.unitIds.forEach((uid) => {
+        const unit = this.engine?.units.find((u) => u.id === uid);
+        if (unit) unit.moveTo(data.targetX, data.targetY);
+      });
+    }
   }
 
   handleClientCommand(data) {
     if (data.type === "MOVE") {
       data.unitIds.forEach((uid) => {
-        const unit = this.engine.units.find((u) => u.id === uid);
+        const unit = this.engine?.units.find((u) => u.id === uid);
         if (unit) unit.moveTo(data.targetX, data.targetY);
+      });
+      // Relayer l'ordre à tous les autres clients
+      this.connections.forEach((conn) => {
+        if (conn.open) conn.send({ ...data, type: "MOVE_SYNC" });
       });
     } else if (data.type === "RECRUIT") {
-      this.engine.recruitUnit(data.factionId, data.unitType);
+      this.engine?.recruitUnit(data.factionId, data.unitType);
     } else if (data.type === "BUILD") {
-      this.engine.buildInfrastructure(data.factionId, data.x, data.y, data.infraType);
-    }
-  }
-
-  handleHostData(data) {
-    if (data.type === "WELCOME") {
-      this.myPlayerId = data.assignedFactionId;
-      const f = this.engine.factions.get(this.myPlayerId);
-      if (f) {
-        f.isAI = false;
-        f.isPlayer = true;
-      }
-      this.engine.addLog(`§aConnecté au salon hôte ! Vous dirigez : ${f ? f.name : "Votre faction"}.`);
-    } else if (data.type === "MOVE_SYNC") {
-      data.unitIds.forEach((uid) => {
-        const unit = this.engine.units.find((u) => u.id === uid);
-        if (unit) unit.moveTo(data.targetX, data.targetY);
-      });
+      this.engine?.buildInfrastructure(data.factionId, data.x, data.y, data.infraType);
     }
   }
 
@@ -164,4 +271,21 @@ export class NetworkManager {
       this.hostConn.send(payload);
     }
   }
+
+  leaveRoom() {
+    if (this.hostConn) {
+      this.hostConn.close();
+      this.hostConn = null;
+    }
+    this.connections.forEach((c) => c.close());
+    this.connections = [];
+    if (this.peer) {
+      this.peer.destroy();
+      this.peer = null;
+    }
+    this.isHost = false;
+    this.isConnected = false;
+    this.lobbyPlayers = [];
+  }
 }
+

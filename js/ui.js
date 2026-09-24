@@ -315,7 +315,7 @@ export class UIManager {
       this.renderer.boxEndX = curX;
       this.renderer.boxEndY = curY;
 
-      if (Math.hypot(curX - startScreenX, curY - startScreenY) > 8) {
+      if (Math.hypot(curX - startScreenX, curY - startScreenY) > 18) {
         hasDragged = true;
         this.renderer.isBoxSelecting = true;
       }
@@ -371,6 +371,14 @@ export class UIManager {
 
         if (this.selectedUnits.length > 0) {
           SOUND.playClick();
+        } else {
+          // Aucun bataillon encadré : sélectionner et inspecter le secteur sous le curseur
+          const cell = this.renderer.screenToWorldCell(mouseX, mouseY);
+          if (cell) {
+            this.inspectedCell = cell;
+            this.updateSectorInfoDisplay();
+            SOUND.playClick();
+          }
         }
         this.updateSelectionDisplay();
         return;
@@ -391,6 +399,7 @@ export class UIManager {
         // Mémoriser le secteur inspecté
         this.inspectedCell = cell;
         this.updateSectorInfoDisplay();
+        SOUND.playClick();
       }
 
       this.updateSelectionDisplay();
