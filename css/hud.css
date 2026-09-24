@@ -1,0 +1,330 @@
+/**
+ * Jerry's Nations: Frontline Realms - HUD & Tactical Command Center
+ * Style utilisant les textures officielles : dialogue_box.png (parchemin doré) et boutons Bedrock.
+ */
+
+#game-container {
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+  position: absolute;
+  top: 0;
+  left: 0;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#canvas-viewport {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+#world-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Masquage du HUD en phase de lobby */
+.in-lobby #top-hud,
+.in-lobby #bottom-dock {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-10px);
+}
+.in-lobby #bottom-dock {
+  transform: translateY(10px);
+}
+
+/* ==================== BANDEAU SUPÉRIEUR (TOP HUD PARCHEMIN) ==================== */
+#top-hud {
+  position: absolute;
+  top: 8px;
+  left: 10px;
+  right: 10px;
+  height: 70px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  padding: 0 14px;
+  gap: 14px;
+}
+
+.hud-section-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.nation-flag-badge {
+  display: flex;
+  flex-direction: column;
+}
+
+#hud-nation-name {
+  font-family: var(--font-title);
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+  color: #1e3a8a;
+  text-shadow: 1px 1px 0px rgba(255, 255, 255, 0.6);
+}
+
+#hud-stage-badge {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: #78350f;
+  background: rgba(180, 83, 9, 0.12);
+  padding: 1px 6px;
+  border: 1px solid #b45309;
+  border-radius: 2px;
+}
+
+/* Scoreboard Mood JN_MOOD */
+.hud-mood-container {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 160px;
+  background: rgba(0, 0, 0, 0.08);
+  padding: 4px 8px;
+  border: 1px solid #a88965;
+  border-radius: 2px;
+}
+
+.mood-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: #2b1d0c;
+}
+
+.mood-bar-track {
+  width: 100%;
+  height: 8px;
+  background: #2a1d0d;
+  border: 1px solid #1a1106;
+  position: relative;
+  overflow: hidden;
+  border-radius: 1px;
+}
+
+#hud-mood-bar {
+  height: 100%;
+  width: 50%;
+  background: #15803d;
+  transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+/* Compteurs de Ressources */
+.hud-resources-group {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: rgba(0, 0, 0, 0.06);
+  padding: 4px 12px;
+  border: 1px solid #a88965;
+  border-radius: 2px;
+}
+
+.res-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.res-label {
+  color: #57442d;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* Section Droite : Temps & Vitesse */
+.hud-section-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#hud-day-display {
+  font-family: var(--font-title);
+  font-weight: 700;
+  font-size: 13px;
+  color: #78350f;
+  background: rgba(0, 0, 0, 0.08);
+  padding: 4px 8px;
+  border: 1px solid #b45309;
+}
+
+.speed-ctrl-group {
+  display: flex;
+  gap: 2px;
+}
+
+.btn-speed-ctrl {
+  padding: 4px 8px;
+  font-size: 10px;
+  min-width: 28px;
+}
+
+/* ==================== BANDEAU INFÉRIEUR (TACTICAL COMMAND DOCK) ==================== */
+#bottom-dock {
+  position: absolute;
+  bottom: 8px;
+  left: 10px;
+  right: 10px;
+  height: 96px;
+  z-index: 10;
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 12px;
+  pointer-events: none;
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+#bottom-dock > * {
+  pointer-events: auto;
+}
+
+/* Volet de gauche : Journal de Combat */
+#combat-log-panel {
+  width: 380px;
+  padding: 6px 12px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.log-title {
+  font-family: var(--font-title);
+  font-size: 11px;
+  font-weight: 900;
+  color: var(--parchment-title);
+  border-bottom: 1px solid rgba(124, 45, 18, 0.3);
+  padding-bottom: 2px;
+  margin-bottom: 4px;
+  letter-spacing: 0.5px;
+}
+
+#combat-log-stream {
+  flex: 1;
+  overflow-y: auto;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.35;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: #2b1d0c;
+}
+
+.log-entry {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Centre : Sélecteur d'Engagement de Troupes % */
+#troop-selector-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  padding: 6px 18px;
+  min-width: 330px;
+}
+
+.selector-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.selector-title {
+  font-family: var(--font-title);
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--parchment-title);
+}
+
+.selector-value {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--parchment-green);
+}
+
+.slider-container {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+#troop-slider {
+  flex: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  background: #3e2d1d;
+  height: 8px;
+  border: 1px solid #1a1106;
+  border-radius: 1px;
+  outline: none;
+}
+
+#troop-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 22px;
+  background: url('../textures/ui/slider_button_default.png') no-repeat center;
+  background-size: contain;
+  cursor: pointer;
+  image-rendering: pixelated;
+  border: none;
+}
+
+#troop-slider::-webkit-slider-thumb:hover {
+  background-image: url('../textures/ui/slider_button_hover.png');
+}
+
+.quick-buttons-row {
+  display: flex;
+  gap: 6px;
+  width: 100%;
+}
+
+.btn-quick-pct {
+  flex: 1;
+  padding: 3px 0;
+  font-size: 10px;
+  font-family: var(--font-mono);
+}
+
+/* Volet de droite : Actions d'Infrastructures */
+#infrastructure-panel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+}
+
+.btn-build-action {
+  font-size: 11px;
+  padding: 6px 8px;
+}

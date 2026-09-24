@@ -1,0 +1,142 @@
+/**
+ * Jerry's Nations: Frontline Realms - Global Theme & Textures
+ * Intégration des textures authentiques officielles de Jerry's Nations (Bedrock RP) :
+ * - dialogue_box.png (Nine-slice 14px) pour les cadres de dialogue et barres parchemin
+ * - dialogue_button.png / hover / pressed pour les boutons Minecraft ardoise biseautés
+ * RÈGLE STRICTE : ZÉRO EMOJI.
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=MedievalSharp&family=JetBrains+Mono:wght@400;600;700&display=swap');
+
+:root {
+  --bg-darkest: #07090e;
+  --bg-slate: #0f1522;
+  --bg-slate-card: #151e2f;
+  --border-slate: #273650;
+  --border-gold: #d97706;
+
+  /* Couleurs sur fond sombre */
+  --mc-green: #55FF55;
+  --mc-red: #FF5555;
+  --mc-gold: #FFAA00;
+  --mc-yellow: #FFFF55;
+  --mc-aqua: #55FFFF;
+  --mc-blue: #5555FF;
+  --mc-dark-green: #00AA00;
+  --mc-gray: #AAAAAA;
+  --mc-dark-gray: #555555;
+  --mc-white: #FFFFFF;
+
+  /* Couleurs adaptées sur texture parchemin (dialogue_box.png) */
+  --parchment-text: #2a1b0d;
+  --parchment-title: #7c2d12;
+  --parchment-green: #15803d;
+  --parchment-red: #b91c1c;
+  --parchment-gold: #b45309;
+  --parchment-blue: #1d4ed8;
+  --parchment-gray: #57534e;
+
+  --font-title: 'Cinzel', serif;
+  --font-retro: 'MedievalSharp', cursive;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--bg-darkest);
+  color: #e2e8f0;
+  font-family: var(--font-retro), sans-serif;
+  font-size: 14px;
+}
+
+/* ==================== CADRE PARCHEMIN AUTHENTIQUE (dialogue_box.png) ==================== */
+.panel-parchment, .panel-slate {
+  border-style: solid;
+  border-width: 14px;
+  border-image-source: url('../textures/ui/dialogue_box.png');
+  border-image-slice: 14 fill;
+  border-image-width: 14px;
+  border-image-repeat: repeat;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  color: var(--parchment-text);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+  background: transparent;
+}
+
+/* Textes et contrastes sur le cadre parchemin */
+.panel-parchment .mc-green, .panel-slate .mc-green { color: var(--parchment-green); font-weight: 700; }
+.panel-parchment .mc-red, .panel-slate .mc-red { color: var(--parchment-red); font-weight: 700; }
+.panel-parchment .mc-gold, .panel-slate .mc-gold { color: var(--parchment-gold); font-weight: 700; }
+.panel-parchment .mc-yellow, .panel-slate .mc-yellow { color: #854d0e; font-weight: 700; }
+.panel-parchment .mc-aqua, .panel-slate .mc-aqua { color: #0284c7; font-weight: 700; }
+.panel-parchment .mc-blue, .panel-slate .mc-blue { color: var(--parchment-blue); font-weight: 700; }
+.panel-parchment .mc-gray, .panel-slate .mc-gray { color: var(--parchment-gray); font-weight: 600; }
+
+/* ==================== BOUTONS AUTHENTIQUES MINECRAFT (dialogue_button.png) ==================== */
+.btn-mc {
+  background: transparent;
+  border-style: solid;
+  border-width: 6px;
+  border-image-source: url('../textures/ui/dialogue_button.png');
+  border-image-slice: 2 fill;
+  border-image-width: 6px;
+  border-image-repeat: stretch;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  color: #f1f5f9;
+  font-family: var(--font-title);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 12px;
+  cursor: pointer;
+  transition: filter 0.08s ease, transform 0.05s ease;
+  text-shadow: 1px 1px 1px #000;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-mc:hover {
+  border-image-source: url('../textures/ui/dialogue_button_hover.png');
+  color: #ffffff;
+}
+
+.btn-mc:active, .btn-mc.active {
+  border-image-source: url('../textures/ui/dialogue_button_pressed.png');
+  color: #fde047;
+  transform: translateY(1px);
+}
+
+.btn-gold {
+  color: #fef08a;
+  text-shadow: 1px 1px 2px #000, 0 0 6px rgba(234, 179, 8, 0.4);
+}
+
+.btn-gold:hover {
+  color: #ffffff;
+}
+
+/* Curseur de défilement personnalisé */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.15);
+}
+::-webkit-scrollbar-thumb {
+  background: #a16207;
+  border-radius: 2px;
+}

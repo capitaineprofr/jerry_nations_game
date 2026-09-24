@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jerry's Nations: Frontline Realms - Conquête Territoriale Web</title>
+  
+  <!-- Feuilles de Styles -->
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/hud.css">
+  <link rel="stylesheet" href="css/lobby.css">
+
+  <!-- PeerJS pour le Multijoueur P2P WebRTC sans serveur backend -->
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+</head>
+<body>
+
+  <!-- ==================== ÉCRAN DE TITRE & LOBBY ==================== -->
+  <div id="lobby-overlay">
+    <div class="lobby-container">
+      <div class="lobby-header">
+        <h1 class="lobby-title">JERRY'S NATIONS</h1>
+        <div class="lobby-subtitle">Frontline Realms - Grand RTS de Conquête Territoriale</div>
+      </div>
+
+      <div class="lobby-cards-grid">
+        <!-- Carte Mode Solo -->
+        <div class="mode-card panel-slate">
+          <div>
+            <div class="mode-card-title">MODE SOLO / ESCARMOUCHE</div>
+            <p class="mode-card-desc">
+              Prenez la tête de votre nation sur une carte continentale vivante. Conquérez les terres sauvages, 
+              repoussez les raids du Clan Maraudeur, et érigez votre capitale jusqu'au rang de Superpuissance.
+            </p>
+          </div>
+          <button id="btn-start-solo" class="btn-mc btn-gold" style="width: 100%; font-size: 14px; padding: 12px 0;">
+            LANCER LA PARTIE SOLO
+          </button>
+        </div>
+
+        <!-- Carte Mode Multijoueur P2P -->
+        <div class="mode-card panel-slate">
+          <div>
+            <div class="mode-card-title">MULTIJOUEUR P2P WEBRTC</div>
+            <p class="mode-card-desc">
+              Affrontez d'autres joueurs en direct via une liaison navigateur à navigateur instantanée, 
+              sans configuration de serveur requise.
+            </p>
+            <div class="p2p-join-box">
+              <input type="text" id="input-room-code" placeholder="Code de salon (ex: jerry-realm-1234)">
+              <button id="btn-join-room" class="btn-mc">REJOINDRE</button>
+            </div>
+            <div id="p2p-status-msg"></div>
+          </div>
+          <button id="btn-create-room" class="btn-mc" style="width: 100%; font-size: 13px; padding: 10px 0;">
+            HÉBERGER UN NOUVEAU SALON
+          </button>
+        </div>
+      </div>
+
+      <!-- Récapitulatif des Mécaniques Officielles -->
+      <div class="mechanics-recap-bar panel-slate">
+        <div class="recap-item"><strong>11 Stades</strong> : Tiers 0 (Campement) à Tier 10 (Superpuissance)</div>
+        <div class="recap-item"><strong>Scoreboard Mood</strong> : [-1000 à +1000] pts de moral national</div>
+        <div class="recap-item"><strong>Ravitaillement</strong> : Banquet obligatoire au crépuscule (jn_food)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== CONTENEUR DE JEU IN-GAME ==================== -->
+  <div id="game-container">
+    <!-- Viewport Canvas de la Carte -->
+    <div id="canvas-viewport">
+      <canvas id="world-canvas"></canvas>
+    </div>
+
+    <!-- Bandeau Supérieur : HUD & Ressources -->
+    <header id="top-hud" class="panel-slate">
+      <!-- Section Faction & Stade -->
+      <div class="hud-section-left">
+        <div class="nation-flag-badge">
+          <span id="hud-nation-name">Empire d'Émeraude</span>
+          <span id="hud-stage-badge">[T0] Campement</span>
+        </div>
+
+        <!-- Jauge Scoreboard Mood (jn_mood) -->
+        <div class="hud-mood-container">
+          <div class="mood-header">
+            <span>MOOD : <strong id="hud-mood-status" class="mc-gray">Stable</strong></span>
+            <span id="hud-mood-value">0 pts</span>
+          </div>
+          <div class="mood-bar-track">
+            <div id="hud-mood-bar"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Compteurs de Ressources Principales -->
+      <div class="hud-resources-group">
+        <div class="res-item" title="Nourriture en réserve (Banquet du crépuscule)">
+          <span class="res-label">PAIN:</span>
+          <span id="res-food" class="mc-gold">120</span>
+        </div>
+        <div class="res-item" title="Bois de charpente">
+          <span class="res-label">BOIS:</span>
+          <span id="res-wood" class="mc-yellow">60</span>
+        </div>
+        <div class="res-item" title="Pierre et minerais">
+          <span class="res-label">PIERRE:</span>
+          <span id="res-stone" class="mc-gray">40</span>
+        </div>
+        <div class="res-item" title="Trésorerie royale en Or">
+          <span class="res-label">OR:</span>
+          <span id="res-gold" class="mc-yellow">100</span>
+        </div>
+        <div class="res-item" title="Troupes de réserve disponibles">
+          <span class="res-label">ARMÉE:</span>
+          <span id="res-troops" class="mc-green">80</span>
+        </div>
+        <div class="res-item" title="Superficie territoriale contrôlée">
+          <span class="res-label">TERRITOIRE:</span>
+          <span id="res-territory" class="mc-aqua">0 pts</span>
+        </div>
+      </div>
+
+      <!-- Section Droite : Temps, Vitesse & Son -->
+      <div class="hud-section-right">
+        <div id="hud-day-display">JOUR 1</div>
+        <div class="speed-ctrl-group">
+          <button class="btn-mc btn-speed-ctrl" data-speed="0">PAUSE</button>
+          <button class="btn-mc btn-speed-ctrl active" data-speed="1">x1</button>
+          <button class="btn-mc btn-speed-ctrl" data-speed="2">x2</button>
+          <button class="btn-mc btn-speed-ctrl" data-speed="5">x5</button>
+        </div>
+        <button id="btn-toggle-sound" class="btn-mc" style="font-size: 11px; padding: 6px 10px;">[SON : ACTIF]</button>
+      </div>
+    </header>
+
+    <!-- Bandeau Inférieur : Commandement Militaire Tactique -->
+    <footer id="bottom-dock">
+      <!-- Volet Gauche : Flux du Journal de Combat -->
+      <div id="combat-log-panel" class="panel-slate">
+        <div class="log-title">JOURNAL MILITAIRE & ÉVÉNEMENTS</div>
+        <div id="combat-log-stream">
+          <div class="log-entry mc-gray">En attente d'ordres...</div>
+        </div>
+      </div>
+
+      <!-- Centre : Sélecteur d'Engagement de Troupes % (Style Territorial.io / OpenFront) -->
+      <div id="troop-selector-panel" class="panel-slate">
+        <div class="selector-header">
+          <span class="selector-title">ENGAGEMENT DE TROUPES</span>
+          <span class="selector-value">
+            <span id="troop-percent-display">25%</span>
+            <span id="troop-count-preview" style="font-size: 11px; color: #94a3b8;">(20 troupes)</span>
+          </span>
+        </div>
+
+        <div class="slider-container">
+          <input type="range" id="troop-slider" min="5" max="100" step="5" value="25">
+        </div>
+
+        <div class="quick-buttons-row">
+          <button class="btn-mc btn-quick-pct active" data-percent="20">20%</button>
+          <button class="btn-mc btn-quick-pct" data-percent="50">50%</button>
+          <button class="btn-mc btn-quick-pct" data-percent="75">75%</button>
+          <button class="btn-mc btn-quick-pct btn-gold" data-percent="100">MAX</button>
+        </div>
+      </div>
+
+      <!-- Volet Droit : Actions d'Infrastructures -->
+      <div id="infrastructure-panel" class="panel-slate">
+        <button class="btn-mc btn-build-action" data-build-type="farm" title="Produit du pain et évite la famine (Coût: 40 Bois, 10 Pierre)">
+          + FERME
+        </button>
+        <button class="btn-mc btn-build-action" data-build-type="palisade" title="Défense frontalière +40% (Coût: 30 Bois, 15 Pierre)">
+          + PALISSADE
+        </button>
+        <button class="btn-mc btn-build-action" data-build-type="watchtower" title="Tour de guet défensive (Coût: 60 Bois, 50 Pierre)">
+          + TOUR
+        </button>
+        <button class="btn-mc btn-build-action" data-build-type="citadel" title="Bastion impérial (Coût: 150 Bois, 200 Pierre, 100 Or)">
+          + BASTION
+        </button>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Script d'orchestration autonome (compatible file:///) -->
+  <script src="js/game.bundle.js"></script>
+</body>
+</html>
