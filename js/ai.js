@@ -17,7 +17,7 @@ export class AIController {
     this.aiTickCounter++;
     const diffKey = (this.engine.aiDifficulty || "normal").toUpperCase();
     const diff = CONFIG.DIFFICULTIES[diffKey] || CONFIG.DIFFICULTIES.NORMAL;
-    const interval = Math.max(10, Math.floor(30 * diff.intervalMultiplier));
+    const interval = Math.max(50, Math.floor(65 * diff.intervalMultiplier));
 
     if (this.aiTickCounter % interval !== 0) return;
 

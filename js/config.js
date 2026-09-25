@@ -51,17 +51,19 @@ export const CONFIG = {
       id: "river",
       name: "Rivière Fluviale",
       color: "#4e7b8f",
-      traversable: false,
-      desc: "Obstacle naturel infranchissable à pied"
+      traversable: true,
+      moveCost: 4.2,
+      defenseBonus: -0.30,
+      desc: "Courant fluvial profond, traversée pénible et lente à découvert"
     },
     FORD: {
       id: "ford",
       name: "Gué Fluvial",
       color: "#8ca89c",
       traversable: true,
-      moveCost: 1.8,
-      defenseBonus: -0.15,
-      desc: "Point de passage stratégique à pied"
+      moveCost: 2.2,
+      defenseBonus: -0.10,
+      desc: "Passage naturel dans l'eau, ralentissement modéré"
     },
     PLAIN: {
       id: "plain",
@@ -79,10 +81,10 @@ export const CONFIG = {
       name: "Forêt Dense",
       color: "#355428",
       traversable: true,
-      moveCost: 1.3,
+      moveCost: 1.6,
       baseWood: 1.8,
       defenseBonus: 0.30,
-      cavalrySpeedPenalty: 0.65,
+      cavalrySpeedPenalty: 0.50,
       allowsLumberCamp: true,
       desc: "Abondance de Bois, couverture défensive pour l'infanterie"
     },
@@ -91,7 +93,7 @@ export const CONFIG = {
       name: "Collines Rocheuses",
       color: "#847458",
       traversable: true,
-      moveCost: 1.5,
+      moveCost: 1.9,
       baseStone: 1.6,
       baseGold: 0.8,
       defenseBonus: 0.45,
@@ -108,7 +110,7 @@ export const CONFIG = {
     }
   },
 
-  // Classes de Bataillons et Unités physiques RTS
+  // Classes de Bataillons et Unités physiques RTS (Cadence réaliste et pondérée)
   UNITS: {
     PIONEER: {
       id: "pioneer",
@@ -119,7 +121,7 @@ export const CONFIG = {
       stoneCost: 0,
       goldCost: 0,
       hp: 70,
-      speed: 0.08,
+      speed: 0.028,
       attack: 0,
       range: 1.0,
       defense: 1,
@@ -136,7 +138,7 @@ export const CONFIG = {
       stoneCost: 15,
       goldCost: 0,
       hp: 140,
-      speed: 0.07,
+      speed: 0.026,
       attack: 16,
       range: 1.1,
       defense: 3,
@@ -151,7 +153,7 @@ export const CONFIG = {
       stoneCost: 0,
       goldCost: 0,
       hp: 85,
-      speed: 0.075,
+      speed: 0.027,
       attack: 18,
       range: 4.8,
       defense: 1,
@@ -167,7 +169,7 @@ export const CONFIG = {
       stoneCost: 0,
       goldCost: 40,
       hp: 180,
-      speed: 0.125,
+      speed: 0.048,
       attack: 26,
       range: 1.2,
       defense: 4,
@@ -183,7 +185,7 @@ export const CONFIG = {
       stoneCost: 60,
       goldCost: 50,
       hp: 220,
-      speed: 0.045,
+      speed: 0.015,
       attack: 55,
       range: 6.2,
       defense: 2,
@@ -249,11 +251,11 @@ export const CONFIG = {
     SANDBOX:  { id: "sandbox",  name: "Bac à Sable",       startingFood: 99999, startingWood: 99999, startingStone: 99999, startingGold: 99999, freeBuild: true }
   },
 
-  // Difficulté des Bots
+  // Difficulté des Bots (Rythme posé et stratégique)
   DIFFICULTIES: {
-    PEACEFUL: { id: "peaceful", name: "Paisible", intervalMultiplier: 1.8, aggression: 0.2, peacefulDays: 10 },
-    NORMAL:   { id: "normal",   name: "Équilibré", intervalMultiplier: 1.0, aggression: 0.6, peacefulDays: 3 },
-    HARD:     { id: "hard",     name: "Implacable", intervalMultiplier: 0.65, aggression: 1.0, peacefulDays: 0 }
+    PEACEFUL: { id: "peaceful", name: "Paisible", intervalMultiplier: 2.5, aggression: 0.2, peacefulDays: 10 },
+    NORMAL:   { id: "normal",   name: "Équilibré", intervalMultiplier: 1.6, aggression: 0.6, peacefulDays: 3 },
+    HARD:     { id: "hard",     name: "Implacable", intervalMultiplier: 1.0, aggression: 1.0, peacefulDays: 0 }
   }
 };
 

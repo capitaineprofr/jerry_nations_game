@@ -38,8 +38,19 @@ export class GameEngine {
     this.combatEvents = [];
     this.logMessages = [];
 
+    // Phase de fondation du royaume (60 secondes pour choisir l'emplacement de la capitale)
+    this.isFoundingCapital = true;
+    this.foundingCountdown = 60.0;
+    this.candidateFoundingCell = null;
+
     this.initFactions();
     this.spawnInitialArmies();
+
+    // Emplacement candidat initial par défaut
+    const initialCap = this.map.capitals.find((c) => c.factionId === 1);
+    if (initialCap) {
+      this.candidateFoundingCell = this.map.getCell(initialCap.x, initialCap.y);
+    }
   }
 
   initFactions() {
@@ -204,6 +215,16 @@ export class GameEngine {
   update() {
     if (this.isPaused || this.timeScale === 0) return;
 
+    // Phase de fondation du royaume (60 secondes) : le monde attend la décision du joueur
+    if (this.isFoundingCapital) {
+      this.foundingCountdown -= 1 / CONFIG.TICK_RATE;
+      if (this.foundingCountdown <= 0) {
+        this.foundingCountdown = 0;
+        this.confirmCapitalFounding();
+      }
+      return;
+    }
+
     const iterations = this.timeScale;
     for (let it = 0; it < iterations; it++) {
       this.tickCount++;
@@ -236,6 +257,109 @@ export class GameEngine {
         this.executeSunsetBanquet();
       }
     }
+  }
+
+  // Sélection d'un secteur candidat pour la capitale pendant la phase des 60s
+  selectFoundingSector(cell) {
+    if (!this.isFoundingCapital || !cell) return false;
+    if (!cell.terrain.traversable) {
+      this.addLog("§cCe secteur naturel est infranchissable. Choisissez une plaine, forêt ou colline.");
+      return false;
+    }
+    if (cell.owner > 1) {
+      this.addLog("§cCe secteur est déjà revendiqué par un autre royaume !");
+      return false;
+    }
+
+    this.candidateFoundingCell = cell;
+    SOUND.playClick();
+    return true;
+  }
+
+  // Confirmation définitive de la fondation de la capitale
+  confirmCapitalFounding(customCell = null) {
+    if (!this.isFoundingCapital) return;
+
+    const targetCell = customCell || this.candidateFoundingCell || this.findBestStartingCell();
+    if (!targetCell) return;
+
+    this.isFoundingCapital = false;
+    this.candidateFoundingCell = null;
+
+    // 1. Nettoyer l'ancienne capitale provisoire
+    const oldCap = this.map.capitals.find((c) => c.factionId === 1);
+    if (oldCap) {
+      const oldCell = this.map.getCell(oldCap.x, oldCap.y);
+      if (oldCell) {
+        oldCell.isCapital = false;
+        oldCell.capitalFactionId = null;
+        oldCell.infrastructure = null;
+        oldCell.infraHp = null;
+      }
+      for (let dy = -1; dy <= 1; dy++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          const c = this.map.getCell(oldCap.x + dx, oldCap.y + dy);
+          if (c && c.owner === 1) c.owner = 0;
+        }
+      }
+    }
+
+    // 2. Établir la citadelle sur le nouveau secteur
+    targetCell.owner = 1;
+    targetCell.isCapital = true;
+    targetCell.capitalFactionId = 1;
+    targetCell.infrastructure = "citadel";
+    targetCell.infraHp = 600;
+
+    // 3. Revendiquer les 3x3 secteurs environnants
+    for (let dy = -1; dy <= 1; dy++) {
+      for (let dx = -1; dx <= 1; dx++) {
+        const neighbor = this.map.getCell(targetCell.x + dx, targetCell.y + dy);
+        if (neighbor && neighbor.terrain.traversable && neighbor.owner === 0) {
+          neighbor.owner = 1;
+        }
+      }
+    }
+
+    // 4. Mettre à jour l'enregistrement de la capitale
+    const capIdx = this.map.capitals.findIndex((c) => c.factionId === 1);
+    const playerCapEntry = {
+      factionId: 1,
+      x: targetCell.x,
+      y: targetCell.y,
+      name: this.settings.nationName || "Empire d'Émeraude"
+    };
+    if (capIdx >= 0) {
+      this.map.capitals[capIdx] = playerCapEntry;
+    } else {
+      this.map.capitals.push(playerCapEntry);
+    }
+
+    // 5. Déployer les armées initiales autour de la nouvelle capitale
+    this.units = this.units.filter((u) => u.factionId !== 1);
+    this.spawnUnit(1, "pioneer", targetCell.x + 0.5, targetCell.y + 1.2);
+    this.spawnUnit(1, "militia", targetCell.x - 0.8, targetCell.y + 0.2);
+    this.spawnUnit(1, "militia", targetCell.x + 0.8, targetCell.y + 0.2);
+    this.spawnUnit(1, "militia", targetCell.x, targetCell.y - 0.8);
+    this.spawnUnit(1, "archer", targetCell.x - 1.2, targetCell.y - 0.8);
+    this.spawnUnit(1, "archer", targetCell.x + 1.2, targetCell.y - 0.8);
+
+    this.updateTerritoryCounts();
+    SOUND.playFanfare();
+    this.addLog(`§a§l[FONDATION ROYALE] Capitale établie en (${targetCell.x}, ${targetCell.y}) sur ${targetCell.terrain.name} !`);
+  }
+
+  findBestStartingCell() {
+    const cap = this.map.capitals.find((c) => c.factionId === 1);
+    if (cap) {
+      const cell = this.map.getCell(cap.x, cap.y);
+      if (cell) return cell;
+    }
+    for (let i = 0; i < this.map.grid.length; i++) {
+      const c = this.map.grid[i];
+      if (c.terrain.id === "plain" && c.owner === 0) return c;
+    }
+    return this.map.grid[0];
   }
 
   updateUnits() {

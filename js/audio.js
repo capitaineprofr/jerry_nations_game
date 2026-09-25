@@ -183,6 +183,11 @@ class SoundEngine {
     });
   }
 
+  // Fanfare impériale royale (fondation de capitale et lancement multijoueur)
+  playFanfare() {
+    this.playLevelUp();
+  }
+
   // Bruitage de marteau / construction d'infrastructure
   playBuild() {
     if (this.muted) return;

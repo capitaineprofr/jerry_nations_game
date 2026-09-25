@@ -63,17 +63,19 @@ const CONFIG = {
       id: "river",
       name: "Rivière Fluviale",
       color: "#4e7b8f",
-      traversable: false,
-      desc: "Obstacle naturel infranchissable à pied"
+      traversable: true,
+      moveCost: 4.2,
+      defenseBonus: -0.30,
+      desc: "Courant fluvial profond, traversée pénible et lente à découvert"
     },
     FORD: {
       id: "ford",
       name: "Gué Fluvial",
       color: "#8ca89c",
       traversable: true,
-      moveCost: 1.8,
-      defenseBonus: -0.15,
-      desc: "Point de passage stratégique à pied"
+      moveCost: 2.2,
+      defenseBonus: -0.10,
+      desc: "Passage naturel dans l'eau, ralentissement modéré"
     },
     PLAIN: {
       id: "plain",
@@ -91,10 +93,10 @@ const CONFIG = {
       name: "Forêt Dense",
       color: "#355428",
       traversable: true,
-      moveCost: 1.3,
+      moveCost: 1.6,
       baseWood: 1.8,
       defenseBonus: 0.30,
-      cavalrySpeedPenalty: 0.65,
+      cavalrySpeedPenalty: 0.50,
       allowsLumberCamp: true,
       desc: "Abondance de Bois, couverture défensive pour l'infanterie"
     },
@@ -103,7 +105,7 @@ const CONFIG = {
       name: "Collines Rocheuses",
       color: "#847458",
       traversable: true,
-      moveCost: 1.5,
+      moveCost: 1.9,
       baseStone: 1.6,
       baseGold: 0.8,
       defenseBonus: 0.45,
@@ -120,7 +122,7 @@ const CONFIG = {
     }
   },
 
-  // Classes de Bataillons et Unités physiques RTS
+  // Classes de Bataillons et Unités physiques RTS (Cadence réaliste et pondérée)
   UNITS: {
     PIONEER: {
       id: "pioneer",
@@ -131,7 +133,7 @@ const CONFIG = {
       stoneCost: 0,
       goldCost: 0,
       hp: 70,
-      speed: 0.08,
+      speed: 0.028,
       attack: 0,
       range: 1.0,
       defense: 1,
@@ -148,7 +150,7 @@ const CONFIG = {
       stoneCost: 15,
       goldCost: 0,
       hp: 140,
-      speed: 0.07,
+      speed: 0.026,
       attack: 16,
       range: 1.1,
       defense: 3,
@@ -163,7 +165,7 @@ const CONFIG = {
       stoneCost: 0,
       goldCost: 0,
       hp: 85,
-      speed: 0.075,
+      speed: 0.027,
       attack: 18,
       range: 4.8,
       defense: 1,
@@ -179,7 +181,7 @@ const CONFIG = {
       stoneCost: 0,
       goldCost: 40,
       hp: 180,
-      speed: 0.125,
+      speed: 0.048,
       attack: 26,
       range: 1.2,
       defense: 4,
@@ -195,7 +197,7 @@ const CONFIG = {
       stoneCost: 60,
       goldCost: 50,
       hp: 220,
-      speed: 0.045,
+      speed: 0.015,
       attack: 55,
       range: 6.2,
       defense: 2,
@@ -261,14 +263,403 @@ const CONFIG = {
     SANDBOX:  { id: "sandbox",  name: "Bac à Sable",       startingFood: 99999, startingWood: 99999, startingStone: 99999, startingGold: 99999, freeBuild: true }
   },
 
-  // Difficulté des Bots
+  // Difficulté des Bots (Rythme posé et stratégique)
   DIFFICULTIES: {
-    PEACEFUL: { id: "peaceful", name: "Paisible", intervalMultiplier: 1.8, aggression: 0.2, peacefulDays: 10 },
-    NORMAL:   { id: "normal",   name: "Équilibré", intervalMultiplier: 1.0, aggression: 0.6, peacefulDays: 3 },
-    HARD:     { id: "hard",     name: "Implacable", intervalMultiplier: 0.65, aggression: 1.0, peacefulDays: 0 }
+    PEACEFUL: { id: "peaceful", name: "Paisible", intervalMultiplier: 2.5, aggression: 0.2, peacefulDays: 10 },
+    NORMAL:   { id: "normal",   name: "Équilibré", intervalMultiplier: 1.6, aggression: 0.6, peacefulDays: 3 },
+    HARD:     { id: "hard",     name: "Implacable", intervalMultiplier: 1.0, aggression: 1.0, peacefulDays: 0 }
   }
 };
 
+
+
+  // ==================== MODULE: i18n.js ====================
+/**
+ * Jerry's Nations: Frontline Realms - Bilingual System (FR / EN)
+ * Gestionnaire de traduction bilingue conforme aux règles strictes du projet.
+ * ZÉRO EMOJI. Mémorisation du choix utilisateur dans localStorage.
+ */
+
+const I18N = {
+  currentLang: "fr",
+
+  translations: {
+    fr: {
+      langBtn: "LANGUE : FRANÇAIS",
+      langCode: "FR",
+      switchLang: "ENGLISH",
+      
+      // Lobby & Écran de Configuration
+      gameTitle: "JERRY'S NATIONS",
+      gameSubtitle: "Frontline Realms - Grand RTS de Conquête Territoriale",
+      secIdentity: "1. IDENTITÉ DE LA NATION",
+      avatarLabel: "Avatar & Skin du Dirigeant :",
+      btnUploadSkin: "IMPORTER SKIN (.PNG)",
+      btnResetSkin: "DÉFAUT (ME.GIF)",
+      avatarHint: "Supporte les fichiers skins Minecraft 64x64 PNG avec reliefs.",
+      playerNameLabel: "Pseudo du Dirigeant :",
+      nationNameLabel: "Nom du Royaume / Nation :",
+      bannerLabel: "Bannière Royale & Couleur :",
+      nationMottoLabel: "Devise de la Faction :",
+      defaultMotto: "Souveraineté, Moissons et Gloire",
+      
+      secRules: "2. RÈGLES & DIFFICULTÉ",
+      gameModeLabel: "Mode de Jeu :",
+      modeStandard: "Conquête",
+      modeStandardSub: "Ressources & Famine",
+      modeSandbox: "Bac à Sable",
+      modeSandboxSub: "Illimité & Gratuit",
+      
+      botCountLabel: "Royaumes Rivaux (Bots) :",
+      bots0: "0 (Solo)",
+      bots1: "1 Faction",
+      bots2: "2 Factions",
+      bots3: "3 Factions",
+      
+      aiDiffLabel: "Stratégie de l'IA :",
+      diffPeaceful: "Paisible",
+      diffPeacefulSub: "Expansion modérée",
+      diffNormal: "Équilibrée",
+      diffNormalSub: "Pression constante",
+      diffHard: "Implacable",
+      diffHardSub: "Raids rapides",
+      
+      optMarauders: "Clan Maraudeur (Pillards agressifs des terres sauvages)",
+      btnLaunchGame: "FONDER LA NATION & COMMENCER",
+      
+      secP2P: "MULTIJOUEUR P2P WEBRTC :",
+      roomCodePlaceholder: "Code de salon (ex: jerry-123)",
+      btnJoinRoom: "REJOINDRE",
+      btnCreateRoom: "HÉBERGER UN NOUVEAU SALON",
+      
+      recapNav: "Navigation Carte : Bords d'écran, Clic droit glissé, Clic molette, ZQSD/Flèches ou Clic Minimap",
+      recapUnits: "Bataillons RTS : Glisser pour encadrer (Box Select), Clic droit pour ordonner",
+      recapCenter: "Recentrer Caméra : Touche C ou bouton [CENTRER]",
+
+      // HUD Supérieur
+      dayLabel: "JOUR",
+      resFood: "Pain",
+      resWood: "Bois",
+      resStone: "Pierre",
+      resGold: "Or",
+      resArmy: "Armée",
+      resTerritory: "Secteurs",
+      btnPause: "PAUSE",
+      btnResume: "REPRENDRE",
+      btnCenter: "CENTRER",
+      btnMenu: "MENU",
+      soundActive: "[SON : ACTIF]",
+      soundMuted: "[SON : COUPE]",
+
+      // Panneau de construction (Tiroir droit)
+      buildingsTitle: "BÂTIMENTS & AVANT-POSTES",
+      buildingsSubtitle: "Sélectionnez une structure puis cliquez sur un secteur éligible :",
+      bldFarm: "FERME",
+      bldFarmDesc: "Plaine | +5.0 Pain/jour",
+      bldLumber: "SCIERIE",
+      bldLumberDesc: "Forêt | +4.5 Bois/jour",
+      bldQuarry: "CARRIÈRE",
+      bldQuarryDesc: "Collines | +3.5 Pierre +1.5 Or/jour",
+      bldBarracks: "CASERNE",
+      bldBarracksDesc: "Tout secteur | Caserne militaire",
+      bldOutpost: "AVANT-POSTE",
+      bldOutpostDesc: "Étend les frontières de +2 cases",
+      bldTower: "TOUR",
+      bldTowerDesc: "Tir défensif (portée accrue sur colline)",
+
+      // Volet de commandement inférieur
+      toggleCmdTitle: "COMMANDEMENT & SECTEUR",
+      secInfoTitle: "SECTEUR SÉLECTIONNÉ",
+      sectorWild: "Terre Sauvage (Libre)",
+      sectorNoInfra: "Aucun aménagement",
+      sectorCitadel: "Cité Royale (Bastion)",
+      defensePts: "pts",
+      noYields: "Aucun revenu",
+      noUnitsSelected: "Aucun bataillon sélectionné. Clic gauche ou glisser pour sélectionner.",
+      battalionsSelected: "BATAILLONS :",
+      hpLabel: "PV :",
+      btnHalt: "HALTE",
+      btnExpColonize: "[EXPÉDITION COLONISATION]",
+      btnExpDefend: "[DÉFENSE FRONTIÈRE]",
+      btnExpAssault: "[ASSAUT GÉNÉRAL]",
+
+      // Phase de fondation de la capitale
+      foundingTitle: "FONDATION DU ROYAUME : CHOISISSEZ VOTRE CAPITALE",
+      foundingCountdown: "Temps restant :",
+      foundingInstruction: "Explorez la carte et cliquez sur un secteur fertile pour y établir votre Citadelle.",
+      foundingBtn: "FONDER MA CAPITALE ICI",
+      foundingDoneMsg: "Capitale fondée avec succès ! Gloire au Souverain !",
+
+      // Salon d'Attente Multijoueur
+      mpLobbyTitle: "SALON MULTIJOUEUR - SALLE D'ATTENTE",
+      mpLobbyStatusWaiting: "En attente de connexion...",
+      mpLobbyStatusHost: "Salon ouvert ! En attente d'autres souverains...",
+      mpLobbyStatusClient: "Connecté au salon ! En attente du signal de l'Hôte...",
+      mpCodeLabel: "CODE DU SALON À PARTAGER :",
+      btnCopyCode: "COPIER LE CODE",
+      mpCopyFeedback: "Transmettez ce code à vos amis pour qu'ils rejoignent votre royaume.",
+      mpCopySuccess: "Code copié dans le presse-papiers ! Partagez-le avec vos alliés.",
+      mpSlotsTitle: "ROYAUMES & SOUVERAINS DANS LE SALON (1 à 4 JOUEURS) :",
+      mpSlotFree: "En attente d'un joueur ou Bot IA",
+      mpSlotBadgeFree: "[LIBRE]",
+      mpSlotBadgeHost: "[HÔTE]",
+      mpSlotBadgeReady: "[PRÊT]",
+      mpBtnStartHost: "LANCER LA PARTIE POUR TOUS",
+      mpBtnStartClient: "EN ATTENTE DU SIGNAL DE L'HÔTE...",
+      mpBtnLeave: "QUITTER LE SALON",
+
+      // Modal de Pause
+      pauseModalTitle: "CONSEIL DE GUERRE - PAUSE",
+      pauseModalDesc: "La simulation est suspendue. Choisissez une directive :",
+      pauseBtnResume: "REPRENDRE LA PARTIE",
+      pauseBtnCenter: "RECENTRER SUR LA CAPITALE (C)",
+      pauseBtnEdgeScrollOn: "DÉFILEMENT BORD ÉCRAN : ACTIF",
+      pauseBtnEdgeScrollOff: "DÉFILEMENT BORD ÉCRAN : DÉSACTIVÉ",
+      pauseBtnQuit: "QUITTER VERS LE MENU PRINCIPAL"
+    },
+
+    en: {
+      langBtn: "LANGUAGE : ENGLISH",
+      langCode: "EN",
+      switchLang: "FRANÇAIS",
+      
+      // Lobby & Setup Screen
+      gameTitle: "JERRY'S NATIONS",
+      gameSubtitle: "Frontline Realms - Grand Territorial RTS Web Game",
+      secIdentity: "1. NATION IDENTITY",
+      avatarLabel: "Leader Avatar & Skin:",
+      btnUploadSkin: "IMPORT SKIN (.PNG)",
+      btnResetSkin: "DEFAULT (ME.GIF)",
+      avatarHint: "Supports 64x64 Minecraft PNG skins with 3D overlays.",
+      playerNameLabel: "Leader Username:",
+      nationNameLabel: "Kingdom / Realm Name:",
+      bannerLabel: "Royal Banner & Color:",
+      nationMottoLabel: "Faction Motto:",
+      defaultMotto: "Sovereignty, Harvest and Glory",
+      
+      secRules: "2. RULES & DIFFICULTY",
+      gameModeLabel: "Game Mode:",
+      modeStandard: "Conquest",
+      modeStandardSub: "Resources & Starvation",
+      modeSandbox: "Sandbox",
+      modeSandboxSub: "Unlimited & Free",
+      
+      botCountLabel: "Rival Kingdoms (Bots):",
+      bots0: "0 (Solo)",
+      bots1: "1 Faction",
+      bots2: "2 Factions",
+      bots3: "3 Factions",
+      
+      aiDiffLabel: "AI Strategy:",
+      diffPeaceful: "Peaceful",
+      diffPeacefulSub: "Slow expansion",
+      diffNormal: "Balanced",
+      diffNormalSub: "Steady pressure",
+      diffHard: "Relentless",
+      diffHardSub: "Swift raids",
+      
+      optMarauders: "Marauder Clan (Hostile border raiders)",
+      btnLaunchGame: "FOUND REALM & START",
+      
+      secP2P: "P2P WEBRTC MULTIPLAYER:",
+      roomCodePlaceholder: "Room Code (e.g. jerry-123)",
+      btnJoinRoom: "JOIN ROOM",
+      btnCreateRoom: "HOST A NEW ROOM",
+      
+      recapNav: "Map Controls: Screen edges, Right-click drag, Middle-click, WASD/Arrows or Minimap click",
+      recapUnits: "RTS Battalions: Drag to Box Select, Right-click to issue orders",
+      recapCenter: "Center Camera: C key or [CENTER] button",
+
+      // Top HUD
+      dayLabel: "DAY",
+      resFood: "Bread",
+      resWood: "Wood",
+      resStone: "Stone",
+      resGold: "Gold",
+      resArmy: "Army",
+      resTerritory: "Sectors",
+      btnPause: "PAUSE",
+      btnResume: "RESUME",
+      btnCenter: "CENTER",
+      btnMenu: "MENU",
+      soundActive: "[SOUND: ON]",
+      soundMuted: "[SOUND: MUTED]",
+
+      // Building Drawer (Right)
+      buildingsTitle: "BUILDINGS & OUTPOSTS",
+      buildingsSubtitle: "Select a structure then click on an eligible sector:",
+      bldFarm: "FARM",
+      bldFarmDesc: "Plain | +5.0 Bread/day",
+      bldLumber: "LUMBER CAMP",
+      bldLumberDesc: "Forest | +4.5 Wood/day",
+      bldQuarry: "QUARRY",
+      bldQuarryDesc: "Hills | +3.5 Stone +1.5 Gold/day",
+      bldBarracks: "BARRACKS",
+      bldBarracksDesc: "Any sector | Military hub",
+      bldOutpost: "OUTPOST",
+      bldOutpostDesc: "Expands borders by +2 tiles",
+      bldTower: "TOWER",
+      bldTowerDesc: "Defensive archery (bonus on hills)",
+
+      // Bottom Command Dock
+      toggleCmdTitle: "COMMAND & SECTOR",
+      secInfoTitle: "SELECTED SECTOR",
+      sectorWild: "Wildlands (Neutral)",
+      sectorNoInfra: "No infrastructure",
+      sectorCitadel: "Royal City (Citadel)",
+      defensePts: "pts",
+      noYields: "No revenue",
+      noUnitsSelected: "No battalion selected. Left-click or drag to select.",
+      battalionsSelected: "BATTALIONS:",
+      hpLabel: "HP:",
+      btnHalt: "HALT",
+      btnExpColonize: "[COLONIZATION EXPEDITION]",
+      btnExpDefend: "[FRONTIER DEFENSE]",
+      btnExpAssault: "[GENERAL ASSAULT]",
+
+      // Capital Founding Phase
+      foundingTitle: "FOUNDING OF THE REALM: CHOOSE YOUR CAPITAL",
+      foundingCountdown: "Time remaining:",
+      foundingInstruction: "Scout the map and click on a fertile sector to establish your Citadel.",
+      foundingBtn: "FOUND MY CAPITAL HERE",
+      foundingDoneMsg: "Capital established! Long live the Sovereign!",
+
+      // Multiplayer Lobby Modal
+      mpLobbyTitle: "MULTIPLAYER LOBBY - WAITING ROOM",
+      mpLobbyStatusWaiting: "Waiting for connection...",
+      mpLobbyStatusHost: "Room created! Waiting for other monarchs...",
+      mpLobbyStatusClient: "Connected! Waiting for host to launch...",
+      mpCodeLabel: "ROOM CODE TO SHARE:",
+      btnCopyCode: "COPY CODE",
+      mpCopyFeedback: "Send this code to your friends so they can join your realm.",
+      mpCopySuccess: "Code copied to clipboard! Share it with your allies.",
+      mpSlotsTitle: "KINGDOMS & MONARCHS IN ROOM (1 to 4 PLAYERS):",
+      mpSlotFree: "Waiting for player or AI Bot",
+      mpSlotBadgeFree: "[OPEN]",
+      mpSlotBadgeHost: "[HOST]",
+      mpSlotBadgeReady: "[READY]",
+      mpBtnStartHost: "LAUNCH GAME FOR ALL",
+      mpBtnStartClient: "WAITING FOR HOST...",
+      mpBtnLeave: "LEAVE ROOM",
+
+      // Pause Modal
+      pauseModalTitle: "WAR COUNCIL - PAUSE",
+      pauseModalDesc: "Simulation is paused. Choose a directive:",
+      pauseBtnResume: "RESUME GAME",
+      pauseBtnCenter: "CENTER ON CAPITAL (C)",
+      pauseBtnEdgeScrollOn: "EDGE SCROLLING: ON",
+      pauseBtnEdgeScrollOff: "EDGE SCROLLING: OFF",
+      pauseBtnQuit: "QUIT TO MAIN MENU"
+    }
+  },
+
+  init() {
+    try {
+      const saved = localStorage.getItem("jerry_nations_lang");
+      if (saved && (saved === "fr" || saved === "en")) {
+        this.currentLang = saved;
+      } else {
+        const nav = (navigator.language || "").toLowerCase();
+        this.currentLang = nav.startsWith("en") ? "en" : "fr";
+      }
+    } catch (e) {
+      this.currentLang = "fr";
+    }
+  },
+
+  setLang(lang) {
+    if (lang !== "fr" && lang !== "en") return;
+    this.currentLang = lang;
+    try {
+      localStorage.setItem("jerry_nations_lang", lang);
+    } catch (e) {}
+    this.applyToDOM();
+  },
+
+  toggleLang() {
+    this.setLang(this.currentLang === "fr" ? "en" : "fr");
+  },
+
+  t(key) {
+    const dict = this.translations[this.currentLang] || this.translations.fr;
+    return dict[key] || this.translations.fr[key] || key;
+  },
+
+  applyToDOM() {
+    const lang = this.currentLang;
+    const dict = this.translations[lang];
+
+    // Mettre à jour les boutons de langue
+    document.querySelectorAll(".btn-toggle-lang").forEach((btn) => {
+      btn.textContent = dict.langBtn;
+    });
+
+    // Éléments du Lobby
+    const setText = (id, text) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = text;
+    };
+    const setHtml = (id, html) => {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = html;
+    };
+
+    setText("lobby-main-subtitle", dict.gameSubtitle);
+    setText("lobby-sec1-title", dict.secIdentity);
+    setText("lbl-leader-avatar", dict.avatarLabel);
+    setText("btn-upload-skin", dict.btnUploadSkin);
+    setText("btn-reset-skin", dict.btnResetSkin);
+    setText("txt-avatar-hint", dict.avatarHint);
+    setText("lbl-player-name", dict.playerNameLabel);
+    setText("lbl-nation-name", dict.nationNameLabel);
+    setText("lbl-banner-picker", dict.bannerLabel);
+    setText("lbl-nation-motto", dict.nationMottoLabel);
+
+    setText("lobby-sec2-title", dict.secRules);
+    setText("lbl-game-mode", dict.gameModeLabel);
+    setText("lbl-bot-count", dict.botCountLabel);
+    setText("lbl-ai-diff", dict.aiDiffLabel);
+    setText("txt-opt-marauders", dict.optMarauders);
+    setText("btn-start-game", dict.btnLaunchGame);
+
+    setText("txt-p2p-title", dict.secP2P);
+    setText("btn-join-room", dict.btnJoinRoom);
+    setText("btn-create-room", dict.btnCreateRoom);
+
+    // Récap commandes
+    setHtml("recap-item-nav", `<strong>${lang === 'fr' ? 'Navigation Carte' : 'Map Controls'}</strong> : ${dict.recapNav.split(': ')[1]}`);
+    setHtml("recap-item-units", `<strong>${lang === 'fr' ? 'Bataillons RTS' : 'RTS Battalions'}</strong> : ${dict.recapUnits.split(': ')[1]}`);
+    setHtml("recap-item-center", `<strong>${lang === 'fr' ? 'Recentrer Caméra' : 'Center Camera'}</strong> : ${dict.recapCenter.split(': ')[1]}`);
+
+    // Modal de Pause
+    setText("modal-pause-title", dict.pauseModalTitle);
+    setText("modal-pause-desc", dict.pauseModalDesc);
+    setText("modal-btn-resume", dict.pauseBtnResume);
+    setText("modal-btn-center", dict.pauseBtnCenter);
+    setText("modal-btn-quit-lobby", dict.pauseBtnQuit);
+
+    // Salon Multijoueur
+    setText("mp-lobby-header-title", dict.mpLobbyTitle);
+    setText("mp-code-label-text", dict.mpCodeLabel);
+    setText("btn-copy-room-code", dict.btnCopyCode);
+    setText("mp-slots-title-text", dict.mpSlotsTitle);
+    setText("btn-mp-leave-room", dict.mpBtnLeave);
+
+    // Volet Bâtiments
+    setText("buildings-drawer-title", dict.buildingsTitle);
+    setText("buildings-drawer-desc", dict.buildingsSubtitle);
+
+    // Ordres rapides & Halte
+    setText("btn-order-halt", dict.btnHalt);
+    setText("btn-expedition-col", dict.btnExpColonize);
+    setText("btn-expedition-def", dict.btnExpDefend);
+    setText("btn-expedition-assault", dict.btnExpAssault);
+
+    // Bandeau de fondation
+    setText("founding-banner-title", dict.foundingTitle);
+    setText("btn-confirm-founding", dict.foundingBtn);
+  }
+};
 
 
   // ==================== MODULE: audio.js ====================
@@ -455,6 +846,11 @@ class SoundEngine {
       osc.start(time);
       osc.stop(time + 0.4);
     });
+  }
+
+  // Fanfare impériale royale (fondation de capitale et lancement multijoueur)
+  playFanfare() {
+    this.playLevelUp();
   }
 
   // Bruitage de marteau / construction d'infrastructure
@@ -1134,8 +1530,19 @@ class GameEngine {
     this.combatEvents = [];
     this.logMessages = [];
 
+    // Phase de fondation du royaume (60 secondes pour choisir l'emplacement de la capitale)
+    this.isFoundingCapital = true;
+    this.foundingCountdown = 60.0;
+    this.candidateFoundingCell = null;
+
     this.initFactions();
     this.spawnInitialArmies();
+
+    // Emplacement candidat initial par défaut
+    const initialCap = this.map.capitals.find((c) => c.factionId === 1);
+    if (initialCap) {
+      this.candidateFoundingCell = this.map.getCell(initialCap.x, initialCap.y);
+    }
   }
 
   initFactions() {
@@ -1300,6 +1707,16 @@ class GameEngine {
   update() {
     if (this.isPaused || this.timeScale === 0) return;
 
+    // Phase de fondation du royaume (60 secondes) : le monde attend la décision du joueur
+    if (this.isFoundingCapital) {
+      this.foundingCountdown -= 1 / CONFIG.TICK_RATE;
+      if (this.foundingCountdown <= 0) {
+        this.foundingCountdown = 0;
+        this.confirmCapitalFounding();
+      }
+      return;
+    }
+
     const iterations = this.timeScale;
     for (let it = 0; it < iterations; it++) {
       this.tickCount++;
@@ -1332,6 +1749,109 @@ class GameEngine {
         this.executeSunsetBanquet();
       }
     }
+  }
+
+  // Sélection d'un secteur candidat pour la capitale pendant la phase des 60s
+  selectFoundingSector(cell) {
+    if (!this.isFoundingCapital || !cell) return false;
+    if (!cell.terrain.traversable) {
+      this.addLog("§cCe secteur naturel est infranchissable. Choisissez une plaine, forêt ou colline.");
+      return false;
+    }
+    if (cell.owner > 1) {
+      this.addLog("§cCe secteur est déjà revendiqué par un autre royaume !");
+      return false;
+    }
+
+    this.candidateFoundingCell = cell;
+    SOUND.playClick();
+    return true;
+  }
+
+  // Confirmation définitive de la fondation de la capitale
+  confirmCapitalFounding(customCell = null) {
+    if (!this.isFoundingCapital) return;
+
+    const targetCell = customCell || this.candidateFoundingCell || this.findBestStartingCell();
+    if (!targetCell) return;
+
+    this.isFoundingCapital = false;
+    this.candidateFoundingCell = null;
+
+    // 1. Nettoyer l'ancienne capitale provisoire
+    const oldCap = this.map.capitals.find((c) => c.factionId === 1);
+    if (oldCap) {
+      const oldCell = this.map.getCell(oldCap.x, oldCap.y);
+      if (oldCell) {
+        oldCell.isCapital = false;
+        oldCell.capitalFactionId = null;
+        oldCell.infrastructure = null;
+        oldCell.infraHp = null;
+      }
+      for (let dy = -1; dy <= 1; dy++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          const c = this.map.getCell(oldCap.x + dx, oldCap.y + dy);
+          if (c && c.owner === 1) c.owner = 0;
+        }
+      }
+    }
+
+    // 2. Établir la citadelle sur le nouveau secteur
+    targetCell.owner = 1;
+    targetCell.isCapital = true;
+    targetCell.capitalFactionId = 1;
+    targetCell.infrastructure = "citadel";
+    targetCell.infraHp = 600;
+
+    // 3. Revendiquer les 3x3 secteurs environnants
+    for (let dy = -1; dy <= 1; dy++) {
+      for (let dx = -1; dx <= 1; dx++) {
+        const neighbor = this.map.getCell(targetCell.x + dx, targetCell.y + dy);
+        if (neighbor && neighbor.terrain.traversable && neighbor.owner === 0) {
+          neighbor.owner = 1;
+        }
+      }
+    }
+
+    // 4. Mettre à jour l'enregistrement de la capitale
+    const capIdx = this.map.capitals.findIndex((c) => c.factionId === 1);
+    const playerCapEntry = {
+      factionId: 1,
+      x: targetCell.x,
+      y: targetCell.y,
+      name: this.settings.nationName || "Empire d'Émeraude"
+    };
+    if (capIdx >= 0) {
+      this.map.capitals[capIdx] = playerCapEntry;
+    } else {
+      this.map.capitals.push(playerCapEntry);
+    }
+
+    // 5. Déployer les armées initiales autour de la nouvelle capitale
+    this.units = this.units.filter((u) => u.factionId !== 1);
+    this.spawnUnit(1, "pioneer", targetCell.x + 0.5, targetCell.y + 1.2);
+    this.spawnUnit(1, "militia", targetCell.x - 0.8, targetCell.y + 0.2);
+    this.spawnUnit(1, "militia", targetCell.x + 0.8, targetCell.y + 0.2);
+    this.spawnUnit(1, "militia", targetCell.x, targetCell.y - 0.8);
+    this.spawnUnit(1, "archer", targetCell.x - 1.2, targetCell.y - 0.8);
+    this.spawnUnit(1, "archer", targetCell.x + 1.2, targetCell.y - 0.8);
+
+    this.updateTerritoryCounts();
+    SOUND.playFanfare();
+    this.addLog(`§a§l[FONDATION ROYALE] Capitale établie en (${targetCell.x}, ${targetCell.y}) sur ${targetCell.terrain.name} !`);
+  }
+
+  findBestStartingCell() {
+    const cap = this.map.capitals.find((c) => c.factionId === 1);
+    if (cap) {
+      const cell = this.map.getCell(cap.x, cap.y);
+      if (cell) return cell;
+    }
+    for (let i = 0; i < this.map.grid.length; i++) {
+      const c = this.map.grid[i];
+      if (c.terrain.id === "plain" && c.owner === 0) return c;
+    }
+    return this.map.grid[0];
   }
 
   updateUnits() {
@@ -1844,7 +2364,7 @@ class AIController {
     this.aiTickCounter++;
     const diffKey = (this.engine.aiDifficulty || "normal").toUpperCase();
     const diff = CONFIG.DIFFICULTIES[diffKey] || CONFIG.DIFFICULTIES.NORMAL;
-    const interval = Math.max(10, Math.floor(30 * diff.intervalMultiplier));
+    const interval = Math.max(50, Math.floor(65 * diff.intervalMultiplier));
 
     if (this.aiTickCounter % interval !== 0) return;
 
@@ -2699,6 +3219,11 @@ class MapRenderer {
       this.drawHoverSectorHighlight(ctx, this.hoverCell, cellSize);
     }
 
+    // 6b. Surbrillance du site candidat de Capitale en phase de fondation (60s)
+    if (this.engine.isFoundingCapital && this.engine.candidateFoundingCell) {
+      this.drawCandidateFoundingHighlight(ctx, this.engine.candidateFoundingCell, cellSize);
+    }
+
     ctx.restore();
 
     // 7. Boîte de sélection Marquee
@@ -3112,6 +3637,44 @@ class MapRenderer {
     ctx.restore();
   }
 
+  drawCandidateFoundingHighlight(ctx, cell, cellSize) {
+    const px = cell.x * cellSize;
+    const py = cell.y * cellSize;
+
+    ctx.save();
+    // 1. Périmètre 3x3 projeté de la future colonie
+    ctx.strokeStyle = "rgba(234, 179, 8, 0.75)";
+    ctx.lineWidth = Math.max(2, 3 * this.scale);
+    ctx.setLineDash([6, 4]);
+    ctx.strokeRect(px - cellSize, py - cellSize, cellSize * 3, cellSize * 3);
+    ctx.setLineDash([]);
+
+    // 2. Halo d'emplacement de la Citadelle avec pulsation
+    const pulse = 0.5 + 0.5 * Math.sin(Date.now() / 200);
+    ctx.fillStyle = `rgba(234, 179, 8, ${0.28 + 0.22 * pulse})`;
+    ctx.fillRect(px, py, cellSize, cellSize);
+
+    ctx.strokeStyle = "#eab308";
+    ctx.lineWidth = Math.max(2.5, 4 * this.scale);
+    ctx.strokeRect(px + 2, py + 2, cellSize - 4, cellSize - 4);
+
+    // 3. Texte d'information clair
+    ctx.fillStyle = "rgba(20, 15, 10, 0.9)";
+    const tagW = Math.max(130, 140 * this.scale);
+    const tagH = 24;
+    ctx.fillRect(px + cellSize / 2 - tagW / 2, py - tagH - 6, tagW, tagH);
+    ctx.strokeStyle = "#fbbf24";
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(px + cellSize / 2 - tagW / 2, py - tagH - 6, tagW, tagH);
+
+    ctx.fillStyle = "#fef08a";
+    ctx.font = `bold ${Math.max(10, 11 * this.scale)}px sans-serif`;
+    ctx.textAlign = "center";
+    ctx.fillText("FUTUR SITE DE CITADELLE", px + cellSize / 2, py - 10);
+
+    ctx.restore();
+  }
+
   drawSelectionBox(ctx) {
     const x = Math.min(this.boxStartX, this.boxEndX);
     const y = Math.min(this.boxStartY, this.boxEndY);
@@ -3224,6 +3787,7 @@ class MapRenderer {
 
 
 
+
 class UIManager {
   constructor(engine, renderer, network) {
     this.engine = engine;
@@ -3235,6 +3799,7 @@ class UIManager {
     this.inspectedCell = null;
 
     this.bindDomElements();
+    this.setupLanguageControls();
     this.setupCameraAndMenuControls();
     this.setupMinimizationControls();
     this.setupRTSMouseControls();
@@ -3310,10 +3875,38 @@ class UIManager {
     if (this.elMuteBtn) {
       this.elMuteBtn.addEventListener("click", () => {
         const isMuted = SOUND.toggleMute();
-        this.elMuteBtn.textContent = isMuted ? "[SON : COUPE]" : "[SON : ACTIF]";
+        this.elMuteBtn.textContent = isMuted ? I18N.t("soundMuted") : I18N.t("soundActive");
         this.elMuteBtn.classList.toggle("muted", isMuted);
       });
     }
+
+    // Bandeau de fondation de la capitale (60s)
+    this.elFoundingBanner = document.getElementById("founding-capital-banner");
+    this.elFoundingCountdown = document.getElementById("founding-countdown-sec");
+    this.elBtnConfirmFounding = document.getElementById("btn-confirm-founding");
+
+    if (this.elBtnConfirmFounding) {
+      this.elBtnConfirmFounding.addEventListener("click", () => {
+        this.engine.confirmCapitalFounding();
+        this.renderer.centerCameraOnPlayerCapital();
+        this.updateFoundingBanner();
+        SOUND.playClick();
+      });
+    }
+  }
+
+  setupLanguageControls() {
+    I18N.init();
+    I18N.applyToDOM();
+
+    document.querySelectorAll(".btn-toggle-lang").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        I18N.toggleLang();
+        SOUND.playClick();
+        this.updateHUD();
+        this.updateSectorInfoDisplay();
+      });
+    });
   }
 
   // Configuration des contrôles de minimisation / réduction des interfaces
@@ -3548,6 +4141,20 @@ class UIManager {
       const mouseY = (e.clientY - rect.top) * (canvas.height / rect.height);
 
       const myPlayerId = this.network.myPlayerId;
+
+      // 0. Phase de fondation du royaume (60s) : Sélection du site de Capitale
+      if (this.engine.isFoundingCapital && !hasDragged) {
+        const cell = this.renderer.screenToWorldCell(mouseX, mouseY);
+        if (cell) {
+          const selected = this.engine.selectFoundingSector(cell);
+          if (selected) {
+            this.inspectedCell = cell;
+            this.updateSectorInfoDisplay();
+          }
+          this.updateFoundingBanner();
+        }
+        return;
+      }
 
       // 1. Mode Construction actif
       if (this.selectedBuildMode && !hasDragged) {
@@ -3784,8 +4391,37 @@ class UIManager {
       `;
     }
 
+    // Mise à jour du bandeau de fondation de la capitale
+    this.updateFoundingBanner();
+
     // Mise à jour du panneau de détails du secteur inspecté
     this.updateSectorInfoDisplay();
+  }
+
+  updateFoundingBanner() {
+    if (!this.elFoundingBanner) return;
+
+    if (this.engine.isFoundingCapital) {
+      this.elFoundingBanner.classList.remove("hidden");
+      if (this.elFoundingCountdown) {
+        const sec = Math.max(0, Math.ceil(this.engine.foundingCountdown));
+        this.elFoundingCountdown.textContent = `${sec}s`;
+      }
+      if (this.elBtnConfirmFounding) {
+        const c = this.engine.candidateFoundingCell;
+        if (c) {
+          this.elBtnConfirmFounding.disabled = false;
+          this.elBtnConfirmFounding.textContent = I18N.currentLang === "fr"
+            ? `FONDER LA CITADELLE EN (${c.x}, ${c.y})`
+            : `FOUND CITADEL AT (${c.x}, ${c.y})`;
+        } else {
+          this.elBtnConfirmFounding.disabled = true;
+          this.elBtnConfirmFounding.textContent = I18N.t("foundingBtn");
+        }
+      }
+    } else {
+      this.elFoundingBanner.classList.add("hidden");
+    }
   }
 
   // Remplissage dynamique des informations du secteur sélectionné
@@ -3900,8 +4536,12 @@ class UIManager {
 
 
 
+
 class GameApp {
   constructor() {
+    I18N.init();
+    I18N.applyToDOM();
+
     this.map = null;
     this.engine = null;
     this.renderer = null;
@@ -4139,17 +4779,16 @@ class GameApp {
       });
     }
 
-    // Bouton Lancer la partie pour tous (Hôte uniquement)
+    // Bouton Lancer la partie pour tous (Hôte)
     if (btnMpStart) {
       btnMpStart.addEventListener("click", () => {
-        if (!this.network.isHost) return;
         SOUND.playFanfare();
-        const payload = this.network.broadcastStartGame(this.settings);
+        const payload = this.network.broadcastStartGame ? this.network.broadcastStartGame(this.settings) : { seed: Date.now() };
         this.onMultiplayerGameStart(payload);
       });
     }
 
-    // Hôte : Création d'un nouveau salon P2P
+    // Hôte : Création d'un nouveau salon P2P (Bascule immédiate vers le Hub)
     if (btnHost) {
       btnHost.addEventListener("click", () => {
         SOUND.playClick();
@@ -4158,33 +4797,41 @@ class GameApp {
         if (inputPlayer && inputPlayer.value.trim()) this.settings.playerName = inputPlayer.value.trim();
         if (inputNation && inputNation.value.trim()) this.settings.nationName = inputNation.value.trim();
 
-        if (p2pStatus) p2pStatus.textContent = "Création du salon P2P en cours...";
-
         const hostInfo = {
           name: this.settings.playerName,
           nationName: this.settings.nationName,
           color: this.settings.bannerColor,
           border: this.settings.bannerBorder,
-          avatarUrl: this.settings.playerAvatarUrl
+          avatarUrl: this.settings.playerAvatarUrl,
+          isHost: true,
+          isReady: true
         };
+
+        const tempRoomId = "jerry-" + Math.floor(1000 + Math.random() * 9000);
+        // Basculer DIRECTEMENT dans le salon d'attente
+        this.openMultiplayerRoomLobby(true, tempRoomId, [
+          { id: 1, ...hostInfo }
+        ]);
 
         this.network.createRoom(
           hostInfo,
           (roomId, players) => {
-            if (p2pStatus) p2pStatus.textContent = "";
-            this.openMultiplayerRoomLobby(true, roomId, players);
+            const mpRoomCode = document.getElementById("mp-room-code-text");
+            if (mpRoomCode) mpRoomCode.textContent = roomId;
+            this.updateMultiplayerSlots(players);
           },
           (players) => {
             this.updateMultiplayerSlots(players);
           },
           (err) => {
-            if (p2pStatus) p2pStatus.textContent = `Erreur : ${err}`;
+            const mpStatus = document.getElementById("mp-lobby-status");
+            if (mpStatus) mpStatus.textContent = `Avertissement réseau : ${err}`;
           }
         );
       });
     }
 
-    // Client : Rejoindre un salon existant
+    // Client : Rejoindre un salon existant (Bascule immédiate vers le Hub)
     if (btnJoin) {
       btnJoin.addEventListener("click", () => {
         SOUND.playClick();
@@ -4195,29 +4842,32 @@ class GameApp {
 
         const code = inputRoom ? inputRoom.value.trim() : "";
         if (!code) {
-          if (p2pStatus) p2pStatus.textContent = "Veuillez entrer un code de salon valide.";
+          if (p2pStatus) p2pStatus.textContent = I18N.currentLang === "fr" ? "Veuillez entrer un code de salon valide." : "Please enter a valid room code.";
           return;
         }
-
-        if (p2pStatus) p2pStatus.textContent = "Connexion au salon de l'hôte...";
 
         const clientInfo = {
           name: this.settings.playerName,
           nationName: this.settings.nationName,
           color: this.settings.bannerColor,
           border: this.settings.bannerBorder,
-          avatarUrl: this.settings.playerAvatarUrl
+          avatarUrl: this.settings.playerAvatarUrl,
+          isHost: false,
+          isReady: true
         };
+
+        // Basculer DIRECTEMENT dans le salon d'attente
+        this.openMultiplayerRoomLobby(false, code, [
+          { id: 1, name: "Hôte du Royaume", nationName: "Empire Hôte", isHost: true, avatarUrl: "textures/ui/me.gif" },
+          { id: 2, ...clientInfo }
+        ]);
 
         this.network.joinRoom(
           code,
           clientInfo,
           (roomId) => {
-            if (p2pStatus) p2pStatus.textContent = "";
-            this.openMultiplayerRoomLobby(false, roomId, [
-              { id: 1, name: "Hôte du Royaume", nationName: "Empire Hôte", isHost: true, avatarUrl: "textures/ui/me.gif" },
-              { id: 2, ...clientInfo, isHost: false }
-            ]);
+            const mpRoomCode = document.getElementById("mp-room-code-text");
+            if (mpRoomCode) mpRoomCode.textContent = roomId;
           },
           (players) => {
             this.updateMultiplayerSlots(players);
@@ -4226,7 +4876,8 @@ class GameApp {
             this.onMultiplayerGameStart(gameStartPayload);
           },
           (err) => {
-            if (p2pStatus) p2pStatus.textContent = `Échec de connexion : ${err}`;
+            const mpStatus = document.getElementById("mp-lobby-status");
+            if (mpStatus) mpStatus.textContent = `Échec de connexion : ${err}`;
           }
         );
       });

@@ -10,9 +10,9 @@
   <meta http-equiv="Expires" content="0">
   
   <!-- Feuilles de Styles -->
-  <link rel="stylesheet" href="css/style.css?v=2.2.2">
-  <link rel="stylesheet" href="css/hud.css?v=2.2.2">
-  <link rel="stylesheet" href="css/lobby.css?v=2.2.2">
+  <link rel="stylesheet" href="css/style.css?v=2.3.0">
+  <link rel="stylesheet" href="css/hud.css?v=2.3.0">
+  <link rel="stylesheet" href="css/lobby.css?v=2.3.0">
 
   <!-- PeerJS pour le Multijoueur P2P WebRTC sans serveur backend -->
   <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
@@ -23,8 +23,11 @@
   <div id="lobby-overlay">
     <div class="lobby-container">
       <div class="lobby-header">
+        <div style="display:flex; justify-content:flex-end; width:100%; margin-bottom: 6px;">
+          <button type="button" id="btn-lobby-lang-toggle" class="btn-mc btn-toggle-lang" style="font-size: 11px; padding: 4px 12px;">LANGUE : FRANÇAIS</button>
+        </div>
         <h1 class="lobby-title">JERRY'S NATIONS</h1>
-        <div class="lobby-subtitle">Frontline Realms - Grand RTS de Conquête Territoriale</div>
+        <div class="lobby-subtitle" id="lobby-main-subtitle">Frontline Realms - Grand RTS de Conquête Territoriale</div>
       </div>
 
       <!-- Panneau Principal de Configuration de Partie -->
@@ -144,6 +147,21 @@
     <!-- Viewport Canvas de la Carte -->
     <div id="canvas-viewport">
       <canvas id="world-canvas"></canvas>
+    </div>
+
+    <!-- Bandeau Flottant de Fondation de Capitale (Phase 60s initiale) -->
+    <div id="founding-capital-banner" class="founding-banner panel-slate hidden">
+      <div class="founding-left-box">
+        <div class="founding-title" id="founding-banner-title">FONDATION DU ROYAUME : CHOISISSEZ VOTRE CAPITALE</div>
+        <div class="founding-instruction" id="founding-banner-desc">Explorez la carte et cliquez sur un secteur fertile pour y établir votre Citadelle.</div>
+      </div>
+      <div class="founding-timer-box">
+        <span id="founding-timer-label">Temps restant :</span>
+        <strong id="founding-countdown-sec" class="mc-gold">60s</strong>
+      </div>
+      <button type="button" id="btn-confirm-founding" class="btn-mc btn-gold" style="padding: 8px 16px; font-size: 11px;">
+        FONDER MA CAPITALE ICI
+      </button>
     </div>
 
     <!-- Bandeau Supérieur : HUD & Ressources -->
@@ -408,6 +426,7 @@
           <button type="button" id="modal-btn-resume" class="btn-mc btn-gold" style="padding: 10px 0;">REPRENDRE LA PARTIE</button>
           <button type="button" id="modal-btn-center" class="btn-mc" style="padding: 10px 0;">RECENTRER SUR LA CAPITALE (C)</button>
           <button type="button" id="modal-btn-toggle-edge-scroll" class="btn-mc" style="padding: 10px 0;">DÉFILEMENT BORD ÉCRAN : ACTIF</button>
+          <button type="button" id="modal-btn-lang-toggle" class="btn-mc btn-toggle-lang" style="padding: 10px 0;">LANGUE : FRANÇAIS</button>
           <button type="button" id="modal-btn-quit-lobby" class="btn-mc btn-red" style="padding: 10px 0; margin-top: 8px;">QUITTER VERS LE MENU PRINCIPAL</button>
         </div>
       </div>
@@ -415,6 +434,6 @@
   </div>
 
   <!-- Script d'orchestration autonome (compatible file:/// et web) -->
-  <script src="js/game.bundle.js?v=2.2.2"></script>
+  <script src="js/game.bundle.js?v=2.3.0"></script>
 </body>
 </html>

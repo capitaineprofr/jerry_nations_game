@@ -573,3 +573,67 @@
   letter-spacing: 0.3px;
 }
 
+/* ==================== BANDEAU DE FONDATION DE CAPITALE (60s) ==================== */
+#founding-capital-banner {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 10px 22px;
+  min-width: 640px;
+  max-width: 90%;
+  animation: bannerSlideDown 0.4s ease-out;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+}
+
+#founding-capital-banner.hidden {
+  display: none !important;
+}
+
+@keyframes bannerSlideDown {
+  from { transform: translate(-50%, -40px); opacity: 0; }
+  to { transform: translate(-50%, 0); opacity: 1; }
+}
+
+.founding-left-box {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.founding-title {
+  font-family: var(--font-title);
+  font-size: 13px;
+  font-weight: 900;
+  color: #2b1d0c;
+  letter-spacing: 0.8px;
+}
+
+.founding-instruction {
+  font-size: 11px;
+  color: #78350f;
+  font-family: var(--font-ui);
+}
+
+.founding-timer-box {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(120, 53, 15, 0.3);
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: var(--font-title);
+}
+
+.btn-toggle-lang {
+  cursor: pointer;
+  letter-spacing: 0.5px;
+}
+

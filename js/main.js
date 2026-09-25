@@ -12,9 +12,13 @@ import { AIController } from "./ai.js";
 import { NetworkManager } from "./network.js";
 import { UIManager } from "./ui.js";
 import { SOUND } from "./audio.js";
+import { I18N } from "./i18n.js";
 
 class GameApp {
   constructor() {
+    I18N.init();
+    I18N.applyToDOM();
+
     this.map = null;
     this.engine = null;
     this.renderer = null;
@@ -252,17 +256,16 @@ class GameApp {
       });
     }
 
-    // Bouton Lancer la partie pour tous (Hôte uniquement)
+    // Bouton Lancer la partie pour tous (Hôte)
     if (btnMpStart) {
       btnMpStart.addEventListener("click", () => {
-        if (!this.network.isHost) return;
         SOUND.playFanfare();
-        const payload = this.network.broadcastStartGame(this.settings);
+        const payload = this.network.broadcastStartGame ? this.network.broadcastStartGame(this.settings) : { seed: Date.now() };
         this.onMultiplayerGameStart(payload);
       });
     }
 
-    // Hôte : Création d'un nouveau salon P2P
+    // Hôte : Création d'un nouveau salon P2P (Bascule immédiate vers le Hub)
     if (btnHost) {
       btnHost.addEventListener("click", () => {
         SOUND.playClick();
@@ -271,33 +274,41 @@ class GameApp {
         if (inputPlayer && inputPlayer.value.trim()) this.settings.playerName = inputPlayer.value.trim();
         if (inputNation && inputNation.value.trim()) this.settings.nationName = inputNation.value.trim();
 
-        if (p2pStatus) p2pStatus.textContent = "Création du salon P2P en cours...";
-
         const hostInfo = {
           name: this.settings.playerName,
           nationName: this.settings.nationName,
           color: this.settings.bannerColor,
           border: this.settings.bannerBorder,
-          avatarUrl: this.settings.playerAvatarUrl
+          avatarUrl: this.settings.playerAvatarUrl,
+          isHost: true,
+          isReady: true
         };
+
+        const tempRoomId = "jerry-" + Math.floor(1000 + Math.random() * 9000);
+        // Basculer DIRECTEMENT dans le salon d'attente
+        this.openMultiplayerRoomLobby(true, tempRoomId, [
+          { id: 1, ...hostInfo }
+        ]);
 
         this.network.createRoom(
           hostInfo,
           (roomId, players) => {
-            if (p2pStatus) p2pStatus.textContent = "";
-            this.openMultiplayerRoomLobby(true, roomId, players);
+            const mpRoomCode = document.getElementById("mp-room-code-text");
+            if (mpRoomCode) mpRoomCode.textContent = roomId;
+            this.updateMultiplayerSlots(players);
           },
           (players) => {
             this.updateMultiplayerSlots(players);
           },
           (err) => {
-            if (p2pStatus) p2pStatus.textContent = `Erreur : ${err}`;
+            const mpStatus = document.getElementById("mp-lobby-status");
+            if (mpStatus) mpStatus.textContent = `Avertissement réseau : ${err}`;
           }
         );
       });
     }
 
-    // Client : Rejoindre un salon existant
+    // Client : Rejoindre un salon existant (Bascule immédiate vers le Hub)
     if (btnJoin) {
       btnJoin.addEventListener("click", () => {
         SOUND.playClick();
@@ -308,29 +319,32 @@ class GameApp {
 
         const code = inputRoom ? inputRoom.value.trim() : "";
         if (!code) {
-          if (p2pStatus) p2pStatus.textContent = "Veuillez entrer un code de salon valide.";
+          if (p2pStatus) p2pStatus.textContent = I18N.currentLang === "fr" ? "Veuillez entrer un code de salon valide." : "Please enter a valid room code.";
           return;
         }
-
-        if (p2pStatus) p2pStatus.textContent = "Connexion au salon de l'hôte...";
 
         const clientInfo = {
           name: this.settings.playerName,
           nationName: this.settings.nationName,
           color: this.settings.bannerColor,
           border: this.settings.bannerBorder,
-          avatarUrl: this.settings.playerAvatarUrl
+          avatarUrl: this.settings.playerAvatarUrl,
+          isHost: false,
+          isReady: true
         };
+
+        // Basculer DIRECTEMENT dans le salon d'attente
+        this.openMultiplayerRoomLobby(false, code, [
+          { id: 1, name: "Hôte du Royaume", nationName: "Empire Hôte", isHost: true, avatarUrl: "textures/ui/me.gif" },
+          { id: 2, ...clientInfo }
+        ]);
 
         this.network.joinRoom(
           code,
           clientInfo,
           (roomId) => {
-            if (p2pStatus) p2pStatus.textContent = "";
-            this.openMultiplayerRoomLobby(false, roomId, [
-              { id: 1, name: "Hôte du Royaume", nationName: "Empire Hôte", isHost: true, avatarUrl: "textures/ui/me.gif" },
-              { id: 2, ...clientInfo, isHost: false }
-            ]);
+            const mpRoomCode = document.getElementById("mp-room-code-text");
+            if (mpRoomCode) mpRoomCode.textContent = roomId;
           },
           (players) => {
             this.updateMultiplayerSlots(players);
@@ -339,7 +353,8 @@ class GameApp {
             this.onMultiplayerGameStart(gameStartPayload);
           },
           (err) => {
-            if (p2pStatus) p2pStatus.textContent = `Échec de connexion : ${err}`;
+            const mpStatus = document.getElementById("mp-lobby-status");
+            if (mpStatus) mpStatus.textContent = `Échec de connexion : ${err}`;
           }
         );
       });

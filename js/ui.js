@@ -6,6 +6,7 @@
 
 import { CONFIG } from "./config.js";
 import { SOUND } from "./audio.js";
+import { I18N } from "./i18n.js";
 
 export class UIManager {
   constructor(engine, renderer, network) {
@@ -18,6 +19,7 @@ export class UIManager {
     this.inspectedCell = null;
 
     this.bindDomElements();
+    this.setupLanguageControls();
     this.setupCameraAndMenuControls();
     this.setupMinimizationControls();
     this.setupRTSMouseControls();
@@ -93,10 +95,38 @@ export class UIManager {
     if (this.elMuteBtn) {
       this.elMuteBtn.addEventListener("click", () => {
         const isMuted = SOUND.toggleMute();
-        this.elMuteBtn.textContent = isMuted ? "[SON : COUPE]" : "[SON : ACTIF]";
+        this.elMuteBtn.textContent = isMuted ? I18N.t("soundMuted") : I18N.t("soundActive");
         this.elMuteBtn.classList.toggle("muted", isMuted);
       });
     }
+
+    // Bandeau de fondation de la capitale (60s)
+    this.elFoundingBanner = document.getElementById("founding-capital-banner");
+    this.elFoundingCountdown = document.getElementById("founding-countdown-sec");
+    this.elBtnConfirmFounding = document.getElementById("btn-confirm-founding");
+
+    if (this.elBtnConfirmFounding) {
+      this.elBtnConfirmFounding.addEventListener("click", () => {
+        this.engine.confirmCapitalFounding();
+        this.renderer.centerCameraOnPlayerCapital();
+        this.updateFoundingBanner();
+        SOUND.playClick();
+      });
+    }
+  }
+
+  setupLanguageControls() {
+    I18N.init();
+    I18N.applyToDOM();
+
+    document.querySelectorAll(".btn-toggle-lang").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        I18N.toggleLang();
+        SOUND.playClick();
+        this.updateHUD();
+        this.updateSectorInfoDisplay();
+      });
+    });
   }
 
   // Configuration des contrôles de minimisation / réduction des interfaces
@@ -331,6 +361,20 @@ export class UIManager {
       const mouseY = (e.clientY - rect.top) * (canvas.height / rect.height);
 
       const myPlayerId = this.network.myPlayerId;
+
+      // 0. Phase de fondation du royaume (60s) : Sélection du site de Capitale
+      if (this.engine.isFoundingCapital && !hasDragged) {
+        const cell = this.renderer.screenToWorldCell(mouseX, mouseY);
+        if (cell) {
+          const selected = this.engine.selectFoundingSector(cell);
+          if (selected) {
+            this.inspectedCell = cell;
+            this.updateSectorInfoDisplay();
+          }
+          this.updateFoundingBanner();
+        }
+        return;
+      }
 
       // 1. Mode Construction actif
       if (this.selectedBuildMode && !hasDragged) {
@@ -567,8 +611,37 @@ export class UIManager {
       `;
     }
 
+    // Mise à jour du bandeau de fondation de la capitale
+    this.updateFoundingBanner();
+
     // Mise à jour du panneau de détails du secteur inspecté
     this.updateSectorInfoDisplay();
+  }
+
+  updateFoundingBanner() {
+    if (!this.elFoundingBanner) return;
+
+    if (this.engine.isFoundingCapital) {
+      this.elFoundingBanner.classList.remove("hidden");
+      if (this.elFoundingCountdown) {
+        const sec = Math.max(0, Math.ceil(this.engine.foundingCountdown));
+        this.elFoundingCountdown.textContent = `${sec}s`;
+      }
+      if (this.elBtnConfirmFounding) {
+        const c = this.engine.candidateFoundingCell;
+        if (c) {
+          this.elBtnConfirmFounding.disabled = false;
+          this.elBtnConfirmFounding.textContent = I18N.currentLang === "fr"
+            ? `FONDER LA CITADELLE EN (${c.x}, ${c.y})`
+            : `FOUND CITADEL AT (${c.x}, ${c.y})`;
+        } else {
+          this.elBtnConfirmFounding.disabled = true;
+          this.elBtnConfirmFounding.textContent = I18N.t("foundingBtn");
+        }
+      }
+    } else {
+      this.elFoundingBanner.classList.add("hidden");
+    }
   }
 
   // Remplissage dynamique des informations du secteur sélectionné

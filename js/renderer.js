@@ -360,6 +360,11 @@ export class MapRenderer {
       this.drawHoverSectorHighlight(ctx, this.hoverCell, cellSize);
     }
 
+    // 6b. Surbrillance du site candidat de Capitale en phase de fondation (60s)
+    if (this.engine.isFoundingCapital && this.engine.candidateFoundingCell) {
+      this.drawCandidateFoundingHighlight(ctx, this.engine.candidateFoundingCell, cellSize);
+    }
+
     ctx.restore();
 
     // 7. Boîte de sélection Marquee
@@ -770,6 +775,44 @@ export class MapRenderer {
     ctx.font = "10px sans-serif";
     ctx.textAlign = "center";
     ctx.fillText(`${cell.terrain.name}`, px + cellSize / 2, py - 9);
+    ctx.restore();
+  }
+
+  drawCandidateFoundingHighlight(ctx, cell, cellSize) {
+    const px = cell.x * cellSize;
+    const py = cell.y * cellSize;
+
+    ctx.save();
+    // 1. Périmètre 3x3 projeté de la future colonie
+    ctx.strokeStyle = "rgba(234, 179, 8, 0.75)";
+    ctx.lineWidth = Math.max(2, 3 * this.scale);
+    ctx.setLineDash([6, 4]);
+    ctx.strokeRect(px - cellSize, py - cellSize, cellSize * 3, cellSize * 3);
+    ctx.setLineDash([]);
+
+    // 2. Halo d'emplacement de la Citadelle avec pulsation
+    const pulse = 0.5 + 0.5 * Math.sin(Date.now() / 200);
+    ctx.fillStyle = `rgba(234, 179, 8, ${0.28 + 0.22 * pulse})`;
+    ctx.fillRect(px, py, cellSize, cellSize);
+
+    ctx.strokeStyle = "#eab308";
+    ctx.lineWidth = Math.max(2.5, 4 * this.scale);
+    ctx.strokeRect(px + 2, py + 2, cellSize - 4, cellSize - 4);
+
+    // 3. Texte d'information clair
+    ctx.fillStyle = "rgba(20, 15, 10, 0.9)";
+    const tagW = Math.max(130, 140 * this.scale);
+    const tagH = 24;
+    ctx.fillRect(px + cellSize / 2 - tagW / 2, py - tagH - 6, tagW, tagH);
+    ctx.strokeStyle = "#fbbf24";
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(px + cellSize / 2 - tagW / 2, py - tagH - 6, tagW, tagH);
+
+    ctx.fillStyle = "#fef08a";
+    ctx.font = `bold ${Math.max(10, 11 * this.scale)}px sans-serif`;
+    ctx.textAlign = "center";
+    ctx.fillText("FUTUR SITE DE CITADELLE", px + cellSize / 2, py - 10);
+
     ctx.restore();
   }
 
