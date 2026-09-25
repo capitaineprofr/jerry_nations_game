@@ -557,22 +557,6 @@
   white-space: nowrap;
 }
 
-.expeditions-buttons-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  width: 100%;
-}
-
-.btn-expedition {
-  flex: 1;
-  padding: 4px 6px;
-  font-size: 10px;
-  font-family: var(--font-title);
-  font-weight: 900;
-  letter-spacing: 0.3px;
-}
-
 /* ==================== BANDEAU DE FONDATION DE CAPITALE (60s) ==================== */
 #founding-capital-banner {
   position: absolute;

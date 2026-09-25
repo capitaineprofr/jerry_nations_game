@@ -833,10 +833,6 @@ const I18N = {
     setText("btn-recruit-cavalry", dict.btnRecruitCavalry);
     setText("btn-recruit-siege", dict.btnRecruitSiege);
 
-    setText("btn-expedition-colo", dict.btnExpColonize);
-    setText("btn-expedition-def", dict.btnExpDefend);
-    setText("btn-expedition-assault", dict.btnExpAssault);
-
     // 5. Modal de Pause
     setText("modal-pause-title", dict.pauseModalTitle);
     setText("modal-pause-desc", dict.pauseModalDesc);
@@ -4303,7 +4299,6 @@ class UIManager {
     this.setupMinimizationControls();
     this.setupRTSMouseControls();
     this.setupRecruitmentControls();
-    this.setupExpeditionControls();
     this.setupBuildControls();
 
     // Callbacks de fin de partie
@@ -4526,33 +4521,6 @@ class UIManager {
         }
       });
     });
-  }
-
-  // Expéditions rapides stratégiques
-  setupExpeditionControls() {
-    const btnColo = document.getElementById("btn-expedition-colo");
-    const btnDef = document.getElementById("btn-expedition-def");
-    const btnAssault = document.getElementById("btn-expedition-assault");
-
-    const myPlayerId = this.network.myPlayerId;
-
-    if (btnColo) {
-      btnColo.addEventListener("click", () => {
-        this.engine.launchColonizationExpedition(myPlayerId);
-      });
-    }
-
-    if (btnDef) {
-      btnDef.addEventListener("click", () => {
-        this.engine.rallyDefense(myPlayerId);
-      });
-    }
-
-    if (btnAssault) {
-      btnAssault.addEventListener("click", () => {
-        this.engine.launchCoordinatedAssault(myPlayerId);
-      });
-    }
   }
 
   setupBuildControls() {

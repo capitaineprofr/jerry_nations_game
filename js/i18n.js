@@ -557,10 +557,6 @@ export const I18N = {
     setText("btn-recruit-cavalry", dict.btnRecruitCavalry);
     setText("btn-recruit-siege", dict.btnRecruitSiege);
 
-    setText("btn-expedition-colo", dict.btnExpColonize);
-    setText("btn-expedition-def", dict.btnExpDefend);
-    setText("btn-expedition-assault", dict.btnExpAssault);
-
     // 5. Modal de Pause
     setText("modal-pause-title", dict.pauseModalTitle);
     setText("modal-pause-desc", dict.pauseModalDesc);

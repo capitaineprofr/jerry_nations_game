@@ -24,7 +24,6 @@ export class UIManager {
     this.setupMinimizationControls();
     this.setupRTSMouseControls();
     this.setupRecruitmentControls();
-    this.setupExpeditionControls();
     this.setupBuildControls();
 
     // Callbacks de fin de partie
@@ -247,33 +246,6 @@ export class UIManager {
         }
       });
     });
-  }
-
-  // Expéditions rapides stratégiques
-  setupExpeditionControls() {
-    const btnColo = document.getElementById("btn-expedition-colo");
-    const btnDef = document.getElementById("btn-expedition-def");
-    const btnAssault = document.getElementById("btn-expedition-assault");
-
-    const myPlayerId = this.network.myPlayerId;
-
-    if (btnColo) {
-      btnColo.addEventListener("click", () => {
-        this.engine.launchColonizationExpedition(myPlayerId);
-      });
-    }
-
-    if (btnDef) {
-      btnDef.addEventListener("click", () => {
-        this.engine.rallyDefense(myPlayerId);
-      });
-    }
-
-    if (btnAssault) {
-      btnAssault.addEventListener("click", () => {
-        this.engine.launchCoordinatedAssault(myPlayerId);
-      });
-    }
   }
 
   setupBuildControls() {
