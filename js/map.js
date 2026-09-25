@@ -157,7 +157,8 @@ export class WorldMap {
       chosen.isCapital = true;
       chosen.capitalFactionId = faction.id;
       chosen.infrastructure = "citadel";
-      chosen.infraHp = 600;
+      chosen.infraHp = 800;
+      chosen.maxInfraHp = 800;
 
       // Revendication territoriale initiale (secteurs immédiats)
       for (let dy = -1; dy <= 1; dy++) {

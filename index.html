@@ -10,9 +10,9 @@
   <meta http-equiv="Expires" content="0">
   
   <!-- Feuilles de Styles -->
-  <link rel="stylesheet" href="css/style.css?v=2.3.1">
-  <link rel="stylesheet" href="css/hud.css?v=2.3.1">
-  <link rel="stylesheet" href="css/lobby.css?v=2.3.1">
+  <link rel="stylesheet" href="css/style.css?v=2.4.0">
+  <link rel="stylesheet" href="css/hud.css?v=2.4.0">
+  <link rel="stylesheet" href="css/lobby.css?v=2.4.0">
 
   <!-- PeerJS pour le Multijoueur P2P WebRTC sans serveur backend -->
   <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
@@ -196,27 +196,27 @@
       <!-- Compteurs de Ressources Principales (DONNÉES DE NATION) -->
       <div class="hud-resources-group">
         <div class="res-item" title="Nourriture en réserve (Banquet du crépuscule)">
-          <span class="res-label">PAIN:</span>
+          <span class="res-label" id="lbl-res-food">PAIN:</span>
           <span id="res-food" class="mc-gold">120</span>
         </div>
         <div class="res-item" title="Bois de charpente">
-          <span class="res-label">BOIS:</span>
+          <span class="res-label" id="lbl-res-wood">BOIS:</span>
           <span id="res-wood" class="mc-yellow">60</span>
         </div>
         <div class="res-item" title="Pierre et minerais">
-          <span class="res-label">PIERRE:</span>
+          <span class="res-label" id="lbl-res-stone">PIERRE:</span>
           <span id="res-stone" class="mc-gray">40</span>
         </div>
         <div class="res-item" title="Trésorerie royale en Or">
-          <span class="res-label">OR:</span>
+          <span class="res-label" id="lbl-res-gold">OR:</span>
           <span id="res-gold" class="mc-yellow">100</span>
         </div>
         <div class="res-item" title="Bataillons et troupes actives sur le terrain">
-          <span class="res-label">ARMÉE:</span>
+          <span class="res-label" id="lbl-res-troops">ARMÉE:</span>
           <span id="res-troops" class="mc-green">6</span>
         </div>
         <div class="res-item" title="Secteurs territoriaux contrôlés sur la carte">
-          <span class="res-label">SECTEURS:</span>
+          <span class="res-label" id="lbl-res-territory">SECTEURS:</span>
           <span id="res-territory" class="mc-aqua">9</span>
         </div>
       </div>
@@ -239,7 +239,7 @@
       <!-- Onglet de Réduction / Ouverture -->
       <button type="button" id="btn-toggle-buildings-panel" class="sidebar-toggle-handle" title="Réduire ou Ouvrir les Bâtiments">
         <span class="toggle-icon">▶</span>
-        <span class="toggle-text">BÂTIMENTS</span>
+        <span class="toggle-text" id="txt-buildings-toggle">BÂTIMENTS</span>
       </button>
 
       <div class="sidebar-buildings-content">
@@ -249,58 +249,58 @@
         <div class="buildings-cards-list">
           <button class="btn-mc btn-build-action" data-build-type="farm" title="Produit du pain (Coût: 40 Bois, 10 Pierre) - Plaine obligatoire">
             <div class="build-card-row">
-              <span class="build-name">+ FERME</span>
+              <span class="build-name" id="bld-name-farm">+ FERME</span>
               <span class="build-cost">40B 10P</span>
             </div>
-            <div class="build-card-desc">Plaine | +5.0 Pain/jour</div>
+            <div class="build-card-desc" id="bld-desc-farm">Plaine | +5.0 Pain/jour</div>
           </button>
 
           <button class="btn-mc btn-build-action" data-build-type="lumber_camp" title="Scierie : récolte de bois (Coût: 30 Bois, 10 Pierre) - Forêt obligatoire">
             <div class="build-card-row">
-              <span class="build-name">+ SCIERIE</span>
+              <span class="build-name" id="bld-name-lumber">+ SCIERIE</span>
               <span class="build-cost">30B 10P</span>
             </div>
-            <div class="build-card-desc">Forêt | +4.5 Bois/jour</div>
+            <div class="build-card-desc" id="bld-desc-lumber">Forêt | +4.5 Bois/jour</div>
           </button>
 
           <button class="btn-mc btn-build-action" data-build-type="quarry" title="Carrière : extraction de pierre et filons d'or (Coût: 40 Bois, 20 Pierre) - Collines obligatoires">
             <div class="build-card-row">
-              <span class="build-name">+ CARRIÈRE</span>
+              <span class="build-name" id="bld-name-quarry">+ CARRIÈRE</span>
               <span class="build-cost">40B 20P</span>
             </div>
-            <div class="build-card-desc">Collines | +3.5 Pierre +1.5 Or/jour</div>
+            <div class="build-card-desc" id="bld-desc-quarry">Collines | +3.5 Pierre +1.5 Or/jour</div>
           </button>
 
           <button class="btn-mc btn-build-action" data-build-type="barracks" title="Caserne d'armes : formation militaire (Coût: 60 Bois, 35 Pierre, 20 Or)">
             <div class="build-card-row">
-              <span class="build-name">+ CASERNE</span>
+              <span class="build-name" id="bld-name-barracks">+ CASERNE</span>
               <span class="build-cost">60B 35P 20O</span>
             </div>
-            <div class="build-card-desc">Tout secteur | Caserne militaire</div>
+            <div class="build-card-desc" id="bld-desc-barracks">Tout secteur | Caserne militaire</div>
           </button>
 
           <button class="btn-mc btn-build-action" data-build-type="outpost" title="Avant-poste : étend le territoire et repousse les frontières (Coût: 50 Bois, 30 Pierre, 15 Or)">
             <div class="build-card-row">
-              <span class="build-name">+ AVANT-POSTE</span>
+              <span class="build-name" id="bld-name-outpost">+ AVANT-POSTE</span>
               <span class="build-cost">50B 30P 15O</span>
             </div>
-            <div class="build-card-desc">Étend les frontières de +2 cases</div>
+            <div class="build-card-desc" id="bld-desc-outpost">Étend les frontières de +2 cases</div>
           </button>
 
           <button class="btn-mc btn-build-action" data-build-type="watchtower" title="Tour de guet défensive avec tirs automatiques (Coût: 60 Bois, 50 Pierre)">
             <div class="build-card-row">
-              <span class="build-name">+ TOUR</span>
+              <span class="build-name" id="bld-name-tower">+ TOUR</span>
               <span class="build-cost">60B 50P</span>
             </div>
-            <div class="build-card-desc">Tirs défensifs (portée accrue sur colline)</div>
+            <div class="build-card-desc" id="bld-desc-tower">Tirs défensifs (portée accrue sur colline)</div>
           </button>
 
           <button class="btn-mc btn-build-action" data-build-type="citadel" title="Bastion impérial : citadelle imprenable (Coût: 150 Bois, 200 Pierre, 100 Or)">
             <div class="build-card-row">
-              <span class="build-name">+ BASTION</span>
+              <span class="build-name" id="bld-name-citadel">+ BASTION</span>
               <span class="build-cost">150B 200P 100O</span>
             </div>
-            <div class="build-card-desc">Forteresse suprême & +150% défense</div>
+            <div class="build-card-desc" id="bld-desc-citadel">Forteresse suprême & +150% défense</div>
           </button>
         </div>
       </div>
@@ -311,31 +311,31 @@
       <!-- Onglet Réduire / Agrandir le volet inférieur -->
       <button type="button" id="btn-toggle-bottom-dock" class="dock-collapse-tab" title="Réduire ou Agrandir le volet de commandement">
         <span class="toggle-icon">▼</span>
-        <span class="toggle-text">COMMANDEMENT & SECTEUR</span>
+        <span class="toggle-text" id="txt-bottom-dock-toggle">COMMANDEMENT & SECTEUR</span>
       </button>
 
-      <!-- Volet Gauche : Informations du Secteur Sélectionné (Remplace l'ancien journal) -->
+      <!-- Volet Gauche : Informations du Secteur Sélectionné -->
       <div id="sector-info-panel" class="panel-slate">
-        <div class="log-title">SECTEUR SÉLECTIONNÉ</div>
+        <div class="log-title" id="sector-info-title">SECTEUR SÉLECTIONNÉ</div>
         <div id="sector-details-content">
           <div class="sector-coord-row">
             <span id="sector-coord" class="mc-gold">Secteur (Capitale)</span>
             <span id="sector-biome-badge" class="biome-badge">Plaine</span>
           </div>
           <div class="sector-stat-row">
-            <span class="sector-lbl">Contrôle :</span>
+            <span class="sector-lbl" id="lbl-sec-control">Contrôle :</span>
             <span id="sector-owner" class="mc-green">Empire d'Émeraude</span>
           </div>
           <div class="sector-stat-row">
-            <span class="sector-lbl">Bâtiment :</span>
+            <span class="sector-lbl" id="lbl-sec-infra">Bâtiment :</span>
             <span id="sector-infra" class="mc-yellow">Aucun</span>
           </div>
           <div class="sector-stat-row">
-            <span class="sector-lbl">Défense :</span>
+            <span class="sector-lbl" id="lbl-sec-defense">Défense :</span>
             <span id="sector-defense">100 / 100</span>
           </div>
           <div class="sector-stat-row">
-            <span class="sector-lbl">Rendement :</span>
+            <span class="sector-lbl" id="lbl-sec-yields">Rendement :</span>
             <span id="sector-yields" class="mc-aqua">+0 Pain, +0 Bois</span>
           </div>
           <div class="sector-tactical-note" id="sector-tactical-note">
@@ -355,11 +355,11 @@
 
         <!-- Ligne 1 : Recrutement de Bataillons -->
         <div class="recruitment-buttons-row">
-          <button class="btn-mc btn-recruit-unit" data-unit-type="pioneer" title="Pionnier : fonde des avant-postes (Coût: 30 Pain, 20 Bois)">+ PIONNIER</button>
-          <button class="btn-mc btn-recruit-unit" data-unit-type="militia" title="Milicien : infanterie d'épée solide (Coût: 25 Pain, 15 Pierre)">+ MILICIEN</button>
-          <button class="btn-mc btn-recruit-unit" data-unit-type="archer" title="Archer : tirs à distance (Coût: 30 Pain, 30 Bois)">+ ARCHER</button>
-          <button class="btn-mc btn-recruit-unit" data-unit-type="cavalry" title="Cavalier : charge rapide (Coût: 50 Pain, 40 Or)">+ CAVALIER</button>
-          <button class="btn-mc btn-recruit-unit" data-unit-type="siege" title="Trébuchet : démolition de bastions (Coût: 80 Bois, 60 Pierre, 50 Or)">+ TRÉBUCHET</button>
+          <button class="btn-mc btn-recruit-unit" id="btn-recruit-pioneer" data-unit-type="pioneer" title="Pionnier : fonde des avant-postes (Coût: 30 Pain, 20 Bois)">+ PIONNIER</button>
+          <button class="btn-mc btn-recruit-unit" id="btn-recruit-militia" data-unit-type="militia" title="Milicien : infanterie d'épée solide (Coût: 25 Pain, 15 Pierre)">+ MILICIEN</button>
+          <button class="btn-mc btn-recruit-unit" id="btn-recruit-archer" data-unit-type="archer" title="Archer : tirs à distance (Coût: 30 Pain, 30 Bois)">+ ARCHER</button>
+          <button class="btn-mc btn-recruit-unit" id="btn-recruit-cavalry" data-unit-type="cavalry" title="Cavalier : charge rapide (Coût: 50 Pain, 40 Or)">+ CAVALIER</button>
+          <button class="btn-mc btn-recruit-unit" id="btn-recruit-siege" data-unit-type="siege" title="Trébuchet : démolition de bastions (Coût: 80 Bois, 60 Pierre, 50 Or)">+ TRÉBUCHET</button>
         </div>
 
         <!-- Ligne 2 : Expéditions Rapides Stratégiques -->
@@ -433,7 +433,24 @@
     </div>
   </div>
 
+  <!-- ==================== MODAL DE FIN DE PARTIE (VICTOIRE / DÉFAITE) ==================== -->
+  <div id="game-end-modal" class="modal-overlay hidden">
+    <div class="modal-dialog panel-slate" style="text-align: center; max-width: 460px;">
+      <div class="modal-header" style="justify-content: center;">
+        <h2 id="game-end-title" class="modal-title mc-gold" style="font-size: 16px;">VICTOIRE ROYALE</h2>
+      </div>
+      <div class="modal-content">
+        <p id="game-end-desc" class="modal-desc" style="font-size: 12px; margin: 12px 0 20px; line-height: 1.5;">
+          Toutes les capitales rivales sont tombées sous vos bannières !
+        </p>
+        <button type="button" id="btn-end-quit-lobby" class="btn-mc btn-gold" style="padding: 10px 24px; font-size: 12px; width: 100%;">
+          RETOURNER AU SALON PRINCIPAL
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Script d'orchestration autonome (compatible file:/// et web) -->
-  <script src="js/game.bundle.js?v=2.3.1"></script>
+  <script src="js/game.bundle.js?v=2.4.0"></script>
 </body>
 </html>

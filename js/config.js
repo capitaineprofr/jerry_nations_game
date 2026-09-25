@@ -206,14 +206,14 @@ export const CONFIG = {
 
   // Bâtiments & Infrastructures de territoire
   INFRASTRUCTURES: {
-    FARM: { id: "farm", name: "Ferme", allowedTerrain: ["plain"], woodCost: 40, stoneCost: 10, foodBonus: 5.0, hp: 150, icon: "farm", desc: "Produit des récoltes abondantes de Pain (Plaine obligatoire)" },
-    BARRACKS: { id: "barracks", name: "Caserne d'Armes", allowedTerrain: ["plain", "forest", "hills"], woodCost: 60, stoneCost: 35, goldCost: 20, hp: 250, icon: "barracks", desc: "Centre d'entraînement militaire" },
+    FARM: { id: "farm", name: "Ferme", allowedTerrain: ["plain"], woodCost: 40, stoneCost: 10, foodBonus: 5.0, hp: 180, icon: "farm", desc: "Produit des récoltes abondantes de Pain (Plaine obligatoire)" },
+    BARRACKS: { id: "barracks", name: "Caserne d'Armes", allowedTerrain: ["plain", "forest", "hills"], woodCost: 60, stoneCost: 35, goldCost: 20, hp: 350, icon: "barracks", desc: "Centre d'entraînement militaire" },
     OUTPOST: { id: "outpost", name: "Avant-poste", allowedTerrain: ["plain", "forest", "hills"], woodCost: 50, stoneCost: 30, goldCost: 15, territoryRadius: 2, defenseBonus: 0.35, hp: 300, icon: "flag", desc: "Revendique et stabilise les secteurs voisins" },
-    LUMBER_CAMP: { id: "lumber_camp", name: "Scierie", allowedTerrain: ["forest"], woodCost: 30, stoneCost: 10, woodBonus: 4.5, hp: 120, icon: "axe", desc: "Exploitation forestière intensive de Bois (Forêt obligatoire)" },
-    QUARRY: { id: "quarry", name: "Carrière de Pierre", allowedTerrain: ["hills"], woodCost: 40, stoneCost: 20, stoneBonus: 3.5, goldBonus: 1.5, hp: 140, icon: "pickaxe", desc: "Extraction de Pierre et filons d'Or (Collines obligatoires)" },
-    PALISADE: { id: "palisade", name: "Palissade", allowedTerrain: ["plain", "forest", "hills"], woodCost: 25, stoneCost: 10, defenseBonus: 0.45, hp: 180, icon: "shield", desc: "Barricade défensive" },
-    WATCHTOWER: { id: "watchtower", name: "Tour de Guet", allowedTerrain: ["plain", "forest", "hills"], woodCost: 60, stoneCost: 50, defenseBonus: 0.80, range: 3.5, attackDamage: 14, hp: 220, icon: "tower", desc: "Tirs de flèches automatiques (portée accrue sur Collines)" },
-    CITADEL: { id: "citadel", name: "Bastion Impérial", allowedTerrain: ["plain", "hills"], woodCost: 150, stoneCost: 200, goldCost: 100, defenseBonus: 1.50, range: 5.0, attackDamage: 28, hp: 600, icon: "fortress", desc: "Citadelle souveraine imprenable" }
+    LUMBER_CAMP: { id: "lumber_camp", name: "Scierie", allowedTerrain: ["forest"], woodCost: 30, stoneCost: 10, woodBonus: 4.5, hp: 180, icon: "axe", desc: "Exploitation forestière intensive de Bois (Forêt obligatoire)" },
+    QUARRY: { id: "quarry", name: "Carrière de Pierre", allowedTerrain: ["hills"], woodCost: 40, stoneCost: 20, stoneBonus: 3.5, goldBonus: 1.5, hp: 220, icon: "pickaxe", desc: "Extraction de Pierre et filons d'Or (Collines obligatoires)" },
+    PALISADE: { id: "palisade", name: "Palissade", allowedTerrain: ["plain", "forest", "hills"], woodCost: 25, stoneCost: 10, defenseBonus: 0.45, hp: 220, icon: "shield", desc: "Barricade défensive" },
+    WATCHTOWER: { id: "watchtower", name: "Tour de Guet", allowedTerrain: ["plain", "forest", "hills"], woodCost: 60, stoneCost: 50, defenseBonus: 0.80, range: 3.8, attackDamage: 16, hp: 350, icon: "tower", desc: "Tirs de flèches automatiques (portée accrue sur Collines)" },
+    CITADEL: { id: "citadel", name: "Bastion Impérial", allowedTerrain: ["plain", "hills"], woodCost: 150, stoneCost: 200, goldCost: 100, defenseBonus: 1.50, range: 5.0, attackDamage: 30, hp: 800, icon: "fortress", desc: "Citadelle souveraine imprenable" }
   },
 
   // Couleurs textuelles Minecraft adaptées au parchemin (dialogue_box.png)

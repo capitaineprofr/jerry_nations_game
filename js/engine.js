@@ -309,7 +309,8 @@ export class GameEngine {
     targetCell.isCapital = true;
     targetCell.capitalFactionId = 1;
     targetCell.infrastructure = "citadel";
-    targetCell.infraHp = 600;
+    targetCell.infraHp = 800;
+    targetCell.maxInfraHp = 800;
 
     // 3. Revendiquer les 3x3 secteurs environnants
     for (let dy = -1; dy <= 1; dy++) {
@@ -431,31 +432,96 @@ export class GameEngine {
     if (!cell.infraHp) {
       const proto = CONFIG.INFRASTRUCTURES[cell.infrastructure.toUpperCase()];
       cell.infraHp = proto ? proto.hp : 200;
+      cell.maxInfraHp = cell.infraHp;
     }
 
     cell.infraHp -= damage;
 
     if (cell.infraHp <= 0) {
       const infraName = cell.infrastructure;
+      const isCapital = cell.isCapital;
+      const ownerId = cell.owner;
+      const owner = this.factions.get(ownerId);
+      const attacker = this.factions.get(attackerFactionId);
+
       cell.infrastructure = null;
       cell.infraHp = null;
+      cell.maxInfraHp = null;
 
-      const attacker = this.factions.get(attackerFactionId);
-      const owner = this.factions.get(cell.owner);
-
-      if (cell.isCapital && owner) {
-        this.addLog(`§c§l[CAPITALE TOMBÉE] La citadelle de ${owner.name} a été rasée par ${attacker ? attacker.name : "l'ennemi"} !`);
-        SOUND.playRaidAlert();
+      if (isCapital && owner) {
         cell.isCapital = false;
         cell.owner = attackerFactionId;
-        if (owner) owner.moodScore = Math.max(-1000, owner.moodScore - 500);
-        if (attacker) attacker.moodScore = Math.min(1000, attacker.moodScore + 250);
+        owner.isDefeated = true;
+
+        // Dissoudre les troupes restantes de la nation vaincue
+        this.units = this.units.filter((u) => u.factionId !== ownerId);
+
+        // Neutraliser les autres territoires de la faction défaite
+        for (let y = 0; y < this.map.height; y++) {
+          for (let x = 0; x < this.map.width; x++) {
+            const c = this.map.getCell(x, y);
+            if (c && c.owner === ownerId) {
+              c.owner = 0;
+              c.infrastructure = null;
+              c.infraHp = null;
+              c.maxInfraHp = null;
+            }
+          }
+        }
+
+        const capitalMsg = (typeof I18N !== "undefined" && I18N.currentLang === "en")
+          ? `§c§l[CAPITAL FALLEN] The Citadel of ${owner.name} has been razed by ${attacker ? attacker.name : "the enemy"}! The realm has collapsed!`
+          : `§c§l[CAPITALE TOMBÉE] La citadelle de ${owner.name} a été rasée par ${attacker ? attacker.name : "l'ennemi"} ! La nation est anéantie !`;
+        this.addLog(capitalMsg);
+        SOUND.playRaidAlert();
+
+        if (attackerFactionId === 1) {
+          SOUND.playFanfare();
+          const conquerMsg = (typeof I18N !== "undefined" && I18N.currentLang === "en")
+            ? `§a§l[CONQUEST] You have destroyed the rival capital of ${owner.name}!`
+            : `§a§l[CONQUÊTE MAJEURE] Vous avez détruit la capitale rivale de ${owner.name} !`;
+          this.addLog(conquerMsg);
+        }
+
+        // Vérifier si la capitale du joueur est tombée
+        if (ownerId === 1) {
+          this.onPlayerDefeat();
+        } else {
+          // Vérifier si toutes les factions rivales sont vaincues
+          const remainingRivals = Array.from(this.factions.values()).filter((f) => f.id !== 1 && !f.isDefeated);
+          if (remainingRivals.length === 0) {
+            this.onPlayerVictory();
+          }
+        }
       } else {
-        this.addLog(`§6Un bâtiment (${infraName}) a été détruit.`);
+        const destroyedMsg = (typeof I18N !== "undefined" && I18N.currentLang === "en")
+          ? `§6A building (${infraName}) was destroyed.`
+          : `§6Un bâtiment (${infraName}) a été détruit.`;
+        this.addLog(destroyedMsg);
       }
 
       this.updateTerritoryCounts();
     }
+  }
+
+  onPlayerVictory() {
+    this.isPaused = true;
+    SOUND.playFanfare();
+    const msg = (typeof I18N !== "undefined" && I18N.currentLang === "en")
+      ? "§6§l[ROYAL VICTORY] All rival capitals have fallen! You reign supreme across the realm!"
+      : "§6§l[VICTOIRE ROYALE] Toutes les capitales rivales sont tombées ! Vous régnez sans partage sur le monde !";
+    this.addLog(msg);
+    if (this.onVictoryCallback) this.onVictoryCallback();
+  }
+
+  onPlayerDefeat() {
+    this.isPaused = true;
+    SOUND.playRaidAlert();
+    const msg = (typeof I18N !== "undefined" && I18N.currentLang === "en")
+      ? "§4§l[ROYAL DEFEAT] Your Capital has fallen! Your realm has collapsed into ashes..."
+      : "§4§l[DÉFAITE ROYALE] Votre Capitale est tombée ! Votre royaume s'est effondré dans les flammes...";
+    this.addLog(msg);
+    if (this.onDefeatCallback) this.onDefeatCallback();
   }
 
   // Banquet du crépuscule (Logique authentique Jerry's Nations jn_food)
@@ -624,6 +690,7 @@ export class GameEngine {
 
     cell.infrastructure = infra.id;
     cell.infraHp = infra.hp || 200;
+    cell.maxInfraHp = cell.infraHp;
     cell.owner = factionId;
 
     // Si c'est un avant-poste, revendiquer un rayon de secteurs

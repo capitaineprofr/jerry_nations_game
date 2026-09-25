@@ -699,6 +699,29 @@ export class MapRenderer {
 
     ctx.strokeStyle = "#fbbf24";
     ctx.strokeRect(px + s * 0.35, py + s * 0.3, s * 0.3, s * 0.2);
+
+    // Barre de PV de la Capitale
+    const maxHp = cell.maxInfraHp || 800;
+    const currentHp = cell.infraHp !== undefined && cell.infraHp !== null ? cell.infraHp : maxHp;
+    const barW = s * 0.76;
+    const barH = 5;
+    const barX = px + (s - barW) / 2;
+    const barY = py + 3;
+    const hpRatio = Math.max(0, Math.min(1, currentHp / maxHp));
+
+    // Fond
+    ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
+    ctx.fillRect(barX - 1, barY - 1, barW + 2, barH + 2);
+
+    // Barre colorée
+    ctx.fillStyle = hpRatio > 0.5 ? "#22c55e" : hpRatio > 0.25 ? "#eab308" : "#ef4444";
+    ctx.fillRect(barX, barY, barW * hpRatio, barH);
+
+    // Bordure dorée prestigieuse
+    ctx.strokeStyle = "#f59e0b";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(barX - 1, barY - 1, barW + 2, barH + 2);
+
     ctx.restore();
   }
 
@@ -750,6 +773,40 @@ export class MapRenderer {
       ctx.fillRect(px + s * 0.35, py + s * 0.35, s * 0.3, s * 0.3);
     }
 
+    // Barre de points de vie (PV) du bâtiment si endommagé ou s'il s'agit d'une Citadelle / Capitale
+    if (cell.infraHp !== null && cell.infraHp !== undefined) {
+      const maxHp = cell.maxInfraHp || (CONFIG.INFRASTRUCTURES[type.toUpperCase()]?.hp || 200);
+      const isDamaged = cell.infraHp < maxHp;
+      const isImportant = cell.isCapital || type === "citadel" || type === "watchtower";
+
+      if (isDamaged || isImportant) {
+        const barW = s * 0.7;
+        const barH = 4;
+        const barX = px + (s - barW) / 2;
+        const barY = py + 3;
+
+        const hpRatio = Math.max(0, Math.min(1, cell.infraHp / maxHp));
+
+        // Fond sombre
+        ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
+        ctx.fillRect(barX - 1, barY - 1, barW + 2, barH + 2);
+
+        // Couleur dynamique selon le pourcentage de vie restant
+        if (hpRatio > 0.5) ctx.fillStyle = "#22c55e"; // Vert
+        else if (hpRatio > 0.25) ctx.fillStyle = "#eab308"; // Jaune
+        else ctx.fillStyle = "#ef4444"; // Rouge critique
+
+        ctx.fillRect(barX, barY, barW * hpRatio, barH);
+
+        // Bordure dorée pour la Capitale
+        if (cell.isCapital) {
+          ctx.strokeStyle = "#f59e0b";
+          ctx.lineWidth = 1;
+          ctx.strokeRect(barX - 1, barY - 1, barW + 2, barH + 2);
+        }
+      }
+    }
+
     ctx.restore();
   }
 
@@ -764,7 +821,7 @@ export class MapRenderer {
 
     // Infobulle légère au-dessus du secteur survolé
     ctx.fillStyle = "rgba(20, 15, 10, 0.85)";
-    const labelW = 120;
+    const labelW = 130;
     const labelH = 22;
     ctx.fillRect(px + cellSize / 2 - labelW / 2, py - labelH - 4, labelW, labelH);
     ctx.strokeStyle = "#b45309";
@@ -774,7 +831,11 @@ export class MapRenderer {
     ctx.fillStyle = "#fef08a";
     ctx.font = "10px sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText(`${cell.terrain.name}`, px + cellSize / 2, py - 9);
+    const biomeName = (typeof I18N !== "undefined" && I18N.getBiomeName)
+      ? I18N.getBiomeName(cell.terrain.id)
+      : cell.terrain.name;
+    const isCap = cell.isCapital ? (typeof I18N !== "undefined" && I18N.currentLang === "en" ? " (Capital)" : " (Capitale)") : "";
+    ctx.fillText(`${biomeName}${isCap}`, px + cellSize / 2, py - 9);
     ctx.restore();
   }
 

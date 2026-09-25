@@ -26,6 +26,10 @@ export class UIManager {
     this.setupRecruitmentControls();
     this.setupExpeditionControls();
     this.setupBuildControls();
+
+    // Callbacks de fin de partie
+    this.engine.onVictoryCallback = () => this.showGameEndModal(true);
+    this.engine.onDefeatCallback = () => this.showGameEndModal(false);
   }
 
   bindDomElements() {
@@ -454,18 +458,30 @@ export class UIManager {
 
       const myPlayerId = this.network.myPlayerId;
 
-      // Vérifier si un ennemi a été ciblé
+      // 1. Vérifier si un bataillon ennemi a été ciblé
       const targetEnemy = this.engine.units.find(
         (u) => u.factionId !== myPlayerId && Math.hypot(u.x - (cell.x + 0.5), u.y - (cell.y + 0.5)) < 1.4 && u.hp > 0
       );
 
       if (targetEnemy) {
-        // ORDRE D'ATTAQUE
+        // ORDRE D'ATTAQUE D'UNITÉ
         this.selectedUnits.forEach((u) => {
           u.attackTarget(targetEnemy);
         });
         this.renderer.addOrderRipple(mouseX, mouseY, true);
         SOUND.playCharge();
+      } else if (cell.owner !== 0 && cell.owner !== myPlayerId && cell.infrastructure) {
+        // ORDRE DE SIÈGE DE BÂTIMENT / CITADELLE / CAPITALE ENNEMIE
+        this.selectedUnits.forEach((u) => {
+          u.attackBuilding(cell);
+        });
+        this.renderer.addOrderRipple(mouseX, mouseY, true);
+        SOUND.playCharge();
+        const bldName = CONFIG.INFRASTRUCTURES[cell.infrastructure.toUpperCase()]?.name || cell.infrastructure;
+        const msg = (typeof I18N !== "undefined" && I18N.currentLang === "en")
+          ? `[ASSAULT] Siege ordered on enemy ${bldName} (${cell.infraHp || 200} HP)!`
+          : `[ASSAUT] Siège ordonné sur ${bldName} ennemie (${cell.infraHp || 200} PV) !`;
+        this.engine.addLog(`§c${msg}`);
       } else {
         // ORDRE DE DÉPLACEMENT EN FORMATION
         const count = this.selectedUnits.length;
@@ -504,13 +520,14 @@ export class UIManager {
     if (!this.elSelectionInfo) return;
 
     if (this.selectedUnits.length === 0) {
-      this.elSelectionInfo.innerHTML = `<span class="mc-gray">Aucun bataillon sélectionné. Clic gauche ou glisser pour sélectionner.</span>`;
+      this.elSelectionInfo.innerHTML = `<span class="mc-gray">${I18N.t("noUnitsSelected")}</span>`;
       return;
     }
 
     const counts = {};
     this.selectedUnits.forEach((u) => {
-      counts[u.name] = (counts[u.name] || 0) + 1;
+      const uName = I18N.getUnitName(u.type);
+      counts[uName] = (counts[uName] || 0) + 1;
     });
 
     const summary = Object.entries(counts)
@@ -522,8 +539,8 @@ export class UIManager {
 
     this.elSelectionInfo.innerHTML = `
       <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
-        <span>BATAILLONS : <strong style="color:var(--parchment-green)">${summary}</strong> (${this.selectedUnits.length})</span>
-        <span style="font-family:var(--font-mono); font-size:11px; color:#57442d;">PV : ${totalHp}/${maxHp}</span>
+        <span>${I18N.t("battalionsSelected")} <strong style="color:var(--parchment-green)">${summary}</strong> (${this.selectedUnits.length})</span>
+        <span style="font-family:var(--font-mono); font-size:11px; color:#57442d;">${I18N.t("hpLabel")} ${totalHp}/${maxHp}</span>
       </div>
     `;
   }
@@ -543,7 +560,7 @@ export class UIManager {
     // Stade de progression ou Mode Bac à Sable
     if (this.elStageBadge) {
       if (this.engine.gameMode === "sandbox") {
-        this.elStageBadge.textContent = "[BAC À SABLE]";
+        this.elStageBadge.textContent = I18N.currentLang === "fr" ? "[BAC À SABLE]" : "[SANDBOX]";
         this.elStageBadge.style.color = "var(--parchment-gold)";
       } else {
         const stage = CONFIG.STAGES[playerFaction.stageTier];
@@ -578,10 +595,10 @@ export class UIManager {
     // Compte des troupes actives
     const activeTroops = this.engine.units.filter((u) => u.factionId === myPlayerId).length;
     if (this.elTroops) this.elTroops.textContent = activeTroops;
-    if (this.elTerritory) this.elTerritory.textContent = `${playerFaction.territoryCount} secteurs`;
+    if (this.elTerritory) this.elTerritory.textContent = `${playerFaction.territoryCount} ${I18N.t("sectorsUnit")}`;
 
     if (this.elDayDisplay) {
-      this.elDayDisplay.textContent = `JOUR ${this.engine.dayCount}`;
+      this.elDayDisplay.textContent = `${I18N.t("dayLabel")} ${this.engine.dayCount}`;
     }
 
     // Nettoyer les unités mortes de la sélection
@@ -594,10 +611,13 @@ export class UIManager {
     if (this.renderer.hoverCell && this.selectedUnits.length === 0 && !this.selectedBuildMode && this.elSelectionInfo) {
       const c = this.renderer.hoverCell;
       const ownerFac = c.owner > 0 ? this.engine.factions.get(c.owner) : null;
-      const ownerStr = ownerFac ? `<strong style="color:${ownerFac.border}">${ownerFac.name}</strong>` : `<span class="mc-gray">Terre Sauvage</span>`;
-      const infraStr = c.infrastructure ? ` | Bâtiment : <strong style="color:#b45309">${CONFIG.INFRASTRUCTURES[c.infrastructure.toUpperCase()]?.name || c.infrastructure}</strong>` : "";
+      const ownerStr = ownerFac ? `<strong style="color:${ownerFac.border}">${ownerFac.name}</strong>` : `<span class="mc-gray">${I18N.t("sectorWild")}</span>`;
+      const infraName = c.isCapital ? I18N.t("sectorCitadel") : (c.infrastructure ? I18N.getInfraName(c.infrastructure) : "");
+      const infraStr = infraName ? ` | ${I18N.t("lblSecInfra")} <strong style="color:#b45309">${infraName}</strong>` : "";
+      const secWord = I18N.currentLang === "en" ? "Sector" : "Secteur";
+      const ctrlWord = I18N.t("lblSecControl");
       this.elSelectionInfo.innerHTML = `
-        <span style="font-size:11px;">Secteur (${c.x}, ${c.y}) : <strong>${c.terrain.name}</strong> | ${c.terrain.desc} | Contrôle : ${ownerStr}${infraStr}</span>
+        <span style="font-size:11px;">${secWord} (${c.x}, ${c.y}) : <strong>${I18N.getBiomeName(c.terrain.id)}</strong> | ${ctrlWord} ${ownerStr}${infraStr}</span>
       `;
     }
 
@@ -639,7 +659,6 @@ export class UIManager {
     if (!this.elSectorCoord) return;
     const myPlayerId = this.network.myPlayerId;
 
-    // Prendre le secteur cliqué, ou survolé, ou la capitale du joueur
     let cell = this.inspectedCell || this.renderer.hoverCell;
     if (!cell) {
       const cap = this.engine.map.capitals.find((c) => c.factionId === myPlayerId);
@@ -648,11 +667,12 @@ export class UIManager {
     if (!cell) return;
 
     // 1. Coordonnées et Biome
-    const isCap = cell.isCapital ? " (Capitale)" : "";
-    this.elSectorCoord.textContent = `Secteur (${cell.x}, ${cell.y})${isCap}`;
+    const isCap = cell.isCapital ? (I18N.currentLang === "en" ? " (Capital)" : " (Capitale)") : "";
+    const secWord = I18N.currentLang === "en" ? "Sector" : "Secteur";
+    this.elSectorCoord.textContent = `${secWord} (${cell.x}, ${cell.y})${isCap}`;
 
     if (this.elSectorBiomeBadge) {
-      this.elSectorBiomeBadge.textContent = cell.terrain.name;
+      this.elSectorBiomeBadge.textContent = I18N.getBiomeName(cell.terrain.id);
       this.elSectorBiomeBadge.style.color = cell.terrain.color || "#78350f";
       this.elSectorBiomeBadge.style.borderColor = cell.terrain.color || "#78350f";
     }
@@ -664,7 +684,7 @@ export class UIManager {
         this.elSectorOwner.textContent = ownerFac.name;
         this.elSectorOwner.style.color = ownerFac.border || "#55FF55";
       } else {
-        this.elSectorOwner.textContent = "Terre Sauvage (Libre)";
+        this.elSectorOwner.textContent = I18N.t("sectorWild");
         this.elSectorOwner.style.color = "#78350f";
       }
     }
@@ -672,29 +692,31 @@ export class UIManager {
     // 3. Infrastructure & Fortification
     if (this.elSectorInfra) {
       if (cell.isCapital) {
-        this.elSectorInfra.textContent = "Cité Royale (Bastion)";
+        this.elSectorInfra.textContent = I18N.t("sectorCitadel");
         this.elSectorInfra.style.color = "#b45309";
       } else if (cell.infrastructure) {
-        const proto = CONFIG.INFRASTRUCTURES[cell.infrastructure.toUpperCase()];
-        this.elSectorInfra.textContent = proto ? proto.name : cell.infrastructure;
+        this.elSectorInfra.textContent = I18N.getInfraName(cell.infrastructure);
         this.elSectorInfra.style.color = "#b45309";
       } else {
-        this.elSectorInfra.textContent = "Aucun aménagement";
+        this.elSectorInfra.textContent = I18N.t("sectorNoInfra");
         this.elSectorInfra.style.color = "#78350f";
       }
     }
 
-    // 4. Défense & Résistance
+    // 4. Défense & Résistance (Points de vie réels de la structure)
     if (this.elSectorDefense) {
       let defPts = 100;
+      let maxDef = 100;
       if (cell.isCapital) {
-        defPts = 500;
+        maxDef = cell.maxInfraHp || 800;
+        defPts = cell.infraHp !== null && cell.infraHp !== undefined ? cell.infraHp : maxDef;
       } else if (cell.infrastructure) {
         const proto = CONFIG.INFRASTRUCTURES[cell.infrastructure.toUpperCase()];
-        if (proto && proto.hp) defPts = proto.hp;
+        maxDef = cell.maxInfraHp || (proto ? proto.hp : 200);
+        defPts = cell.infraHp !== null && cell.infraHp !== undefined ? cell.infraHp : maxDef;
       }
-      this.elSectorDefense.textContent = `${defPts} pts`;
-      this.elSectorDefense.style.color = "#2b1d0c";
+      this.elSectorDefense.textContent = `${defPts} / ${maxDef} ${I18N.t("defensePts")}`;
+      this.elSectorDefense.style.color = defPts < maxDef * 0.4 ? "#dc2626" : "#2b1d0c";
     }
 
     // 5. Rendement Économique
@@ -714,18 +736,64 @@ export class UIManager {
         }
       }
 
-      const yields = [];
-      if (food > 0) yields.push(`+${food.toFixed(0)} Pain`);
-      if (wood > 0) yields.push(`+${wood.toFixed(0)} Bois`);
-      if (stone > 0) yields.push(`+${stone.toFixed(0)} Pierre`);
-      if (gold > 0) yields.push(`+${gold.toFixed(0)} Or`);
+      const foodWord = I18N.currentLang === "en" ? "Bread" : "Pain";
+      const woodWord = I18N.currentLang === "en" ? "Wood" : "Bois";
+      const stoneWord = I18N.currentLang === "en" ? "Stone" : "Pierre";
+      const goldWord = I18N.currentLang === "en" ? "Gold" : "Or";
+      const daySuffix = I18N.currentLang === "en" ? "/day" : "/j";
 
-      this.elSectorYields.textContent = yields.length > 0 ? `${yields.join(", ")} /j` : "Aucun revenu";
+      const yields = [];
+      if (food > 0) yields.push(`+${food.toFixed(0)} ${foodWord}`);
+      if (wood > 0) yields.push(`+${wood.toFixed(0)} ${woodWord}`);
+      if (stone > 0) yields.push(`+${stone.toFixed(0)} ${stoneWord}`);
+      if (gold > 0) yields.push(`+${gold.toFixed(0)} ${goldWord}`);
+
+      this.elSectorYields.textContent = yields.length > 0 ? `${yields.join(", ")} ${daySuffix}` : I18N.t("noYields");
     }
 
     // 6. Note Tactique
     if (this.elSectorTacticalNote) {
-      this.elSectorTacticalNote.textContent = cell.terrain.desc || "Secteur stratégique";
+      this.elSectorTacticalNote.textContent = cell.terrain.desc || I18N.t("tacticalDefaultNote");
+    }
+  }
+
+  showGameEndModal(isVictory) {
+    const modal = document.getElementById("game-end-modal");
+    const title = document.getElementById("game-end-title");
+    const desc = document.getElementById("game-end-desc");
+    const btnQuit = document.getElementById("btn-end-quit-lobby");
+
+    if (!modal) return;
+    modal.classList.remove("hidden");
+
+    if (isVictory) {
+      if (title) {
+        title.textContent = I18N.t("victoryTitle");
+        title.className = "modal-title mc-gold";
+      }
+      if (desc) {
+        desc.textContent = I18N.t("victoryDesc");
+      }
+    } else {
+      if (title) {
+        title.textContent = I18N.t("defeatTitle");
+        title.className = "modal-title mc-red";
+      }
+      if (desc) {
+        desc.textContent = I18N.t("defeatDesc");
+      }
+    }
+
+    if (btnQuit) {
+      btnQuit.textContent = I18N.t("btnReturnLobby");
+      btnQuit.onclick = () => {
+        modal.classList.add("hidden");
+        if (this.onQuitToLobby) {
+          this.onQuitToLobby();
+        } else {
+          location.reload();
+        }
+      };
     }
   }
 }

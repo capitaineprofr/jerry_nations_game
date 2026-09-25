@@ -1,18 +1,35 @@
 /**
- * Jerry's Nations: Frontline Realms - Bilingual System (FR / EN)
- * Gestionnaire de traduction bilingue conforme aux règles strictes du projet.
- * ZÉRO EMOJI. Mémorisation du choix utilisateur dans localStorage.
+ * Jerry's Nations: Frontline Realms - Bilingual Translation Engine (FR / EN)
+ * Gestionnaire de traduction bilingue intégrale conforme aux règles strictes du projet.
+ * RÈGLE STRICTE : ZÉRO EMOJI. Mémorisation du choix utilisateur dans localStorage.
  */
 
 export const I18N = {
   currentLang: "fr",
+  _listenerBound: false,
 
   translations: {
     fr: {
       langBtn: "LANGUE : FRANÇAIS",
       langCode: "FR",
       switchLang: "ENGLISH",
-      
+
+      // Noms des Unités
+      unitPioneer: "Pionnier",
+      unitMilitia: "Milicien",
+      unitArcher: "Archer",
+      unitCavalry: "Cavalier",
+      unitSiege: "Trébuchet",
+
+      // Noms des Biomes
+      biomePlain: "Plaine",
+      biomeForest: "Forêt",
+      biomeHills: "Collines",
+      biomeWater: "Eau Profonde",
+      biomeRiver: "Rivière",
+      biomeFord: "Gué de Rivière",
+      biomeMountain: "Montagnes",
+
       // Lobby & Écran de Configuration
       gameTitle: "JERRY'S NATIONS",
       gameSubtitle: "Frontline Realms - Grand RTS de Conquête Territoriale",
@@ -26,20 +43,20 @@ export const I18N = {
       bannerLabel: "Bannière Royale & Couleur :",
       nationMottoLabel: "Devise de la Faction :",
       defaultMotto: "Souveraineté, Moissons et Gloire",
-      
+
       secRules: "2. RÈGLES & DIFFICULTÉ",
       gameModeLabel: "Mode de Jeu :",
       modeStandard: "Conquête",
       modeStandardSub: "Ressources & Famine",
       modeSandbox: "Bac à Sable",
       modeSandboxSub: "Illimité & Gratuit",
-      
+
       botCountLabel: "Royaumes Rivaux (Bots) :",
       bots0: "0 (Solo)",
       bots1: "1 Faction",
       bots2: "2 Factions",
       bots3: "3 Factions",
-      
+
       aiDiffLabel: "Stratégie de l'IA :",
       diffPeaceful: "Paisible",
       diffPeacefulSub: "Expansion modérée",
@@ -47,28 +64,29 @@ export const I18N = {
       diffNormalSub: "Pression constante",
       diffHard: "Implacable",
       diffHardSub: "Raids rapides",
-      
+
       maraudersLabel: "Pillards Maraudeurs :",
       optMarauders: "Clan Maraudeur (Pillards agressifs des terres sauvages)",
       btnLaunchGame: "FONDER LA NATION & COMMENCER",
-      
+
       secP2P: "MULTIJOUEUR P2P WEBRTC :",
       roomCodePlaceholder: "Code de salon (ex: jerry-123)",
       btnJoinRoom: "REJOINDRE",
       btnCreateRoom: "HÉBERGER UN NOUVEAU SALON",
-      
+
       recapNav: "Navigation Carte : Bords d'écran, Clic droit glissé, Clic molette, ZQSD/Flèches ou Clic Minimap",
       recapUnits: "Bataillons RTS : Glisser pour encadrer (Box Select), Clic droit pour ordonner",
       recapCenter: "Recentrer Caméra : Touche C ou bouton [CENTRER]",
 
       // HUD Supérieur
       dayLabel: "JOUR",
-      resFood: "Pain",
-      resWood: "Bois",
-      resStone: "Pierre",
-      resGold: "Or",
-      resArmy: "Armée",
-      resTerritory: "Secteurs",
+      resFoodLabel: "PAIN:",
+      resWoodLabel: "BOIS:",
+      resStoneLabel: "PIERRE:",
+      resGoldLabel: "OR:",
+      resArmyLabel: "ARMÉE:",
+      resTerritoryLabel: "SECTEURS:",
+      sectorsUnit: "secteurs",
       btnPause: "PAUSE",
       btnResume: "REPRENDRE",
       btnCenter: "CENTRER",
@@ -77,24 +95,31 @@ export const I18N = {
       soundMuted: "[SON : COUPE]",
 
       // Panneau de construction (Tiroir droit)
+      buildingsToggleHandle: "BÂTIMENTS",
       buildingsTitle: "BÂTIMENTS & AVANT-POSTES",
       buildingsSubtitle: "Sélectionnez une structure puis cliquez sur un secteur éligible :",
-      bldFarm: "FERME",
+      bldFarmName: "+ FERME",
       bldFarmDesc: "Plaine | +5.0 Pain/jour",
-      bldLumber: "SCIERIE",
+      bldLumberName: "+ SCIERIE",
       bldLumberDesc: "Forêt | +4.5 Bois/jour",
-      bldQuarry: "CARRIÈRE",
+      bldQuarryName: "+ CARRIÈRE",
       bldQuarryDesc: "Collines | +3.5 Pierre +1.5 Or/jour",
-      bldBarracks: "CASERNE",
+      bldBarracksName: "+ CASERNE",
       bldBarracksDesc: "Tout secteur | Caserne militaire",
-      bldOutpost: "AVANT-POSTE",
+      bldOutpostName: "+ AVANT-POSTE",
       bldOutpostDesc: "Étend les frontières de +2 cases",
-      bldTower: "TOUR",
-      bldTowerDesc: "Tir défensif (portée accrue sur colline)",
+      bldTowerName: "+ TOUR",
+      bldTowerDesc: "Tirs défensifs (portée accrue sur colline)",
+      bldBastionName: "+ BASTION",
+      bldBastionDesc: "Forteresse suprême & +150% défense",
 
       // Volet de commandement inférieur
       toggleCmdTitle: "COMMANDEMENT & SECTEUR",
       secInfoTitle: "SECTEUR SÉLECTIONNÉ",
+      lblSecControl: "Contrôle :",
+      lblSecInfra: "Bâtiment :",
+      lblSecDefense: "Défense :",
+      lblSecYields: "Rendement :",
       sectorWild: "Terre Sauvage (Libre)",
       sectorNoInfra: "Aucun aménagement",
       sectorCitadel: "Cité Royale (Bastion)",
@@ -104,6 +129,11 @@ export const I18N = {
       battalionsSelected: "BATAILLONS :",
       hpLabel: "PV :",
       btnHalt: "HALTE",
+      btnRecruitPioneer: "+ PIONNIER",
+      btnRecruitMilitia: "+ MILICIEN",
+      btnRecruitArcher: "+ ARCHER",
+      btnRecruitCavalry: "+ CAVALIER",
+      btnRecruitSiege: "+ TRÉBUCHET",
       btnExpColonize: "[EXPÉDITION COLONISATION]",
       btnExpDefend: "[DÉFENSE FRONTIÈRE]",
       btnExpAssault: "[ASSAUT GÉNÉRAL]",
@@ -129,8 +159,7 @@ export const I18N = {
       mpSlotBadgeFree: "[LIBRE]",
       mpSlotBadgeHost: "[HÔTE]",
       mpSlotBadgeReady: "[PRÊT]",
-      mpBtnStartHost: "LANCER LA PARTIE POUR TOUS",
-      mpBtnStartClient: "EN ATTENTE DU SIGNAL DE L'HÔTE...",
+      mpBtnStart: "LANCER LA PARTIE POUR TOUS",
       mpBtnLeave: "QUITTER LE SALON",
 
       // Modal de Pause
@@ -140,14 +169,37 @@ export const I18N = {
       pauseBtnCenter: "RECENTRER SUR LA CAPITALE (C)",
       pauseBtnEdgeScrollOn: "DÉFILEMENT BORD ÉCRAN : ACTIF",
       pauseBtnEdgeScrollOff: "DÉFILEMENT BORD ÉCRAN : DÉSACTIVÉ",
-      pauseBtnQuit: "QUITTER VERS LE MENU PRINCIPAL"
+      pauseBtnQuit: "QUITTER VERS LE MENU PRINCIPAL",
+
+      // Fin de Partie (Victoire / Défaite)
+      victoryTitle: "VICTOIRE ROYALE",
+      victoryDesc: "Toutes les capitales rivales sont tombées sous vos bannières ! Vous régnez désormais en maître souverain sur ce monde !",
+      defeatTitle: "DÉFAITE ROYALE",
+      defeatDesc: "Votre Capitale a été rasée par les armées ennemies... Votre empire s'effondre dans les cendres.",
+      btnReturnLobby: "RETOURNER AU SALON PRINCIPAL"
     },
 
     en: {
       langBtn: "LANGUAGE : ENGLISH",
       langCode: "EN",
       switchLang: "FRANÇAIS",
-      
+
+      // Unit Names
+      unitPioneer: "Pioneer",
+      unitMilitia: "Militia",
+      unitArcher: "Archer",
+      unitCavalry: "Cavalry",
+      unitSiege: "Trebuchet",
+
+      // Biome Names
+      biomePlain: "Plains",
+      biomeForest: "Forest",
+      biomeHills: "Hills",
+      biomeWater: "Deep Water",
+      biomeRiver: "River",
+      biomeFord: "River Ford",
+      biomeMountain: "Mountains",
+
       // Lobby & Setup Screen
       gameTitle: "JERRY'S NATIONS",
       gameSubtitle: "Frontline Realms - Grand Territorial RTS Web Game",
@@ -161,20 +213,20 @@ export const I18N = {
       bannerLabel: "Royal Banner & Color:",
       nationMottoLabel: "Faction Motto:",
       defaultMotto: "Sovereignty, Harvest and Glory",
-      
+
       secRules: "2. RULES & DIFFICULTY",
       gameModeLabel: "Game Mode:",
       modeStandard: "Conquest",
       modeStandardSub: "Resources & Starvation",
       modeSandbox: "Sandbox",
       modeSandboxSub: "Unlimited & Free",
-      
+
       botCountLabel: "Rival Kingdoms (Bots):",
       bots0: "0 (Solo)",
       bots1: "1 Faction",
       bots2: "2 Factions",
       bots3: "3 Factions",
-      
+
       aiDiffLabel: "AI Strategy:",
       diffPeaceful: "Peaceful",
       diffPeacefulSub: "Slow expansion",
@@ -182,28 +234,29 @@ export const I18N = {
       diffNormalSub: "Steady pressure",
       diffHard: "Relentless",
       diffHardSub: "Swift raids",
-      
+
       maraudersLabel: "Marauder Raiders:",
       optMarauders: "Marauder Clan (Hostile border raiders)",
       btnLaunchGame: "FOUND REALM & START",
-      
+
       secP2P: "P2P WEBRTC MULTIPLAYER:",
       roomCodePlaceholder: "Room Code (e.g. jerry-123)",
       btnJoinRoom: "JOIN ROOM",
       btnCreateRoom: "HOST A NEW ROOM",
-      
+
       recapNav: "Map Controls: Screen edges, Right-click drag, Middle-click, WASD/Arrows or Minimap click",
       recapUnits: "RTS Battalions: Drag to Box Select, Right-click to issue orders",
       recapCenter: "Center Camera: C key or [CENTER] button",
 
       // Top HUD
       dayLabel: "DAY",
-      resFood: "Bread",
-      resWood: "Wood",
-      resStone: "Stone",
-      resGold: "Gold",
-      resArmy: "Army",
-      resTerritory: "Sectors",
+      resFoodLabel: "BREAD:",
+      resWoodLabel: "WOOD:",
+      resStoneLabel: "STONE:",
+      resGoldLabel: "GOLD:",
+      resArmyLabel: "ARMY:",
+      resTerritoryLabel: "SECTORS:",
+      sectorsUnit: "sectors",
       btnPause: "PAUSE",
       btnResume: "RESUME",
       btnCenter: "CENTER",
@@ -212,33 +265,45 @@ export const I18N = {
       soundMuted: "[SOUND: MUTED]",
 
       // Building Drawer (Right)
+      buildingsToggleHandle: "BUILDINGS",
       buildingsTitle: "BUILDINGS & OUTPOSTS",
       buildingsSubtitle: "Select a structure then click on an eligible sector:",
-      bldFarm: "FARM",
+      bldFarmName: "+ FARM",
       bldFarmDesc: "Plain | +5.0 Bread/day",
-      bldLumber: "LUMBER CAMP",
+      bldLumberName: "+ LUMBER CAMP",
       bldLumberDesc: "Forest | +4.5 Wood/day",
-      bldQuarry: "QUARRY",
+      bldQuarryName: "+ QUARRY",
       bldQuarryDesc: "Hills | +3.5 Stone +1.5 Gold/day",
-      bldBarracks: "BARRACKS",
+      bldBarracksName: "+ BARRACKS",
       bldBarracksDesc: "Any sector | Military hub",
-      bldOutpost: "OUTPOST",
+      bldOutpostName: "+ OUTPOST",
       bldOutpostDesc: "Expands borders by +2 tiles",
-      bldTower: "TOWER",
+      bldTowerName: "+ WATCHTOWER",
       bldTowerDesc: "Defensive archery (bonus on hills)",
+      bldBastionName: "+ CITADEL",
+      bldBastionDesc: "Supreme fortress & +150% defense",
 
       // Bottom Command Dock
       toggleCmdTitle: "COMMAND & SECTOR",
       secInfoTitle: "SELECTED SECTOR",
+      lblSecControl: "Control:",
+      lblSecInfra: "Building:",
+      lblSecDefense: "Defense / HP:",
+      lblSecYields: "Yields:",
       sectorWild: "Wildlands (Neutral)",
       sectorNoInfra: "No infrastructure",
-      sectorCitadel: "Royal City (Citadel)",
-      defensePts: "pts",
+      sectorCitadel: "Royal Capital (Citadel)",
+      defensePts: "HP",
       noYields: "No revenue",
       noUnitsSelected: "No battalion selected. Left-click or drag to select.",
       battalionsSelected: "BATTALIONS:",
       hpLabel: "HP:",
       btnHalt: "HALT",
+      btnRecruitPioneer: "+ PIONEER",
+      btnRecruitMilitia: "+ MILITIA",
+      btnRecruitArcher: "+ ARCHER",
+      btnRecruitCavalry: "+ CAVALRY",
+      btnRecruitSiege: "+ TREBUCHET",
       btnExpColonize: "[COLONIZATION EXPEDITION]",
       btnExpDefend: "[FRONTIER DEFENSE]",
       btnExpAssault: "[GENERAL ASSAULT]",
@@ -264,8 +329,7 @@ export const I18N = {
       mpSlotBadgeFree: "[OPEN]",
       mpSlotBadgeHost: "[HOST]",
       mpSlotBadgeReady: "[READY]",
-      mpBtnStartHost: "LAUNCH GAME FOR ALL",
-      mpBtnStartClient: "WAITING FOR HOST...",
+      mpBtnStart: "LAUNCH GAME FOR ALL",
       mpBtnLeave: "LEAVE ROOM",
 
       // Pause Modal
@@ -275,7 +339,14 @@ export const I18N = {
       pauseBtnCenter: "CENTER ON CAPITAL (C)",
       pauseBtnEdgeScrollOn: "EDGE SCROLLING: ON",
       pauseBtnEdgeScrollOff: "EDGE SCROLLING: OFF",
-      pauseBtnQuit: "QUIT TO MAIN MENU"
+      pauseBtnQuit: "QUIT TO MAIN MENU",
+
+      // Game End (Victory / Defeat)
+      victoryTitle: "ROYAL VICTORY",
+      victoryDesc: "All rival capitals have fallen under your banners! You now reign supreme over this world!",
+      defeatTitle: "ROYAL DEFEAT",
+      defeatDesc: "Your Capital has been destroyed by enemy armies... Your empire collapses into ashes.",
+      btnReturnLobby: "RETURN TO MAIN MENU"
     }
   },
 
@@ -332,6 +403,48 @@ export const I18N = {
     return dict[key] || this.translations.fr[key] || key;
   },
 
+  getUnitName(unitType) {
+    const dict = this.translations[this.currentLang] || this.translations.fr;
+    const map = {
+      pioneer: dict.unitPioneer,
+      militia: dict.unitMilitia,
+      archer: dict.unitArcher,
+      cavalry: dict.unitCavalry,
+      siege: dict.unitSiege
+    };
+    return map[unitType] || unitType;
+  },
+
+  getBiomeName(biomeType) {
+    const dict = this.translations[this.currentLang] || this.translations.fr;
+    const map = {
+      plain: dict.biomePlain,
+      forest: dict.biomeForest,
+      hills: dict.biomeHills,
+      water: dict.biomeWater,
+      deep_water: dict.biomeWater,
+      river: dict.biomeRiver,
+      ford: dict.biomeFord,
+      mountain: dict.biomeMountain
+    };
+    return map[biomeType] || biomeType;
+  },
+
+  getInfraName(infraType) {
+    const dict = this.translations[this.currentLang] || this.translations.fr;
+    const map = {
+      farm: dict.bldFarmName,
+      barracks: dict.bldBarracksName,
+      outpost: dict.bldOutpostName,
+      lumber_camp: dict.bldLumberName,
+      quarry: dict.bldQuarryName,
+      palisade: dict.bldBastionName,
+      watchtower: dict.bldTowerName,
+      citadel: dict.bldBastionName
+    };
+    return map[infraType] || infraType;
+  },
+
   applyToDOM() {
     if (typeof document === "undefined") return;
     const lang = this.currentLang;
@@ -359,7 +472,7 @@ export const I18N = {
       if (el) el.placeholder = placeholder;
     };
 
-    // Écran Titre & Lobby
+    // 1. Écran Titre & Lobby
     setText("lobby-main-subtitle", dict.gameSubtitle);
     setText("lobby-sec1-title", dict.secIdentity);
     setText("lbl-leader-avatar", dict.avatarLabel);
@@ -378,7 +491,6 @@ export const I18N = {
     setText("lbl-bot-count", dict.botCountLabel);
     setText("lbl-ai-diff", dict.aiDiffLabel);
     setText("lbl-marauders", dict.maraudersLabel || dict.optMarauders);
-    setText("txt-opt-marauders", dict.optMarauders);
     setText("btn-start-game", dict.btnLaunchGame);
 
     setText("lobby-sec3-title", lang === "fr" ? "3. COMMANDEMENT" : "3. COMMAND");
@@ -399,7 +511,57 @@ export const I18N = {
     setHtml("recap-item-units", `<strong>${lang === 'fr' ? 'Bataillons RTS' : 'RTS Battalions'}</strong> : ${unitsPart}`);
     setHtml("recap-item-center", `<strong>${lang === 'fr' ? 'Recentrer Caméra' : 'Center Camera'}</strong> : ${centerPart}`);
 
-    // Modal de Pause
+    // 2. Top HUD : Ressources & Contrôles
+    setText("lbl-res-food", dict.resFoodLabel);
+    setText("lbl-res-wood", dict.resWoodLabel);
+    setText("lbl-res-stone", dict.resStoneLabel);
+    setText("lbl-res-gold", dict.resGoldLabel);
+    setText("lbl-res-troops", dict.resArmyLabel);
+    setText("lbl-res-territory", dict.resTerritoryLabel);
+
+    setText("btn-center-camera", dict.btnCenter);
+    setText("btn-open-menu", dict.btnMenu);
+
+    // 3. Tiroir Latéral Bâtiments
+    setText("txt-buildings-toggle", dict.buildingsToggleHandle);
+    setText("buildings-drawer-title", dict.buildingsTitle);
+    setText("buildings-drawer-desc", dict.buildingsSubtitle);
+
+    setText("bld-name-farm", dict.bldFarmName);
+    setText("bld-desc-farm", dict.bldFarmDesc);
+    setText("bld-name-lumber", dict.bldLumberName);
+    setText("bld-desc-lumber", dict.bldLumberDesc);
+    setText("bld-name-quarry", dict.bldQuarryName);
+    setText("bld-desc-quarry", dict.bldQuarryDesc);
+    setText("bld-name-barracks", dict.bldBarracksName);
+    setText("bld-desc-barracks", dict.bldBarracksDesc);
+    setText("bld-name-outpost", dict.bldOutpostName);
+    setText("bld-desc-outpost", dict.bldOutpostDesc);
+    setText("bld-name-tower", dict.bldTowerName);
+    setText("bld-desc-tower", dict.bldTowerDesc);
+    setText("bld-name-citadel", dict.bldBastionName);
+    setText("bld-desc-citadel", dict.bldBastionDesc);
+
+    // 4. Volet Inférieur de Commandement
+    setText("txt-bottom-dock-toggle", dict.toggleCmdTitle);
+    setText("sector-info-title", dict.secInfoTitle);
+    setText("lbl-sec-control", dict.lblSecControl);
+    setText("lbl-sec-infra", dict.lblSecInfra);
+    setText("lbl-sec-defense", dict.lblSecDefense);
+    setText("lbl-sec-yields", dict.lblSecYields);
+
+    setText("btn-order-halt", dict.btnHalt);
+    setText("btn-recruit-pioneer", dict.btnRecruitPioneer);
+    setText("btn-recruit-militia", dict.btnRecruitMilitia);
+    setText("btn-recruit-archer", dict.btnRecruitArcher);
+    setText("btn-recruit-cavalry", dict.btnRecruitCavalry);
+    setText("btn-recruit-siege", dict.btnRecruitSiege);
+
+    setText("btn-expedition-colo", dict.btnExpColonize);
+    setText("btn-expedition-def", dict.btnExpDefend);
+    setText("btn-expedition-assault", dict.btnExpAssault);
+
+    // 5. Modal de Pause
     setText("modal-pause-title", dict.pauseModalTitle);
     setText("modal-pause-desc", dict.pauseModalDesc);
     setText("modal-btn-resume", dict.pauseBtnResume);
@@ -412,7 +574,7 @@ export const I18N = {
       btnEdge.textContent = isScrollActive ? dict.pauseBtnEdgeScrollOn : dict.pauseBtnEdgeScrollOff;
     }
 
-    // Salon Multijoueur
+    // 6. Salon Multijoueur
     setText("mp-lobby-header-title", dict.mpLobbyTitle);
     setText("mp-code-label-text", dict.mpCodeLabel);
     setText("btn-copy-room-code", dict.btnCopyCode);
@@ -421,22 +583,14 @@ export const I18N = {
     setText("btn-mp-start-game", dict.mpBtnStart);
     setText("btn-mp-leave-room", dict.mpBtnLeave);
 
-    // Volet Bâtiments
-    setText("buildings-drawer-title", dict.buildingsTitle);
-    setText("buildings-drawer-desc", dict.buildingsSubtitle);
-
-    // Ordres rapides & Halte
-    setText("btn-order-halt", dict.btnHalt);
-    setText("btn-expedition-colo", dict.btnExpColonize);
-    setText("btn-expedition-col", dict.btnExpColonize);
-    setText("btn-expedition-def", dict.btnExpDefend);
-    setText("btn-expedition-assault", dict.btnExpAssault);
-
-    // Bandeau de fondation
+    // 7. Bandeau de fondation
     setText("founding-banner-title", dict.foundingTitle);
     setText("btn-confirm-founding", dict.foundingBtn);
 
-    // Boutons de réglages du Lobby (Mode, Bots, Difficulté, Maraudeurs)
+    // 8. Modal de Fin de Partie
+    setText("btn-end-quit-lobby", dict.btnReturnLobby);
+
+    // 9. Boutons de réglages du Lobby (Mode, Bots, Difficulté, Maraudeurs)
     document.querySelectorAll(".setup-btn-toggle").forEach((btn) => {
       const setting = btn.dataset.setting;
       const val = btn.dataset.value;

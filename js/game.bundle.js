@@ -218,14 +218,14 @@ const CONFIG = {
 
   // Bâtiments & Infrastructures de territoire
   INFRASTRUCTURES: {
-    FARM: { id: "farm", name: "Ferme", allowedTerrain: ["plain"], woodCost: 40, stoneCost: 10, foodBonus: 5.0, hp: 150, icon: "farm", desc: "Produit des récoltes abondantes de Pain (Plaine obligatoire)" },
-    BARRACKS: { id: "barracks", name: "Caserne d'Armes", allowedTerrain: ["plain", "forest", "hills"], woodCost: 60, stoneCost: 35, goldCost: 20, hp: 250, icon: "barracks", desc: "Centre d'entraînement militaire" },
+    FARM: { id: "farm", name: "Ferme", allowedTerrain: ["plain"], woodCost: 40, stoneCost: 10, foodBonus: 5.0, hp: 180, icon: "farm", desc: "Produit des récoltes abondantes de Pain (Plaine obligatoire)" },
+    BARRACKS: { id: "barracks", name: "Caserne d'Armes", allowedTerrain: ["plain", "forest", "hills"], woodCost: 60, stoneCost: 35, goldCost: 20, hp: 350, icon: "barracks", desc: "Centre d'entraînement militaire" },
     OUTPOST: { id: "outpost", name: "Avant-poste", allowedTerrain: ["plain", "forest", "hills"], woodCost: 50, stoneCost: 30, goldCost: 15, territoryRadius: 2, defenseBonus: 0.35, hp: 300, icon: "flag", desc: "Revendique et stabilise les secteurs voisins" },
-    LUMBER_CAMP: { id: "lumber_camp", name: "Scierie", allowedTerrain: ["forest"], woodCost: 30, stoneCost: 10, woodBonus: 4.5, hp: 120, icon: "axe", desc: "Exploitation forestière intensive de Bois (Forêt obligatoire)" },
-    QUARRY: { id: "quarry", name: "Carrière de Pierre", allowedTerrain: ["hills"], woodCost: 40, stoneCost: 20, stoneBonus: 3.5, goldBonus: 1.5, hp: 140, icon: "pickaxe", desc: "Extraction de Pierre et filons d'Or (Collines obligatoires)" },
-    PALISADE: { id: "palisade", name: "Palissade", allowedTerrain: ["plain", "forest", "hills"], woodCost: 25, stoneCost: 10, defenseBonus: 0.45, hp: 180, icon: "shield", desc: "Barricade défensive" },
-    WATCHTOWER: { id: "watchtower", name: "Tour de Guet", allowedTerrain: ["plain", "forest", "hills"], woodCost: 60, stoneCost: 50, defenseBonus: 0.80, range: 3.5, attackDamage: 14, hp: 220, icon: "tower", desc: "Tirs de flèches automatiques (portée accrue sur Collines)" },
-    CITADEL: { id: "citadel", name: "Bastion Impérial", allowedTerrain: ["plain", "hills"], woodCost: 150, stoneCost: 200, goldCost: 100, defenseBonus: 1.50, range: 5.0, attackDamage: 28, hp: 600, icon: "fortress", desc: "Citadelle souveraine imprenable" }
+    LUMBER_CAMP: { id: "lumber_camp", name: "Scierie", allowedTerrain: ["forest"], woodCost: 30, stoneCost: 10, woodBonus: 4.5, hp: 180, icon: "axe", desc: "Exploitation forestière intensive de Bois (Forêt obligatoire)" },
+    QUARRY: { id: "quarry", name: "Carrière de Pierre", allowedTerrain: ["hills"], woodCost: 40, stoneCost: 20, stoneBonus: 3.5, goldBonus: 1.5, hp: 220, icon: "pickaxe", desc: "Extraction de Pierre et filons d'Or (Collines obligatoires)" },
+    PALISADE: { id: "palisade", name: "Palissade", allowedTerrain: ["plain", "forest", "hills"], woodCost: 25, stoneCost: 10, defenseBonus: 0.45, hp: 220, icon: "shield", desc: "Barricade défensive" },
+    WATCHTOWER: { id: "watchtower", name: "Tour de Guet", allowedTerrain: ["plain", "forest", "hills"], woodCost: 60, stoneCost: 50, defenseBonus: 0.80, range: 3.8, attackDamage: 16, hp: 350, icon: "tower", desc: "Tirs de flèches automatiques (portée accrue sur Collines)" },
+    CITADEL: { id: "citadel", name: "Bastion Impérial", allowedTerrain: ["plain", "hills"], woodCost: 150, stoneCost: 200, goldCost: 100, defenseBonus: 1.50, range: 5.0, attackDamage: 30, hp: 800, icon: "fortress", desc: "Citadelle souveraine imprenable" }
   },
 
   // Couleurs textuelles Minecraft adaptées au parchemin (dialogue_box.png)
@@ -275,20 +275,37 @@ const CONFIG = {
 
   // ==================== MODULE: i18n.js ====================
 /**
- * Jerry's Nations: Frontline Realms - Bilingual System (FR / EN)
- * Gestionnaire de traduction bilingue conforme aux règles strictes du projet.
- * ZÉRO EMOJI. Mémorisation du choix utilisateur dans localStorage.
+ * Jerry's Nations: Frontline Realms - Bilingual Translation Engine (FR / EN)
+ * Gestionnaire de traduction bilingue intégrale conforme aux règles strictes du projet.
+ * RÈGLE STRICTE : ZÉRO EMOJI. Mémorisation du choix utilisateur dans localStorage.
  */
 
 const I18N = {
   currentLang: "fr",
+  _listenerBound: false,
 
   translations: {
     fr: {
       langBtn: "LANGUE : FRANÇAIS",
       langCode: "FR",
       switchLang: "ENGLISH",
-      
+
+      // Noms des Unités
+      unitPioneer: "Pionnier",
+      unitMilitia: "Milicien",
+      unitArcher: "Archer",
+      unitCavalry: "Cavalier",
+      unitSiege: "Trébuchet",
+
+      // Noms des Biomes
+      biomePlain: "Plaine",
+      biomeForest: "Forêt",
+      biomeHills: "Collines",
+      biomeWater: "Eau Profonde",
+      biomeRiver: "Rivière",
+      biomeFord: "Gué de Rivière",
+      biomeMountain: "Montagnes",
+
       // Lobby & Écran de Configuration
       gameTitle: "JERRY'S NATIONS",
       gameSubtitle: "Frontline Realms - Grand RTS de Conquête Territoriale",
@@ -302,20 +319,20 @@ const I18N = {
       bannerLabel: "Bannière Royale & Couleur :",
       nationMottoLabel: "Devise de la Faction :",
       defaultMotto: "Souveraineté, Moissons et Gloire",
-      
+
       secRules: "2. RÈGLES & DIFFICULTÉ",
       gameModeLabel: "Mode de Jeu :",
       modeStandard: "Conquête",
       modeStandardSub: "Ressources & Famine",
       modeSandbox: "Bac à Sable",
       modeSandboxSub: "Illimité & Gratuit",
-      
+
       botCountLabel: "Royaumes Rivaux (Bots) :",
       bots0: "0 (Solo)",
       bots1: "1 Faction",
       bots2: "2 Factions",
       bots3: "3 Factions",
-      
+
       aiDiffLabel: "Stratégie de l'IA :",
       diffPeaceful: "Paisible",
       diffPeacefulSub: "Expansion modérée",
@@ -323,28 +340,29 @@ const I18N = {
       diffNormalSub: "Pression constante",
       diffHard: "Implacable",
       diffHardSub: "Raids rapides",
-      
+
       maraudersLabel: "Pillards Maraudeurs :",
       optMarauders: "Clan Maraudeur (Pillards agressifs des terres sauvages)",
       btnLaunchGame: "FONDER LA NATION & COMMENCER",
-      
+
       secP2P: "MULTIJOUEUR P2P WEBRTC :",
       roomCodePlaceholder: "Code de salon (ex: jerry-123)",
       btnJoinRoom: "REJOINDRE",
       btnCreateRoom: "HÉBERGER UN NOUVEAU SALON",
-      
+
       recapNav: "Navigation Carte : Bords d'écran, Clic droit glissé, Clic molette, ZQSD/Flèches ou Clic Minimap",
       recapUnits: "Bataillons RTS : Glisser pour encadrer (Box Select), Clic droit pour ordonner",
       recapCenter: "Recentrer Caméra : Touche C ou bouton [CENTRER]",
 
       // HUD Supérieur
       dayLabel: "JOUR",
-      resFood: "Pain",
-      resWood: "Bois",
-      resStone: "Pierre",
-      resGold: "Or",
-      resArmy: "Armée",
-      resTerritory: "Secteurs",
+      resFoodLabel: "PAIN:",
+      resWoodLabel: "BOIS:",
+      resStoneLabel: "PIERRE:",
+      resGoldLabel: "OR:",
+      resArmyLabel: "ARMÉE:",
+      resTerritoryLabel: "SECTEURS:",
+      sectorsUnit: "secteurs",
       btnPause: "PAUSE",
       btnResume: "REPRENDRE",
       btnCenter: "CENTRER",
@@ -353,24 +371,31 @@ const I18N = {
       soundMuted: "[SON : COUPE]",
 
       // Panneau de construction (Tiroir droit)
+      buildingsToggleHandle: "BÂTIMENTS",
       buildingsTitle: "BÂTIMENTS & AVANT-POSTES",
       buildingsSubtitle: "Sélectionnez une structure puis cliquez sur un secteur éligible :",
-      bldFarm: "FERME",
+      bldFarmName: "+ FERME",
       bldFarmDesc: "Plaine | +5.0 Pain/jour",
-      bldLumber: "SCIERIE",
+      bldLumberName: "+ SCIERIE",
       bldLumberDesc: "Forêt | +4.5 Bois/jour",
-      bldQuarry: "CARRIÈRE",
+      bldQuarryName: "+ CARRIÈRE",
       bldQuarryDesc: "Collines | +3.5 Pierre +1.5 Or/jour",
-      bldBarracks: "CASERNE",
+      bldBarracksName: "+ CASERNE",
       bldBarracksDesc: "Tout secteur | Caserne militaire",
-      bldOutpost: "AVANT-POSTE",
+      bldOutpostName: "+ AVANT-POSTE",
       bldOutpostDesc: "Étend les frontières de +2 cases",
-      bldTower: "TOUR",
-      bldTowerDesc: "Tir défensif (portée accrue sur colline)",
+      bldTowerName: "+ TOUR",
+      bldTowerDesc: "Tirs défensifs (portée accrue sur colline)",
+      bldBastionName: "+ BASTION",
+      bldBastionDesc: "Forteresse suprême & +150% défense",
 
       // Volet de commandement inférieur
       toggleCmdTitle: "COMMANDEMENT & SECTEUR",
       secInfoTitle: "SECTEUR SÉLECTIONNÉ",
+      lblSecControl: "Contrôle :",
+      lblSecInfra: "Bâtiment :",
+      lblSecDefense: "Défense :",
+      lblSecYields: "Rendement :",
       sectorWild: "Terre Sauvage (Libre)",
       sectorNoInfra: "Aucun aménagement",
       sectorCitadel: "Cité Royale (Bastion)",
@@ -380,6 +405,11 @@ const I18N = {
       battalionsSelected: "BATAILLONS :",
       hpLabel: "PV :",
       btnHalt: "HALTE",
+      btnRecruitPioneer: "+ PIONNIER",
+      btnRecruitMilitia: "+ MILICIEN",
+      btnRecruitArcher: "+ ARCHER",
+      btnRecruitCavalry: "+ CAVALIER",
+      btnRecruitSiege: "+ TRÉBUCHET",
       btnExpColonize: "[EXPÉDITION COLONISATION]",
       btnExpDefend: "[DÉFENSE FRONTIÈRE]",
       btnExpAssault: "[ASSAUT GÉNÉRAL]",
@@ -405,8 +435,7 @@ const I18N = {
       mpSlotBadgeFree: "[LIBRE]",
       mpSlotBadgeHost: "[HÔTE]",
       mpSlotBadgeReady: "[PRÊT]",
-      mpBtnStartHost: "LANCER LA PARTIE POUR TOUS",
-      mpBtnStartClient: "EN ATTENTE DU SIGNAL DE L'HÔTE...",
+      mpBtnStart: "LANCER LA PARTIE POUR TOUS",
       mpBtnLeave: "QUITTER LE SALON",
 
       // Modal de Pause
@@ -416,14 +445,37 @@ const I18N = {
       pauseBtnCenter: "RECENTRER SUR LA CAPITALE (C)",
       pauseBtnEdgeScrollOn: "DÉFILEMENT BORD ÉCRAN : ACTIF",
       pauseBtnEdgeScrollOff: "DÉFILEMENT BORD ÉCRAN : DÉSACTIVÉ",
-      pauseBtnQuit: "QUITTER VERS LE MENU PRINCIPAL"
+      pauseBtnQuit: "QUITTER VERS LE MENU PRINCIPAL",
+
+      // Fin de Partie (Victoire / Défaite)
+      victoryTitle: "VICTOIRE ROYALE",
+      victoryDesc: "Toutes les capitales rivales sont tombées sous vos bannières ! Vous régnez désormais en maître souverain sur ce monde !",
+      defeatTitle: "DÉFAITE ROYALE",
+      defeatDesc: "Votre Capitale a été rasée par les armées ennemies... Votre empire s'effondre dans les cendres.",
+      btnReturnLobby: "RETOURNER AU SALON PRINCIPAL"
     },
 
     en: {
       langBtn: "LANGUAGE : ENGLISH",
       langCode: "EN",
       switchLang: "FRANÇAIS",
-      
+
+      // Unit Names
+      unitPioneer: "Pioneer",
+      unitMilitia: "Militia",
+      unitArcher: "Archer",
+      unitCavalry: "Cavalry",
+      unitSiege: "Trebuchet",
+
+      // Biome Names
+      biomePlain: "Plains",
+      biomeForest: "Forest",
+      biomeHills: "Hills",
+      biomeWater: "Deep Water",
+      biomeRiver: "River",
+      biomeFord: "River Ford",
+      biomeMountain: "Mountains",
+
       // Lobby & Setup Screen
       gameTitle: "JERRY'S NATIONS",
       gameSubtitle: "Frontline Realms - Grand Territorial RTS Web Game",
@@ -437,20 +489,20 @@ const I18N = {
       bannerLabel: "Royal Banner & Color:",
       nationMottoLabel: "Faction Motto:",
       defaultMotto: "Sovereignty, Harvest and Glory",
-      
+
       secRules: "2. RULES & DIFFICULTY",
       gameModeLabel: "Game Mode:",
       modeStandard: "Conquest",
       modeStandardSub: "Resources & Starvation",
       modeSandbox: "Sandbox",
       modeSandboxSub: "Unlimited & Free",
-      
+
       botCountLabel: "Rival Kingdoms (Bots):",
       bots0: "0 (Solo)",
       bots1: "1 Faction",
       bots2: "2 Factions",
       bots3: "3 Factions",
-      
+
       aiDiffLabel: "AI Strategy:",
       diffPeaceful: "Peaceful",
       diffPeacefulSub: "Slow expansion",
@@ -458,28 +510,29 @@ const I18N = {
       diffNormalSub: "Steady pressure",
       diffHard: "Relentless",
       diffHardSub: "Swift raids",
-      
+
       maraudersLabel: "Marauder Raiders:",
       optMarauders: "Marauder Clan (Hostile border raiders)",
       btnLaunchGame: "FOUND REALM & START",
-      
+
       secP2P: "P2P WEBRTC MULTIPLAYER:",
       roomCodePlaceholder: "Room Code (e.g. jerry-123)",
       btnJoinRoom: "JOIN ROOM",
       btnCreateRoom: "HOST A NEW ROOM",
-      
+
       recapNav: "Map Controls: Screen edges, Right-click drag, Middle-click, WASD/Arrows or Minimap click",
       recapUnits: "RTS Battalions: Drag to Box Select, Right-click to issue orders",
       recapCenter: "Center Camera: C key or [CENTER] button",
 
       // Top HUD
       dayLabel: "DAY",
-      resFood: "Bread",
-      resWood: "Wood",
-      resStone: "Stone",
-      resGold: "Gold",
-      resArmy: "Army",
-      resTerritory: "Sectors",
+      resFoodLabel: "BREAD:",
+      resWoodLabel: "WOOD:",
+      resStoneLabel: "STONE:",
+      resGoldLabel: "GOLD:",
+      resArmyLabel: "ARMY:",
+      resTerritoryLabel: "SECTORS:",
+      sectorsUnit: "sectors",
       btnPause: "PAUSE",
       btnResume: "RESUME",
       btnCenter: "CENTER",
@@ -488,33 +541,45 @@ const I18N = {
       soundMuted: "[SOUND: MUTED]",
 
       // Building Drawer (Right)
+      buildingsToggleHandle: "BUILDINGS",
       buildingsTitle: "BUILDINGS & OUTPOSTS",
       buildingsSubtitle: "Select a structure then click on an eligible sector:",
-      bldFarm: "FARM",
+      bldFarmName: "+ FARM",
       bldFarmDesc: "Plain | +5.0 Bread/day",
-      bldLumber: "LUMBER CAMP",
+      bldLumberName: "+ LUMBER CAMP",
       bldLumberDesc: "Forest | +4.5 Wood/day",
-      bldQuarry: "QUARRY",
+      bldQuarryName: "+ QUARRY",
       bldQuarryDesc: "Hills | +3.5 Stone +1.5 Gold/day",
-      bldBarracks: "BARRACKS",
+      bldBarracksName: "+ BARRACKS",
       bldBarracksDesc: "Any sector | Military hub",
-      bldOutpost: "OUTPOST",
+      bldOutpostName: "+ OUTPOST",
       bldOutpostDesc: "Expands borders by +2 tiles",
-      bldTower: "TOWER",
+      bldTowerName: "+ WATCHTOWER",
       bldTowerDesc: "Defensive archery (bonus on hills)",
+      bldBastionName: "+ CITADEL",
+      bldBastionDesc: "Supreme fortress & +150% defense",
 
       // Bottom Command Dock
       toggleCmdTitle: "COMMAND & SECTOR",
       secInfoTitle: "SELECTED SECTOR",
+      lblSecControl: "Control:",
+      lblSecInfra: "Building:",
+      lblSecDefense: "Defense / HP:",
+      lblSecYields: "Yields:",
       sectorWild: "Wildlands (Neutral)",
       sectorNoInfra: "No infrastructure",
-      sectorCitadel: "Royal City (Citadel)",
-      defensePts: "pts",
+      sectorCitadel: "Royal Capital (Citadel)",
+      defensePts: "HP",
       noYields: "No revenue",
       noUnitsSelected: "No battalion selected. Left-click or drag to select.",
       battalionsSelected: "BATTALIONS:",
       hpLabel: "HP:",
       btnHalt: "HALT",
+      btnRecruitPioneer: "+ PIONEER",
+      btnRecruitMilitia: "+ MILITIA",
+      btnRecruitArcher: "+ ARCHER",
+      btnRecruitCavalry: "+ CAVALRY",
+      btnRecruitSiege: "+ TREBUCHET",
       btnExpColonize: "[COLONIZATION EXPEDITION]",
       btnExpDefend: "[FRONTIER DEFENSE]",
       btnExpAssault: "[GENERAL ASSAULT]",
@@ -540,8 +605,7 @@ const I18N = {
       mpSlotBadgeFree: "[OPEN]",
       mpSlotBadgeHost: "[HOST]",
       mpSlotBadgeReady: "[READY]",
-      mpBtnStartHost: "LAUNCH GAME FOR ALL",
-      mpBtnStartClient: "WAITING FOR HOST...",
+      mpBtnStart: "LAUNCH GAME FOR ALL",
       mpBtnLeave: "LEAVE ROOM",
 
       // Pause Modal
@@ -551,7 +615,14 @@ const I18N = {
       pauseBtnCenter: "CENTER ON CAPITAL (C)",
       pauseBtnEdgeScrollOn: "EDGE SCROLLING: ON",
       pauseBtnEdgeScrollOff: "EDGE SCROLLING: OFF",
-      pauseBtnQuit: "QUIT TO MAIN MENU"
+      pauseBtnQuit: "QUIT TO MAIN MENU",
+
+      // Game End (Victory / Defeat)
+      victoryTitle: "ROYAL VICTORY",
+      victoryDesc: "All rival capitals have fallen under your banners! You now reign supreme over this world!",
+      defeatTitle: "ROYAL DEFEAT",
+      defeatDesc: "Your Capital has been destroyed by enemy armies... Your empire collapses into ashes.",
+      btnReturnLobby: "RETURN TO MAIN MENU"
     }
   },
 
@@ -608,6 +679,48 @@ const I18N = {
     return dict[key] || this.translations.fr[key] || key;
   },
 
+  getUnitName(unitType) {
+    const dict = this.translations[this.currentLang] || this.translations.fr;
+    const map = {
+      pioneer: dict.unitPioneer,
+      militia: dict.unitMilitia,
+      archer: dict.unitArcher,
+      cavalry: dict.unitCavalry,
+      siege: dict.unitSiege
+    };
+    return map[unitType] || unitType;
+  },
+
+  getBiomeName(biomeType) {
+    const dict = this.translations[this.currentLang] || this.translations.fr;
+    const map = {
+      plain: dict.biomePlain,
+      forest: dict.biomeForest,
+      hills: dict.biomeHills,
+      water: dict.biomeWater,
+      deep_water: dict.biomeWater,
+      river: dict.biomeRiver,
+      ford: dict.biomeFord,
+      mountain: dict.biomeMountain
+    };
+    return map[biomeType] || biomeType;
+  },
+
+  getInfraName(infraType) {
+    const dict = this.translations[this.currentLang] || this.translations.fr;
+    const map = {
+      farm: dict.bldFarmName,
+      barracks: dict.bldBarracksName,
+      outpost: dict.bldOutpostName,
+      lumber_camp: dict.bldLumberName,
+      quarry: dict.bldQuarryName,
+      palisade: dict.bldBastionName,
+      watchtower: dict.bldTowerName,
+      citadel: dict.bldBastionName
+    };
+    return map[infraType] || infraType;
+  },
+
   applyToDOM() {
     if (typeof document === "undefined") return;
     const lang = this.currentLang;
@@ -635,7 +748,7 @@ const I18N = {
       if (el) el.placeholder = placeholder;
     };
 
-    // Écran Titre & Lobby
+    // 1. Écran Titre & Lobby
     setText("lobby-main-subtitle", dict.gameSubtitle);
     setText("lobby-sec1-title", dict.secIdentity);
     setText("lbl-leader-avatar", dict.avatarLabel);
@@ -654,7 +767,6 @@ const I18N = {
     setText("lbl-bot-count", dict.botCountLabel);
     setText("lbl-ai-diff", dict.aiDiffLabel);
     setText("lbl-marauders", dict.maraudersLabel || dict.optMarauders);
-    setText("txt-opt-marauders", dict.optMarauders);
     setText("btn-start-game", dict.btnLaunchGame);
 
     setText("lobby-sec3-title", lang === "fr" ? "3. COMMANDEMENT" : "3. COMMAND");
@@ -675,7 +787,57 @@ const I18N = {
     setHtml("recap-item-units", `<strong>${lang === 'fr' ? 'Bataillons RTS' : 'RTS Battalions'}</strong> : ${unitsPart}`);
     setHtml("recap-item-center", `<strong>${lang === 'fr' ? 'Recentrer Caméra' : 'Center Camera'}</strong> : ${centerPart}`);
 
-    // Modal de Pause
+    // 2. Top HUD : Ressources & Contrôles
+    setText("lbl-res-food", dict.resFoodLabel);
+    setText("lbl-res-wood", dict.resWoodLabel);
+    setText("lbl-res-stone", dict.resStoneLabel);
+    setText("lbl-res-gold", dict.resGoldLabel);
+    setText("lbl-res-troops", dict.resArmyLabel);
+    setText("lbl-res-territory", dict.resTerritoryLabel);
+
+    setText("btn-center-camera", dict.btnCenter);
+    setText("btn-open-menu", dict.btnMenu);
+
+    // 3. Tiroir Latéral Bâtiments
+    setText("txt-buildings-toggle", dict.buildingsToggleHandle);
+    setText("buildings-drawer-title", dict.buildingsTitle);
+    setText("buildings-drawer-desc", dict.buildingsSubtitle);
+
+    setText("bld-name-farm", dict.bldFarmName);
+    setText("bld-desc-farm", dict.bldFarmDesc);
+    setText("bld-name-lumber", dict.bldLumberName);
+    setText("bld-desc-lumber", dict.bldLumberDesc);
+    setText("bld-name-quarry", dict.bldQuarryName);
+    setText("bld-desc-quarry", dict.bldQuarryDesc);
+    setText("bld-name-barracks", dict.bldBarracksName);
+    setText("bld-desc-barracks", dict.bldBarracksDesc);
+    setText("bld-name-outpost", dict.bldOutpostName);
+    setText("bld-desc-outpost", dict.bldOutpostDesc);
+    setText("bld-name-tower", dict.bldTowerName);
+    setText("bld-desc-tower", dict.bldTowerDesc);
+    setText("bld-name-citadel", dict.bldBastionName);
+    setText("bld-desc-citadel", dict.bldBastionDesc);
+
+    // 4. Volet Inférieur de Commandement
+    setText("txt-bottom-dock-toggle", dict.toggleCmdTitle);
+    setText("sector-info-title", dict.secInfoTitle);
+    setText("lbl-sec-control", dict.lblSecControl);
+    setText("lbl-sec-infra", dict.lblSecInfra);
+    setText("lbl-sec-defense", dict.lblSecDefense);
+    setText("lbl-sec-yields", dict.lblSecYields);
+
+    setText("btn-order-halt", dict.btnHalt);
+    setText("btn-recruit-pioneer", dict.btnRecruitPioneer);
+    setText("btn-recruit-militia", dict.btnRecruitMilitia);
+    setText("btn-recruit-archer", dict.btnRecruitArcher);
+    setText("btn-recruit-cavalry", dict.btnRecruitCavalry);
+    setText("btn-recruit-siege", dict.btnRecruitSiege);
+
+    setText("btn-expedition-colo", dict.btnExpColonize);
+    setText("btn-expedition-def", dict.btnExpDefend);
+    setText("btn-expedition-assault", dict.btnExpAssault);
+
+    // 5. Modal de Pause
     setText("modal-pause-title", dict.pauseModalTitle);
     setText("modal-pause-desc", dict.pauseModalDesc);
     setText("modal-btn-resume", dict.pauseBtnResume);
@@ -688,7 +850,7 @@ const I18N = {
       btnEdge.textContent = isScrollActive ? dict.pauseBtnEdgeScrollOn : dict.pauseBtnEdgeScrollOff;
     }
 
-    // Salon Multijoueur
+    // 6. Salon Multijoueur
     setText("mp-lobby-header-title", dict.mpLobbyTitle);
     setText("mp-code-label-text", dict.mpCodeLabel);
     setText("btn-copy-room-code", dict.btnCopyCode);
@@ -697,22 +859,14 @@ const I18N = {
     setText("btn-mp-start-game", dict.mpBtnStart);
     setText("btn-mp-leave-room", dict.mpBtnLeave);
 
-    // Volet Bâtiments
-    setText("buildings-drawer-title", dict.buildingsTitle);
-    setText("buildings-drawer-desc", dict.buildingsSubtitle);
-
-    // Ordres rapides & Halte
-    setText("btn-order-halt", dict.btnHalt);
-    setText("btn-expedition-colo", dict.btnExpColonize);
-    setText("btn-expedition-col", dict.btnExpColonize);
-    setText("btn-expedition-def", dict.btnExpDefend);
-    setText("btn-expedition-assault", dict.btnExpAssault);
-
-    // Bandeau de fondation
+    // 7. Bandeau de fondation
     setText("founding-banner-title", dict.foundingTitle);
     setText("btn-confirm-founding", dict.foundingBtn);
 
-    // Boutons de réglages du Lobby (Mode, Bots, Difficulté, Maraudeurs)
+    // 8. Modal de Fin de Partie
+    setText("btn-end-quit-lobby", dict.btnReturnLobby);
+
+    // 9. Boutons de réglages du Lobby (Mode, Bots, Difficulté, Maraudeurs)
     document.querySelectorAll(".setup-btn-toggle").forEach((btn) => {
       const setting = btn.dataset.setting;
       const val = btn.dataset.value;
@@ -1039,10 +1193,9 @@ class Projectile {
       this.targetUnit.takeDamage(this.damage, this.attackerId, engine);
     } else {
       // Dégât de zone ou sur infrastructure
-      const targetCell = engine.map.getCell(Math.round(this.targetX), Math.round(this.targetY));
+      const targetCell = engine.map.getCell(Math.floor(this.targetX), Math.floor(this.targetY));
       if (targetCell && targetCell.infrastructure && targetCell.owner !== this.attackerId) {
-        const mult = this.isSiege ? 3.5 : 1.0;
-        engine.damageInfrastructure(targetCell, this.damage * mult, this.attackerId);
+        engine.damageInfrastructure(targetCell, this.damage, this.attackerId);
       }
     }
 
@@ -1074,6 +1227,7 @@ class Unit {
 
     this.targetUnit = null;
     this.targetCell = null;
+    this.targetBuildingCell = null;
 
     this.hp = proto.hp;
     this.maxHp = proto.hp;
@@ -1087,7 +1241,7 @@ class Unit {
     this.chargeBonus = proto.chargeBonus || 1.0;
     this.hasCharged = false;
 
-    this.state = "idle"; // "idle", "moving", "attacking", "building"
+    this.state = "idle"; // "idle", "moving", "attacking", "attacking_building", "building"
     this.attackCooldown = 0;
     this.isSelected = false;
 
@@ -1101,6 +1255,7 @@ class Unit {
     this.targetY = cellY + 0.5;
     this.targetUnit = null;
     this.targetCell = null;
+    this.targetBuildingCell = null;
     this.state = "moving";
     this.hasCharged = false;
   }
@@ -1109,9 +1264,20 @@ class Unit {
     if (!targetUnit || targetUnit.hp <= 0 || targetUnit.factionId === this.factionId) return;
     this.targetUnit = targetUnit;
     this.targetCell = null;
+    this.targetBuildingCell = null;
     this.targetX = targetUnit.x;
     this.targetY = targetUnit.y;
     this.state = "attacking";
+  }
+
+  attackBuilding(targetCell) {
+    if (!targetCell || !targetCell.infrastructure || targetCell.owner === this.factionId) return;
+    this.targetBuildingCell = targetCell;
+    this.targetUnit = null;
+    this.targetCell = null;
+    this.targetX = targetCell.x + 0.5;
+    this.targetY = targetCell.y + 0.5;
+    this.state = "attacking_building";
   }
 
   update(engine) {
@@ -1142,6 +1308,27 @@ class Unit {
         } else {
           // Hors de portée : s'approcher de l'ennemi
           this.stepTowards(this.targetUnit.x, this.targetUnit.y, this.speed * moodBuff, engine);
+          return true;
+        }
+      }
+    }
+
+    // 1b. Ciblage d'un bâtiment ou d'une citadelle / capitale ennemie
+    if (this.targetBuildingCell) {
+      if (!this.targetBuildingCell.infrastructure || this.targetBuildingCell.owner === this.factionId) {
+        this.targetBuildingCell = null;
+        this.state = "idle";
+      } else {
+        const bx = this.targetBuildingCell.x + 0.5;
+        const by = this.targetBuildingCell.y + 0.5;
+        const dist = Math.hypot(bx - this.x, by - this.y);
+
+        const effectiveRange = this.getEffectiveRange(engine);
+        if (dist <= effectiveRange) {
+          this.performBuildingAttack(this.targetBuildingCell, engine, combatBuff);
+          return true;
+        } else {
+          this.stepTowards(bx, by, this.speed * moodBuff, engine);
           return true;
         }
       }
@@ -1250,6 +1437,48 @@ class Unit {
     }
   }
 
+  performBuildingAttack(targetCell, engine, combatBuff) {
+    if (this.attackCooldown > 0) return;
+
+    this.attackCooldown = this.isRanged ? 24 : 18;
+
+    let dmg = this.attack * combatBuff;
+    // Multiplicateur contre les fortifications
+    let mult = 1.0;
+    if (this.type === "siege") mult = 3.5;
+    else if (this.type === "militia") mult = 1.25;
+    else if (this.type === "cavalry") mult = 0.9;
+    else if (this.type === "archer") mult = 0.8;
+    else if (this.type === "pioneer") mult = 0.5;
+
+    dmg *= mult;
+
+    const targetX = targetCell.x + 0.5;
+    const targetY = targetCell.y + 0.5;
+
+    if (this.isRanged) {
+      const isSiege = this.type === "siege";
+      const proj = new Projectile(this.factionId, this.x, this.y, targetX, targetY, dmg, null, isSiege);
+      engine.projectiles.push(proj);
+
+      if (this.factionId === 1) {
+        SOUND.playCharge();
+      }
+    } else {
+      engine.damageInfrastructure(targetCell, dmg, this.factionId);
+      if (this.factionId === 1) {
+        SOUND.playClash();
+      }
+      engine.combatEvents.push({
+        x: targetX,
+        y: targetY,
+        life: 14,
+        attackerId: this.factionId,
+        type: "slash"
+      });
+    }
+  }
+
   takeDamage(amount, attackerId, engine) {
     const def = this.getEffectiveDefense(engine);
     const netDamage = Math.max(2, Math.floor(amount - def));
@@ -1264,8 +1493,8 @@ class Unit {
       type: "slash"
     });
 
-    // Auto-riposte si la cible n'en a pas
-    if (!this.targetUnit && this.attack > 0) {
+    // Auto-riposte si l'unité n'a pas déjà de cible ou d'ordre de siège
+    if (!this.targetUnit && !this.targetBuildingCell && this.attack > 0) {
       const attackerUnit = engine.units.find((u) => u.id === attackerId || (u.factionId === attackerId && Math.hypot(u.x - this.x, u.y - this.y) <= this.range * 1.5));
       if (attackerUnit) {
         this.attackTarget(attackerUnit);
@@ -1301,6 +1530,34 @@ class Unit {
     let closestEnemy = null;
     let minDist = aggroRadius;
 
+    // Pour les trébuchets (armes de siège), priorité absolue aux fortifications et bastions ennemis
+    if (this.type === "siege") {
+      let closestBuilding = null;
+      let minBldDist = aggroRadius;
+      const curX = Math.floor(this.x);
+      const curY = Math.floor(this.y);
+      const rInt = Math.ceil(aggroRadius);
+
+      for (let dy = -rInt; dy <= rInt; dy++) {
+        for (let dx = -rInt; dx <= rInt; dx++) {
+          const c = engine.map.getCell(curX + dx, curY + dy);
+          if (c && c.owner !== 0 && c.owner !== this.factionId && c.infrastructure) {
+            const d = Math.hypot((c.x + 0.5) - this.x, (c.y + 0.5) - this.y);
+            if (d <= minBldDist) {
+              minBldDist = d;
+              closestBuilding = c;
+            }
+          }
+        }
+      }
+
+      if (closestBuilding) {
+        this.attackBuilding(closestBuilding);
+        return;
+      }
+    }
+
+    // 1. Détection des bataillons ennemis mobiles
     for (let i = 0; i < engine.units.length; i++) {
       const other = engine.units[i];
       if (other.factionId !== this.factionId && other.hp > 0) {
@@ -1314,6 +1571,31 @@ class Unit {
 
     if (closestEnemy) {
       this.attackTarget(closestEnemy);
+      return;
+    }
+
+    // 2. Si aucune unité ennemie en vue, détecter les bastions, tours et citadelles ennemis dans le rayon
+    let closestBuilding = null;
+    let minBldDist = aggroRadius;
+    const curX = Math.floor(this.x);
+    const curY = Math.floor(this.y);
+    const rInt = Math.ceil(aggroRadius);
+
+    for (let dy = -rInt; dy <= rInt; dy++) {
+      for (let dx = -rInt; dx <= rInt; dx++) {
+        const c = engine.map.getCell(curX + dx, curY + dy);
+        if (c && c.owner !== 0 && c.owner !== this.factionId && c.infrastructure) {
+          const d = Math.hypot((c.x + 0.5) - this.x, (c.y + 0.5) - this.y);
+          if (d <= minBldDist) {
+            minBldDist = d;
+            closestBuilding = c;
+          }
+        }
+      }
+    }
+
+    if (closestBuilding) {
+      this.attackBuilding(closestBuilding);
     }
   }
 
@@ -1323,8 +1605,10 @@ class Unit {
     const cell = engine.map.getCell(cx, cy);
 
     if (cell && cell.terrain.traversable && cell.owner !== this.factionId) {
-      // Si la case n'a pas d'infrastructure ennemie ou si l'unité est capable de pacifier
-      if (!cell.infrastructure || cell.infrastructure === "farm") {
+      if (cell.infrastructure && cell.owner !== 0) {
+        // Le secteur contient un bâtiment ennemi : engager le siège !
+        this.attackBuilding(cell);
+      } else {
         cell.owner = this.factionId;
         engine.updateTerritoryCounts();
       }
@@ -1337,10 +1621,13 @@ class Unit {
     const cell = engine.map.getCell(cx, cy);
 
     if (cell && cell.terrain.traversable) {
-      // Revendiquer la cellule
-      if (cell.owner !== this.factionId && !cell.infrastructure) {
-        cell.owner = this.factionId;
-        engine.updateTerritoryCounts();
+      if (cell.owner !== this.factionId) {
+        if (cell.infrastructure && cell.owner !== 0) {
+          this.attackBuilding(cell);
+        } else {
+          cell.owner = this.factionId;
+          engine.updateTerritoryCounts();
+        }
       }
     }
   }
@@ -1506,7 +1793,8 @@ class WorldMap {
       chosen.isCapital = true;
       chosen.capitalFactionId = faction.id;
       chosen.infrastructure = "citadel";
-      chosen.infraHp = 600;
+      chosen.infraHp = 800;
+      chosen.maxInfraHp = 800;
 
       // Revendication territoriale initiale (secteurs immédiats)
       for (let dy = -1; dy <= 1; dy++) {
@@ -1884,7 +2172,8 @@ class GameEngine {
     targetCell.isCapital = true;
     targetCell.capitalFactionId = 1;
     targetCell.infrastructure = "citadel";
-    targetCell.infraHp = 600;
+    targetCell.infraHp = 800;
+    targetCell.maxInfraHp = 800;
 
     // 3. Revendiquer les 3x3 secteurs environnants
     for (let dy = -1; dy <= 1; dy++) {
@@ -2006,31 +2295,96 @@ class GameEngine {
     if (!cell.infraHp) {
       const proto = CONFIG.INFRASTRUCTURES[cell.infrastructure.toUpperCase()];
       cell.infraHp = proto ? proto.hp : 200;
+      cell.maxInfraHp = cell.infraHp;
     }
 
     cell.infraHp -= damage;
 
     if (cell.infraHp <= 0) {
       const infraName = cell.infrastructure;
+      const isCapital = cell.isCapital;
+      const ownerId = cell.owner;
+      const owner = this.factions.get(ownerId);
+      const attacker = this.factions.get(attackerFactionId);
+
       cell.infrastructure = null;
       cell.infraHp = null;
+      cell.maxInfraHp = null;
 
-      const attacker = this.factions.get(attackerFactionId);
-      const owner = this.factions.get(cell.owner);
-
-      if (cell.isCapital && owner) {
-        this.addLog(`§c§l[CAPITALE TOMBÉE] La citadelle de ${owner.name} a été rasée par ${attacker ? attacker.name : "l'ennemi"} !`);
-        SOUND.playRaidAlert();
+      if (isCapital && owner) {
         cell.isCapital = false;
         cell.owner = attackerFactionId;
-        if (owner) owner.moodScore = Math.max(-1000, owner.moodScore - 500);
-        if (attacker) attacker.moodScore = Math.min(1000, attacker.moodScore + 250);
+        owner.isDefeated = true;
+
+        // Dissoudre les troupes restantes de la nation vaincue
+        this.units = this.units.filter((u) => u.factionId !== ownerId);
+
+        // Neutraliser les autres territoires de la faction défaite
+        for (let y = 0; y < this.map.height; y++) {
+          for (let x = 0; x < this.map.width; x++) {
+            const c = this.map.getCell(x, y);
+            if (c && c.owner === ownerId) {
+              c.owner = 0;
+              c.infrastructure = null;
+              c.infraHp = null;
+              c.maxInfraHp = null;
+            }
+          }
+        }
+
+        const capitalMsg = (typeof I18N !== "undefined" && I18N.currentLang === "en")
+          ? `§c§l[CAPITAL FALLEN] The Citadel of ${owner.name} has been razed by ${attacker ? attacker.name : "the enemy"}! The realm has collapsed!`
+          : `§c§l[CAPITALE TOMBÉE] La citadelle de ${owner.name} a été rasée par ${attacker ? attacker.name : "l'ennemi"} ! La nation est anéantie !`;
+        this.addLog(capitalMsg);
+        SOUND.playRaidAlert();
+
+        if (attackerFactionId === 1) {
+          SOUND.playFanfare();
+          const conquerMsg = (typeof I18N !== "undefined" && I18N.currentLang === "en")
+            ? `§a§l[CONQUEST] You have destroyed the rival capital of ${owner.name}!`
+            : `§a§l[CONQUÊTE MAJEURE] Vous avez détruit la capitale rivale de ${owner.name} !`;
+          this.addLog(conquerMsg);
+        }
+
+        // Vérifier si la capitale du joueur est tombée
+        if (ownerId === 1) {
+          this.onPlayerDefeat();
+        } else {
+          // Vérifier si toutes les factions rivales sont vaincues
+          const remainingRivals = Array.from(this.factions.values()).filter((f) => f.id !== 1 && !f.isDefeated);
+          if (remainingRivals.length === 0) {
+            this.onPlayerVictory();
+          }
+        }
       } else {
-        this.addLog(`§6Un bâtiment (${infraName}) a été détruit.`);
+        const destroyedMsg = (typeof I18N !== "undefined" && I18N.currentLang === "en")
+          ? `§6A building (${infraName}) was destroyed.`
+          : `§6Un bâtiment (${infraName}) a été détruit.`;
+        this.addLog(destroyedMsg);
       }
 
       this.updateTerritoryCounts();
     }
+  }
+
+  onPlayerVictory() {
+    this.isPaused = true;
+    SOUND.playFanfare();
+    const msg = (typeof I18N !== "undefined" && I18N.currentLang === "en")
+      ? "§6§l[ROYAL VICTORY] All rival capitals have fallen! You reign supreme across the realm!"
+      : "§6§l[VICTOIRE ROYALE] Toutes les capitales rivales sont tombées ! Vous régnez sans partage sur le monde !";
+    this.addLog(msg);
+    if (this.onVictoryCallback) this.onVictoryCallback();
+  }
+
+  onPlayerDefeat() {
+    this.isPaused = true;
+    SOUND.playRaidAlert();
+    const msg = (typeof I18N !== "undefined" && I18N.currentLang === "en")
+      ? "§4§l[ROYAL DEFEAT] Your Capital has fallen! Your realm has collapsed into ashes..."
+      : "§4§l[DÉFAITE ROYALE] Votre Capitale est tombée ! Votre royaume s'est effondré dans les flammes...";
+    this.addLog(msg);
+    if (this.onDefeatCallback) this.onDefeatCallback();
   }
 
   // Banquet du crépuscule (Logique authentique Jerry's Nations jn_food)
@@ -2199,6 +2553,7 @@ class GameEngine {
 
     cell.infrastructure = infra.id;
     cell.infraHp = infra.hp || 200;
+    cell.maxInfraHp = cell.infraHp;
     cell.owner = factionId;
 
     // Si c'est un avant-poste, revendiquer un rayon de secteurs
@@ -3641,6 +3996,29 @@ class MapRenderer {
 
     ctx.strokeStyle = "#fbbf24";
     ctx.strokeRect(px + s * 0.35, py + s * 0.3, s * 0.3, s * 0.2);
+
+    // Barre de PV de la Capitale
+    const maxHp = cell.maxInfraHp || 800;
+    const currentHp = cell.infraHp !== undefined && cell.infraHp !== null ? cell.infraHp : maxHp;
+    const barW = s * 0.76;
+    const barH = 5;
+    const barX = px + (s - barW) / 2;
+    const barY = py + 3;
+    const hpRatio = Math.max(0, Math.min(1, currentHp / maxHp));
+
+    // Fond
+    ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
+    ctx.fillRect(barX - 1, barY - 1, barW + 2, barH + 2);
+
+    // Barre colorée
+    ctx.fillStyle = hpRatio > 0.5 ? "#22c55e" : hpRatio > 0.25 ? "#eab308" : "#ef4444";
+    ctx.fillRect(barX, barY, barW * hpRatio, barH);
+
+    // Bordure dorée prestigieuse
+    ctx.strokeStyle = "#f59e0b";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(barX - 1, barY - 1, barW + 2, barH + 2);
+
     ctx.restore();
   }
 
@@ -3692,6 +4070,40 @@ class MapRenderer {
       ctx.fillRect(px + s * 0.35, py + s * 0.35, s * 0.3, s * 0.3);
     }
 
+    // Barre de points de vie (PV) du bâtiment si endommagé ou s'il s'agit d'une Citadelle / Capitale
+    if (cell.infraHp !== null && cell.infraHp !== undefined) {
+      const maxHp = cell.maxInfraHp || (CONFIG.INFRASTRUCTURES[type.toUpperCase()]?.hp || 200);
+      const isDamaged = cell.infraHp < maxHp;
+      const isImportant = cell.isCapital || type === "citadel" || type === "watchtower";
+
+      if (isDamaged || isImportant) {
+        const barW = s * 0.7;
+        const barH = 4;
+        const barX = px + (s - barW) / 2;
+        const barY = py + 3;
+
+        const hpRatio = Math.max(0, Math.min(1, cell.infraHp / maxHp));
+
+        // Fond sombre
+        ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
+        ctx.fillRect(barX - 1, barY - 1, barW + 2, barH + 2);
+
+        // Couleur dynamique selon le pourcentage de vie restant
+        if (hpRatio > 0.5) ctx.fillStyle = "#22c55e"; // Vert
+        else if (hpRatio > 0.25) ctx.fillStyle = "#eab308"; // Jaune
+        else ctx.fillStyle = "#ef4444"; // Rouge critique
+
+        ctx.fillRect(barX, barY, barW * hpRatio, barH);
+
+        // Bordure dorée pour la Capitale
+        if (cell.isCapital) {
+          ctx.strokeStyle = "#f59e0b";
+          ctx.lineWidth = 1;
+          ctx.strokeRect(barX - 1, barY - 1, barW + 2, barH + 2);
+        }
+      }
+    }
+
     ctx.restore();
   }
 
@@ -3706,7 +4118,7 @@ class MapRenderer {
 
     // Infobulle légère au-dessus du secteur survolé
     ctx.fillStyle = "rgba(20, 15, 10, 0.85)";
-    const labelW = 120;
+    const labelW = 130;
     const labelH = 22;
     ctx.fillRect(px + cellSize / 2 - labelW / 2, py - labelH - 4, labelW, labelH);
     ctx.strokeStyle = "#b45309";
@@ -3716,7 +4128,11 @@ class MapRenderer {
     ctx.fillStyle = "#fef08a";
     ctx.font = "10px sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText(`${cell.terrain.name}`, px + cellSize / 2, py - 9);
+    const biomeName = (typeof I18N !== "undefined" && I18N.getBiomeName)
+      ? I18N.getBiomeName(cell.terrain.id)
+      : cell.terrain.name;
+    const isCap = cell.isCapital ? (typeof I18N !== "undefined" && I18N.currentLang === "en" ? " (Capital)" : " (Capitale)") : "";
+    ctx.fillText(`${biomeName}${isCap}`, px + cellSize / 2, py - 9);
     ctx.restore();
   }
 
@@ -3889,6 +4305,10 @@ class UIManager {
     this.setupRecruitmentControls();
     this.setupExpeditionControls();
     this.setupBuildControls();
+
+    // Callbacks de fin de partie
+    this.engine.onVictoryCallback = () => this.showGameEndModal(true);
+    this.engine.onDefeatCallback = () => this.showGameEndModal(false);
   }
 
   bindDomElements() {
@@ -4317,18 +4737,30 @@ class UIManager {
 
       const myPlayerId = this.network.myPlayerId;
 
-      // Vérifier si un ennemi a été ciblé
+      // 1. Vérifier si un bataillon ennemi a été ciblé
       const targetEnemy = this.engine.units.find(
         (u) => u.factionId !== myPlayerId && Math.hypot(u.x - (cell.x + 0.5), u.y - (cell.y + 0.5)) < 1.4 && u.hp > 0
       );
 
       if (targetEnemy) {
-        // ORDRE D'ATTAQUE
+        // ORDRE D'ATTAQUE D'UNITÉ
         this.selectedUnits.forEach((u) => {
           u.attackTarget(targetEnemy);
         });
         this.renderer.addOrderRipple(mouseX, mouseY, true);
         SOUND.playCharge();
+      } else if (cell.owner !== 0 && cell.owner !== myPlayerId && cell.infrastructure) {
+        // ORDRE DE SIÈGE DE BÂTIMENT / CITADELLE / CAPITALE ENNEMIE
+        this.selectedUnits.forEach((u) => {
+          u.attackBuilding(cell);
+        });
+        this.renderer.addOrderRipple(mouseX, mouseY, true);
+        SOUND.playCharge();
+        const bldName = CONFIG.INFRASTRUCTURES[cell.infrastructure.toUpperCase()]?.name || cell.infrastructure;
+        const msg = (typeof I18N !== "undefined" && I18N.currentLang === "en")
+          ? `[ASSAULT] Siege ordered on enemy ${bldName} (${cell.infraHp || 200} HP)!`
+          : `[ASSAUT] Siège ordonné sur ${bldName} ennemie (${cell.infraHp || 200} PV) !`;
+        this.engine.addLog(`§c${msg}`);
       } else {
         // ORDRE DE DÉPLACEMENT EN FORMATION
         const count = this.selectedUnits.length;
@@ -4367,13 +4799,14 @@ class UIManager {
     if (!this.elSelectionInfo) return;
 
     if (this.selectedUnits.length === 0) {
-      this.elSelectionInfo.innerHTML = `<span class="mc-gray">Aucun bataillon sélectionné. Clic gauche ou glisser pour sélectionner.</span>`;
+      this.elSelectionInfo.innerHTML = `<span class="mc-gray">${I18N.t("noUnitsSelected")}</span>`;
       return;
     }
 
     const counts = {};
     this.selectedUnits.forEach((u) => {
-      counts[u.name] = (counts[u.name] || 0) + 1;
+      const uName = I18N.getUnitName(u.type);
+      counts[uName] = (counts[uName] || 0) + 1;
     });
 
     const summary = Object.entries(counts)
@@ -4385,8 +4818,8 @@ class UIManager {
 
     this.elSelectionInfo.innerHTML = `
       <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
-        <span>BATAILLONS : <strong style="color:var(--parchment-green)">${summary}</strong> (${this.selectedUnits.length})</span>
-        <span style="font-family:var(--font-mono); font-size:11px; color:#57442d;">PV : ${totalHp}/${maxHp}</span>
+        <span>${I18N.t("battalionsSelected")} <strong style="color:var(--parchment-green)">${summary}</strong> (${this.selectedUnits.length})</span>
+        <span style="font-family:var(--font-mono); font-size:11px; color:#57442d;">${I18N.t("hpLabel")} ${totalHp}/${maxHp}</span>
       </div>
     `;
   }
@@ -4406,7 +4839,7 @@ class UIManager {
     // Stade de progression ou Mode Bac à Sable
     if (this.elStageBadge) {
       if (this.engine.gameMode === "sandbox") {
-        this.elStageBadge.textContent = "[BAC À SABLE]";
+        this.elStageBadge.textContent = I18N.currentLang === "fr" ? "[BAC À SABLE]" : "[SANDBOX]";
         this.elStageBadge.style.color = "var(--parchment-gold)";
       } else {
         const stage = CONFIG.STAGES[playerFaction.stageTier];
@@ -4441,10 +4874,10 @@ class UIManager {
     // Compte des troupes actives
     const activeTroops = this.engine.units.filter((u) => u.factionId === myPlayerId).length;
     if (this.elTroops) this.elTroops.textContent = activeTroops;
-    if (this.elTerritory) this.elTerritory.textContent = `${playerFaction.territoryCount} secteurs`;
+    if (this.elTerritory) this.elTerritory.textContent = `${playerFaction.territoryCount} ${I18N.t("sectorsUnit")}`;
 
     if (this.elDayDisplay) {
-      this.elDayDisplay.textContent = `JOUR ${this.engine.dayCount}`;
+      this.elDayDisplay.textContent = `${I18N.t("dayLabel")} ${this.engine.dayCount}`;
     }
 
     // Nettoyer les unités mortes de la sélection
@@ -4457,10 +4890,13 @@ class UIManager {
     if (this.renderer.hoverCell && this.selectedUnits.length === 0 && !this.selectedBuildMode && this.elSelectionInfo) {
       const c = this.renderer.hoverCell;
       const ownerFac = c.owner > 0 ? this.engine.factions.get(c.owner) : null;
-      const ownerStr = ownerFac ? `<strong style="color:${ownerFac.border}">${ownerFac.name}</strong>` : `<span class="mc-gray">Terre Sauvage</span>`;
-      const infraStr = c.infrastructure ? ` | Bâtiment : <strong style="color:#b45309">${CONFIG.INFRASTRUCTURES[c.infrastructure.toUpperCase()]?.name || c.infrastructure}</strong>` : "";
+      const ownerStr = ownerFac ? `<strong style="color:${ownerFac.border}">${ownerFac.name}</strong>` : `<span class="mc-gray">${I18N.t("sectorWild")}</span>`;
+      const infraName = c.isCapital ? I18N.t("sectorCitadel") : (c.infrastructure ? I18N.getInfraName(c.infrastructure) : "");
+      const infraStr = infraName ? ` | ${I18N.t("lblSecInfra")} <strong style="color:#b45309">${infraName}</strong>` : "";
+      const secWord = I18N.currentLang === "en" ? "Sector" : "Secteur";
+      const ctrlWord = I18N.t("lblSecControl");
       this.elSelectionInfo.innerHTML = `
-        <span style="font-size:11px;">Secteur (${c.x}, ${c.y}) : <strong>${c.terrain.name}</strong> | ${c.terrain.desc} | Contrôle : ${ownerStr}${infraStr}</span>
+        <span style="font-size:11px;">${secWord} (${c.x}, ${c.y}) : <strong>${I18N.getBiomeName(c.terrain.id)}</strong> | ${ctrlWord} ${ownerStr}${infraStr}</span>
       `;
     }
 
@@ -4502,7 +4938,6 @@ class UIManager {
     if (!this.elSectorCoord) return;
     const myPlayerId = this.network.myPlayerId;
 
-    // Prendre le secteur cliqué, ou survolé, ou la capitale du joueur
     let cell = this.inspectedCell || this.renderer.hoverCell;
     if (!cell) {
       const cap = this.engine.map.capitals.find((c) => c.factionId === myPlayerId);
@@ -4511,11 +4946,12 @@ class UIManager {
     if (!cell) return;
 
     // 1. Coordonnées et Biome
-    const isCap = cell.isCapital ? " (Capitale)" : "";
-    this.elSectorCoord.textContent = `Secteur (${cell.x}, ${cell.y})${isCap}`;
+    const isCap = cell.isCapital ? (I18N.currentLang === "en" ? " (Capital)" : " (Capitale)") : "";
+    const secWord = I18N.currentLang === "en" ? "Sector" : "Secteur";
+    this.elSectorCoord.textContent = `${secWord} (${cell.x}, ${cell.y})${isCap}`;
 
     if (this.elSectorBiomeBadge) {
-      this.elSectorBiomeBadge.textContent = cell.terrain.name;
+      this.elSectorBiomeBadge.textContent = I18N.getBiomeName(cell.terrain.id);
       this.elSectorBiomeBadge.style.color = cell.terrain.color || "#78350f";
       this.elSectorBiomeBadge.style.borderColor = cell.terrain.color || "#78350f";
     }
@@ -4527,7 +4963,7 @@ class UIManager {
         this.elSectorOwner.textContent = ownerFac.name;
         this.elSectorOwner.style.color = ownerFac.border || "#55FF55";
       } else {
-        this.elSectorOwner.textContent = "Terre Sauvage (Libre)";
+        this.elSectorOwner.textContent = I18N.t("sectorWild");
         this.elSectorOwner.style.color = "#78350f";
       }
     }
@@ -4535,29 +4971,31 @@ class UIManager {
     // 3. Infrastructure & Fortification
     if (this.elSectorInfra) {
       if (cell.isCapital) {
-        this.elSectorInfra.textContent = "Cité Royale (Bastion)";
+        this.elSectorInfra.textContent = I18N.t("sectorCitadel");
         this.elSectorInfra.style.color = "#b45309";
       } else if (cell.infrastructure) {
-        const proto = CONFIG.INFRASTRUCTURES[cell.infrastructure.toUpperCase()];
-        this.elSectorInfra.textContent = proto ? proto.name : cell.infrastructure;
+        this.elSectorInfra.textContent = I18N.getInfraName(cell.infrastructure);
         this.elSectorInfra.style.color = "#b45309";
       } else {
-        this.elSectorInfra.textContent = "Aucun aménagement";
+        this.elSectorInfra.textContent = I18N.t("sectorNoInfra");
         this.elSectorInfra.style.color = "#78350f";
       }
     }
 
-    // 4. Défense & Résistance
+    // 4. Défense & Résistance (Points de vie réels de la structure)
     if (this.elSectorDefense) {
       let defPts = 100;
+      let maxDef = 100;
       if (cell.isCapital) {
-        defPts = 500;
+        maxDef = cell.maxInfraHp || 800;
+        defPts = cell.infraHp !== null && cell.infraHp !== undefined ? cell.infraHp : maxDef;
       } else if (cell.infrastructure) {
         const proto = CONFIG.INFRASTRUCTURES[cell.infrastructure.toUpperCase()];
-        if (proto && proto.hp) defPts = proto.hp;
+        maxDef = cell.maxInfraHp || (proto ? proto.hp : 200);
+        defPts = cell.infraHp !== null && cell.infraHp !== undefined ? cell.infraHp : maxDef;
       }
-      this.elSectorDefense.textContent = `${defPts} pts`;
-      this.elSectorDefense.style.color = "#2b1d0c";
+      this.elSectorDefense.textContent = `${defPts} / ${maxDef} ${I18N.t("defensePts")}`;
+      this.elSectorDefense.style.color = defPts < maxDef * 0.4 ? "#dc2626" : "#2b1d0c";
     }
 
     // 5. Rendement Économique
@@ -4577,18 +5015,64 @@ class UIManager {
         }
       }
 
-      const yields = [];
-      if (food > 0) yields.push(`+${food.toFixed(0)} Pain`);
-      if (wood > 0) yields.push(`+${wood.toFixed(0)} Bois`);
-      if (stone > 0) yields.push(`+${stone.toFixed(0)} Pierre`);
-      if (gold > 0) yields.push(`+${gold.toFixed(0)} Or`);
+      const foodWord = I18N.currentLang === "en" ? "Bread" : "Pain";
+      const woodWord = I18N.currentLang === "en" ? "Wood" : "Bois";
+      const stoneWord = I18N.currentLang === "en" ? "Stone" : "Pierre";
+      const goldWord = I18N.currentLang === "en" ? "Gold" : "Or";
+      const daySuffix = I18N.currentLang === "en" ? "/day" : "/j";
 
-      this.elSectorYields.textContent = yields.length > 0 ? `${yields.join(", ")} /j` : "Aucun revenu";
+      const yields = [];
+      if (food > 0) yields.push(`+${food.toFixed(0)} ${foodWord}`);
+      if (wood > 0) yields.push(`+${wood.toFixed(0)} ${woodWord}`);
+      if (stone > 0) yields.push(`+${stone.toFixed(0)} ${stoneWord}`);
+      if (gold > 0) yields.push(`+${gold.toFixed(0)} ${goldWord}`);
+
+      this.elSectorYields.textContent = yields.length > 0 ? `${yields.join(", ")} ${daySuffix}` : I18N.t("noYields");
     }
 
     // 6. Note Tactique
     if (this.elSectorTacticalNote) {
-      this.elSectorTacticalNote.textContent = cell.terrain.desc || "Secteur stratégique";
+      this.elSectorTacticalNote.textContent = cell.terrain.desc || I18N.t("tacticalDefaultNote");
+    }
+  }
+
+  showGameEndModal(isVictory) {
+    const modal = document.getElementById("game-end-modal");
+    const title = document.getElementById("game-end-title");
+    const desc = document.getElementById("game-end-desc");
+    const btnQuit = document.getElementById("btn-end-quit-lobby");
+
+    if (!modal) return;
+    modal.classList.remove("hidden");
+
+    if (isVictory) {
+      if (title) {
+        title.textContent = I18N.t("victoryTitle");
+        title.className = "modal-title mc-gold";
+      }
+      if (desc) {
+        desc.textContent = I18N.t("victoryDesc");
+      }
+    } else {
+      if (title) {
+        title.textContent = I18N.t("defeatTitle");
+        title.className = "modal-title mc-red";
+      }
+      if (desc) {
+        desc.textContent = I18N.t("defeatDesc");
+      }
+    }
+
+    if (btnQuit) {
+      btnQuit.textContent = I18N.t("btnReturnLobby");
+      btnQuit.onclick = () => {
+        modal.classList.add("hidden");
+        if (this.onQuitToLobby) {
+          this.onQuitToLobby();
+        } else {
+          location.reload();
+        }
+      };
     }
   }
 }

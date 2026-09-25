@@ -49,10 +49,9 @@ export class Projectile {
       this.targetUnit.takeDamage(this.damage, this.attackerId, engine);
     } else {
       // Dégât de zone ou sur infrastructure
-      const targetCell = engine.map.getCell(Math.round(this.targetX), Math.round(this.targetY));
+      const targetCell = engine.map.getCell(Math.floor(this.targetX), Math.floor(this.targetY));
       if (targetCell && targetCell.infrastructure && targetCell.owner !== this.attackerId) {
-        const mult = this.isSiege ? 3.5 : 1.0;
-        engine.damageInfrastructure(targetCell, this.damage * mult, this.attackerId);
+        engine.damageInfrastructure(targetCell, this.damage, this.attackerId);
       }
     }
 
@@ -84,6 +83,7 @@ export class Unit {
 
     this.targetUnit = null;
     this.targetCell = null;
+    this.targetBuildingCell = null;
 
     this.hp = proto.hp;
     this.maxHp = proto.hp;
@@ -97,7 +97,7 @@ export class Unit {
     this.chargeBonus = proto.chargeBonus || 1.0;
     this.hasCharged = false;
 
-    this.state = "idle"; // "idle", "moving", "attacking", "building"
+    this.state = "idle"; // "idle", "moving", "attacking", "attacking_building", "building"
     this.attackCooldown = 0;
     this.isSelected = false;
 
@@ -111,6 +111,7 @@ export class Unit {
     this.targetY = cellY + 0.5;
     this.targetUnit = null;
     this.targetCell = null;
+    this.targetBuildingCell = null;
     this.state = "moving";
     this.hasCharged = false;
   }
@@ -119,9 +120,20 @@ export class Unit {
     if (!targetUnit || targetUnit.hp <= 0 || targetUnit.factionId === this.factionId) return;
     this.targetUnit = targetUnit;
     this.targetCell = null;
+    this.targetBuildingCell = null;
     this.targetX = targetUnit.x;
     this.targetY = targetUnit.y;
     this.state = "attacking";
+  }
+
+  attackBuilding(targetCell) {
+    if (!targetCell || !targetCell.infrastructure || targetCell.owner === this.factionId) return;
+    this.targetBuildingCell = targetCell;
+    this.targetUnit = null;
+    this.targetCell = null;
+    this.targetX = targetCell.x + 0.5;
+    this.targetY = targetCell.y + 0.5;
+    this.state = "attacking_building";
   }
 
   update(engine) {
@@ -152,6 +164,27 @@ export class Unit {
         } else {
           // Hors de portée : s'approcher de l'ennemi
           this.stepTowards(this.targetUnit.x, this.targetUnit.y, this.speed * moodBuff, engine);
+          return true;
+        }
+      }
+    }
+
+    // 1b. Ciblage d'un bâtiment ou d'une citadelle / capitale ennemie
+    if (this.targetBuildingCell) {
+      if (!this.targetBuildingCell.infrastructure || this.targetBuildingCell.owner === this.factionId) {
+        this.targetBuildingCell = null;
+        this.state = "idle";
+      } else {
+        const bx = this.targetBuildingCell.x + 0.5;
+        const by = this.targetBuildingCell.y + 0.5;
+        const dist = Math.hypot(bx - this.x, by - this.y);
+
+        const effectiveRange = this.getEffectiveRange(engine);
+        if (dist <= effectiveRange) {
+          this.performBuildingAttack(this.targetBuildingCell, engine, combatBuff);
+          return true;
+        } else {
+          this.stepTowards(bx, by, this.speed * moodBuff, engine);
           return true;
         }
       }
@@ -260,6 +293,48 @@ export class Unit {
     }
   }
 
+  performBuildingAttack(targetCell, engine, combatBuff) {
+    if (this.attackCooldown > 0) return;
+
+    this.attackCooldown = this.isRanged ? 24 : 18;
+
+    let dmg = this.attack * combatBuff;
+    // Multiplicateur contre les fortifications
+    let mult = 1.0;
+    if (this.type === "siege") mult = 3.5;
+    else if (this.type === "militia") mult = 1.25;
+    else if (this.type === "cavalry") mult = 0.9;
+    else if (this.type === "archer") mult = 0.8;
+    else if (this.type === "pioneer") mult = 0.5;
+
+    dmg *= mult;
+
+    const targetX = targetCell.x + 0.5;
+    const targetY = targetCell.y + 0.5;
+
+    if (this.isRanged) {
+      const isSiege = this.type === "siege";
+      const proj = new Projectile(this.factionId, this.x, this.y, targetX, targetY, dmg, null, isSiege);
+      engine.projectiles.push(proj);
+
+      if (this.factionId === 1) {
+        SOUND.playCharge();
+      }
+    } else {
+      engine.damageInfrastructure(targetCell, dmg, this.factionId);
+      if (this.factionId === 1) {
+        SOUND.playClash();
+      }
+      engine.combatEvents.push({
+        x: targetX,
+        y: targetY,
+        life: 14,
+        attackerId: this.factionId,
+        type: "slash"
+      });
+    }
+  }
+
   takeDamage(amount, attackerId, engine) {
     const def = this.getEffectiveDefense(engine);
     const netDamage = Math.max(2, Math.floor(amount - def));
@@ -274,8 +349,8 @@ export class Unit {
       type: "slash"
     });
 
-    // Auto-riposte si la cible n'en a pas
-    if (!this.targetUnit && this.attack > 0) {
+    // Auto-riposte si l'unité n'a pas déjà de cible ou d'ordre de siège
+    if (!this.targetUnit && !this.targetBuildingCell && this.attack > 0) {
       const attackerUnit = engine.units.find((u) => u.id === attackerId || (u.factionId === attackerId && Math.hypot(u.x - this.x, u.y - this.y) <= this.range * 1.5));
       if (attackerUnit) {
         this.attackTarget(attackerUnit);
@@ -311,6 +386,34 @@ export class Unit {
     let closestEnemy = null;
     let minDist = aggroRadius;
 
+    // Pour les trébuchets (armes de siège), priorité absolue aux fortifications et bastions ennemis
+    if (this.type === "siege") {
+      let closestBuilding = null;
+      let minBldDist = aggroRadius;
+      const curX = Math.floor(this.x);
+      const curY = Math.floor(this.y);
+      const rInt = Math.ceil(aggroRadius);
+
+      for (let dy = -rInt; dy <= rInt; dy++) {
+        for (let dx = -rInt; dx <= rInt; dx++) {
+          const c = engine.map.getCell(curX + dx, curY + dy);
+          if (c && c.owner !== 0 && c.owner !== this.factionId && c.infrastructure) {
+            const d = Math.hypot((c.x + 0.5) - this.x, (c.y + 0.5) - this.y);
+            if (d <= minBldDist) {
+              minBldDist = d;
+              closestBuilding = c;
+            }
+          }
+        }
+      }
+
+      if (closestBuilding) {
+        this.attackBuilding(closestBuilding);
+        return;
+      }
+    }
+
+    // 1. Détection des bataillons ennemis mobiles
     for (let i = 0; i < engine.units.length; i++) {
       const other = engine.units[i];
       if (other.factionId !== this.factionId && other.hp > 0) {
@@ -324,6 +427,31 @@ export class Unit {
 
     if (closestEnemy) {
       this.attackTarget(closestEnemy);
+      return;
+    }
+
+    // 2. Si aucune unité ennemie en vue, détecter les bastions, tours et citadelles ennemis dans le rayon
+    let closestBuilding = null;
+    let minBldDist = aggroRadius;
+    const curX = Math.floor(this.x);
+    const curY = Math.floor(this.y);
+    const rInt = Math.ceil(aggroRadius);
+
+    for (let dy = -rInt; dy <= rInt; dy++) {
+      for (let dx = -rInt; dx <= rInt; dx++) {
+        const c = engine.map.getCell(curX + dx, curY + dy);
+        if (c && c.owner !== 0 && c.owner !== this.factionId && c.infrastructure) {
+          const d = Math.hypot((c.x + 0.5) - this.x, (c.y + 0.5) - this.y);
+          if (d <= minBldDist) {
+            minBldDist = d;
+            closestBuilding = c;
+          }
+        }
+      }
+    }
+
+    if (closestBuilding) {
+      this.attackBuilding(closestBuilding);
     }
   }
 
@@ -333,8 +461,10 @@ export class Unit {
     const cell = engine.map.getCell(cx, cy);
 
     if (cell && cell.terrain.traversable && cell.owner !== this.factionId) {
-      // Si la case n'a pas d'infrastructure ennemie ou si l'unité est capable de pacifier
-      if (!cell.infrastructure || cell.infrastructure === "farm") {
+      if (cell.infrastructure && cell.owner !== 0) {
+        // Le secteur contient un bâtiment ennemi : engager le siège !
+        this.attackBuilding(cell);
+      } else {
         cell.owner = this.factionId;
         engine.updateTerritoryCounts();
       }
@@ -347,10 +477,13 @@ export class Unit {
     const cell = engine.map.getCell(cx, cy);
 
     if (cell && cell.terrain.traversable) {
-      // Revendiquer la cellule
-      if (cell.owner !== this.factionId && !cell.infrastructure) {
-        cell.owner = this.factionId;
-        engine.updateTerritoryCounts();
+      if (cell.owner !== this.factionId) {
+        if (cell.infrastructure && cell.owner !== 0) {
+          this.attackBuilding(cell);
+        } else {
+          cell.owner = this.factionId;
+          engine.updateTerritoryCounts();
+        }
       }
     }
   }
