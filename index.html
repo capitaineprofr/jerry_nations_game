@@ -10,9 +10,9 @@
   <meta http-equiv="Expires" content="0">
   
   <!-- Feuilles de Styles -->
-  <link rel="stylesheet" href="css/style.css?v=2.3.0">
-  <link rel="stylesheet" href="css/hud.css?v=2.3.0">
-  <link rel="stylesheet" href="css/lobby.css?v=2.3.0">
+  <link rel="stylesheet" href="css/style.css?v=2.3.1">
+  <link rel="stylesheet" href="css/hud.css?v=2.3.1">
+  <link rel="stylesheet" href="css/lobby.css?v=2.3.1">
 
   <!-- PeerJS pour le Multijoueur P2P WebRTC sans serveur backend -->
   <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
@@ -36,10 +36,10 @@
           
           <!-- Colonne 1 : Identité de la Nation & du Dirigeant -->
           <div class="setup-col">
-            <div class="setup-section-title">1. IDENTITÉ DE LA NATION</div>
+            <div class="setup-section-title" id="lobby-sec1-title">1. IDENTITÉ DE LA NATION</div>
 
             <!-- Avatar & Skin Minecraft -->
-            <label class="setup-label">Avatar & Skin du Dirigeant :</label>
+            <label class="setup-label" id="lbl-leader-avatar">Avatar & Skin du Dirigeant :</label>
             <div class="avatar-setup-row">
               <div class="avatar-preview-frame">
                 <img id="setup-avatar-preview" src="textures/ui/me.gif" alt="Avatar Dirigeant">
@@ -50,15 +50,15 @@
                 <button type="button" id="btn-reset-skin" class="btn-mc" style="font-size: 10px; width: 100%; margin-top: 4px;">DÉFAUT (ME.GIF)</button>
               </div>
             </div>
-            <div class="avatar-hint-subtext">Supporte les fichiers skins Minecraft 64x64 PNG avec reliefs.</div>
+            <div class="avatar-hint-subtext" id="txt-avatar-hint">Supporte les fichiers skins Minecraft 64x64 PNG avec reliefs.</div>
             
-            <label class="setup-label" for="setup-player-name">Pseudo du Dirigeant :</label>
+            <label class="setup-label" id="lbl-player-name" for="setup-player-name">Pseudo du Dirigeant :</label>
             <input type="text" id="setup-player-name" class="setup-input" value="Jerry" maxlength="20" placeholder="Votre Nom ou Pseudo">
 
-            <label class="setup-label" for="setup-nation-name">Nom du Royaume / Nation :</label>
+            <label class="setup-label" id="lbl-nation-name" for="setup-nation-name">Nom du Royaume / Nation :</label>
             <input type="text" id="setup-nation-name" class="setup-input" value="Empire d'Émeraude" maxlength="28" placeholder="Nom de votre Empire">
 
-            <label class="setup-label">Bannière Royale & Couleur :</label>
+            <label class="setup-label" id="lbl-banner-picker">Bannière Royale & Couleur :</label>
             <div class="banner-picker-row" id="banner-picker">
               <button type="button" class="banner-swatch active" data-banner="emerald" style="background:#1b7a63; border-color:#22c55e;" title="Émeraude (Vert)"></button>
               <button type="button" class="banner-swatch" data-banner="ruby" style="background:#8a2424; border-color:#ef4444;" title="Rubis (Rouge)"></button>
@@ -67,22 +67,22 @@
               <button type="button" class="banner-swatch" data-banner="amber" style="background:#b8860b; border-color:#eab308;" title="Ambre (Or)"></button>
             </div>
 
-            <label class="setup-label" for="setup-nation-motto">Devise de la Faction :</label>
+            <label class="setup-label" id="lbl-nation-motto" for="setup-nation-motto">Devise de la Faction :</label>
             <input type="text" id="setup-nation-motto" class="setup-input" value="Souveraineté, Moissons et Gloire" maxlength="40">
           </div>
 
           <!-- Colonne 2 : Paramètres & Règles de la Partie -->
           <div class="setup-col">
-            <div class="setup-section-title">2. RÈGLES & DIFFICULTÉ</div>
+            <div class="setup-section-title" id="lobby-sec2-title">2. RÈGLES & DIFFICULTÉ</div>
 
-            <label class="setup-label">Mode de Jeu :</label>
+            <label class="setup-label" id="lbl-game-mode">Mode de Jeu :</label>
             <div class="toggle-group-row">
               <button type="button" class="btn-mc setup-btn-toggle active" data-setting="gameMode" data-value="standard">CONQUÊTE (T0-T10)</button>
               <button type="button" class="btn-mc setup-btn-toggle" data-setting="gameMode" data-value="sandbox">BAC À SABLE</button>
             </div>
             <div id="mode-help-text" class="setup-subtext">11 Stades, Banquet au crépuscule et gestion alimentaire.</div>
 
-            <label class="setup-label">Nations Rivales IA (Bots) :</label>
+            <label class="setup-label" id="lbl-bot-count">Nations Rivales IA (Bots) :</label>
             <div class="toggle-group-row">
               <button type="button" class="btn-mc setup-btn-toggle" data-setting="botCount" data-value="0">0 (SEUL)</button>
               <button type="button" class="btn-mc setup-btn-toggle" data-setting="botCount" data-value="1">1 BOT</button>
@@ -90,14 +90,14 @@
               <button type="button" class="btn-mc setup-btn-toggle active" data-setting="botCount" data-value="3">3 BOTS</button>
             </div>
 
-            <label class="setup-label">Niveau de Menace / Difficulté IA :</label>
+            <label class="setup-label" id="lbl-ai-diff">Niveau de Menace / Difficulté IA :</label>
             <div class="toggle-group-row">
               <button type="button" class="btn-mc setup-btn-toggle" data-setting="aiDifficulty" data-value="peaceful">PAISIBLE</button>
               <button type="button" class="btn-mc setup-btn-toggle active" data-setting="aiDifficulty" data-value="normal">ÉQUILIBRÉ</button>
               <button type="button" class="btn-mc setup-btn-toggle" data-setting="aiDifficulty" data-value="hard">IMPLACABLE</button>
             </div>
 
-            <label class="setup-label">Pillards Maraudeurs :</label>
+            <label class="setup-label" id="lbl-marauders">Pillards Maraudeurs :</label>
             <div class="toggle-group-row">
               <button type="button" class="btn-mc setup-btn-toggle active" data-setting="marauders" data-value="true">ACTIVÉS (HOSTILES)</button>
               <button type="button" class="btn-mc setup-btn-toggle" data-setting="marauders" data-value="false">DÉSACTIVÉS</button>
@@ -106,8 +106,8 @@
 
           <!-- Colonne 3 : Lancement & Multijoueur -->
           <div class="setup-col setup-col-action">
-            <div class="setup-section-title">3. COMMANDEMENT</div>
-            <p class="setup-p-desc">
+            <div class="setup-section-title" id="lobby-sec3-title">3. COMMANDEMENT</div>
+            <p class="setup-p-desc" id="txt-command-desc">
               Explorez la carte, exploitez les forêts pour le bois, les plaines pour le pain et les collines pour la pierre.
             </p>
 
@@ -118,7 +118,7 @@
             <div class="setup-divider"></div>
 
             <div class="setup-p2p-block">
-              <div class="p2p-title">MULTIJOUEUR P2P WEBRTC :</div>
+              <div class="p2p-title" id="txt-p2p-title">MULTIJOUEUR P2P WEBRTC :</div>
               <div class="p2p-join-box">
                 <input type="text" id="input-room-code" placeholder="Code de salon (ex: jerry-123)">
                 <button type="button" id="btn-join-room" class="btn-mc">REJOINDRE</button>
@@ -135,9 +135,9 @@
 
       <!-- Barre d'aide aux commandes et mécaniques -->
       <div class="mechanics-recap-bar panel-slate">
-        <div class="recap-item"><strong>Navigation Carte</strong> : Bords d'écran, Clic droit glissé, Clic molette, ZQSD/Flèches ou Clic Minimap</div>
-        <div class="recap-item"><strong>Bataillons RTS</strong> : Glisser pour encadrer (Box Select), Clic droit pour ordonner</div>
-        <div class="recap-item"><strong>Recentrer Caméra</strong> : Touche C ou bouton [CENTRER]</div>
+        <div class="recap-item" id="recap-item-nav"><strong>Navigation Carte</strong> : Bords d'écran, Clic droit glissé, Clic molette, ZQSD/Flèches ou Clic Minimap</div>
+        <div class="recap-item" id="recap-item-units"><strong>Bataillons RTS</strong> : Glisser pour encadrer (Box Select), Clic droit pour ordonner</div>
+        <div class="recap-item" id="recap-item-center"><strong>Recentrer Caméra</strong> : Touche C ou bouton [CENTRER]</div>
       </div>
     </div>
   </div>
@@ -243,8 +243,8 @@
       </button>
 
       <div class="sidebar-buildings-content">
-        <div class="sidebar-title">BÂTIMENTS & AVANT-POSTES</div>
-        <div class="sidebar-subtext">Sélectionnez une structure puis cliquez sur un secteur éligible :</div>
+        <div class="sidebar-title" id="buildings-drawer-title">BÂTIMENTS & AVANT-POSTES</div>
+        <div class="sidebar-subtext" id="buildings-drawer-desc">Sélectionnez une structure puis cliquez sur un secteur éligible :</div>
 
         <div class="buildings-cards-list">
           <button class="btn-mc btn-build-action" data-build-type="farm" title="Produit du pain (Coût: 40 Bois, 10 Pierre) - Plaine obligatoire">
@@ -376,13 +376,13 @@
   <div id="multiplayer-lobby-modal" class="modal-overlay hidden">
     <div class="modal-dialog panel-slate mp-lobby-dialog">
       <div class="modal-header">
-        <h2 class="modal-title">SALON MULTIJOUEUR - SALLE D'ATTENTE</h2>
+        <h2 class="modal-title" id="mp-lobby-header-title">SALON MULTIJOUEUR - SALLE D'ATTENTE</h2>
         <div id="mp-lobby-status" class="mc-gold" style="font-size: 11px; margin-top: 2px;">En attente de connexion...</div>
       </div>
       <div class="modal-content">
         <!-- Bloc Code de Salon & Partage -->
         <div class="mp-room-code-box">
-          <div class="mp-code-label">CODE DU SALON À PARTAGER :</div>
+          <div class="mp-code-label" id="mp-code-label-text">CODE DU SALON À PARTAGER :</div>
           <div class="mp-code-display-row">
             <span id="mp-room-code-text" class="mc-green">jerry-realm-XXXX</span>
             <button type="button" id="btn-copy-room-code" class="btn-mc" style="font-size: 10px; padding: 4px 8px;">COPIER LE CODE</button>
@@ -391,7 +391,7 @@
         </div>
 
         <!-- Liste des Factions / Joueurs dans le Salon -->
-        <div class="mp-slots-title">ROYAUMES & SOUVERAINS DANS LE SALON (1 à 4 JOUEURS) :</div>
+        <div class="mp-slots-title" id="mp-slots-title-text">ROYAUMES & SOUVERAINS DANS LE SALON (1 à 4 JOUEURS) :</div>
         <div class="mp-slots-grid" id="mp-slots-container">
           <!-- Injecté dynamiquement par JS -->
         </div>
@@ -418,10 +418,10 @@
   <div id="pause-modal" class="modal-overlay hidden">
     <div class="modal-dialog panel-slate">
       <div class="modal-header">
-        <h2 class="modal-title">CONSEIL DE GUERRE - PAUSE</h2>
+        <h2 class="modal-title" id="modal-pause-title">CONSEIL DE GUERRE - PAUSE</h2>
       </div>
       <div class="modal-content">
-        <p class="modal-desc">La simulation est suspendue. Choisissez une directive :</p>
+        <p class="modal-desc" id="modal-pause-desc">La simulation est suspendue. Choisissez une directive :</p>
         <div class="modal-actions-list">
           <button type="button" id="modal-btn-resume" class="btn-mc btn-gold" style="padding: 10px 0;">REPRENDRE LA PARTIE</button>
           <button type="button" id="modal-btn-center" class="btn-mc" style="padding: 10px 0;">RECENTRER SUR LA CAPITALE (C)</button>
@@ -434,6 +434,6 @@
   </div>
 
   <!-- Script d'orchestration autonome (compatible file:/// et web) -->
-  <script src="js/game.bundle.js?v=2.3.0"></script>
+  <script src="js/game.bundle.js?v=2.3.1"></script>
 </body>
 </html>

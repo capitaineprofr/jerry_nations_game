@@ -116,17 +116,7 @@ export class UIManager {
   }
 
   setupLanguageControls() {
-    I18N.init();
     I18N.applyToDOM();
-
-    document.querySelectorAll(".btn-toggle-lang").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        I18N.toggleLang();
-        SOUND.playClick();
-        this.updateHUD();
-        this.updateSectorInfoDisplay();
-      });
-    });
   }
 
   // Configuration des contrôles de minimisation / réduction des interfaces

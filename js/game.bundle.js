@@ -324,6 +324,7 @@ const I18N = {
       diffHard: "Implacable",
       diffHardSub: "Raids rapides",
       
+      maraudersLabel: "Pillards Maraudeurs :",
       optMarauders: "Clan Maraudeur (Pillards agressifs des terres sauvages)",
       btnLaunchGame: "FONDER LA NATION & COMMENCER",
       
@@ -458,6 +459,7 @@ const I18N = {
       diffHard: "Relentless",
       diffHardSub: "Swift raids",
       
+      maraudersLabel: "Marauder Raiders:",
       optMarauders: "Marauder Clan (Hostile border raiders)",
       btnLaunchGame: "FOUND REALM & START",
       
@@ -559,12 +561,33 @@ const I18N = {
       if (saved && (saved === "fr" || saved === "en")) {
         this.currentLang = saved;
       } else {
-        const nav = (navigator.language || "").toLowerCase();
+        const nav = (typeof navigator !== "undefined" && (navigator.language || navigator.userLanguage) || "").toLowerCase();
         this.currentLang = nav.startsWith("en") ? "en" : "fr";
       }
     } catch (e) {
       this.currentLang = "fr";
     }
+
+    // Gestionnaire de clic délégué unique sur le document
+    if (!this._listenerBound && typeof document !== "undefined") {
+      this._listenerBound = true;
+      document.addEventListener("click", (e) => {
+        const btn = e.target && e.target.closest && e.target.closest(".btn-toggle-lang");
+        if (btn) {
+          e.preventDefault();
+          this.toggleLang();
+          if (typeof SOUND !== "undefined" && SOUND.playClick) {
+            SOUND.playClick();
+          }
+          if (typeof window !== "undefined" && window.app && window.app.ui) {
+            window.app.ui.updateHUD();
+            window.app.ui.updateSectorInfoDisplay();
+          }
+        }
+      });
+    }
+
+    this.applyToDOM();
   },
 
   setLang(lang) {
@@ -586,15 +609,19 @@ const I18N = {
   },
 
   applyToDOM() {
+    if (typeof document === "undefined") return;
     const lang = this.currentLang;
-    const dict = this.translations[lang];
+    const dict = this.translations[lang] || this.translations.fr;
+
+    if (document.documentElement) {
+      document.documentElement.lang = lang;
+    }
 
     // Mettre à jour les boutons de langue
     document.querySelectorAll(".btn-toggle-lang").forEach((btn) => {
       btn.textContent = dict.langBtn;
     });
 
-    // Éléments du Lobby
     const setText = (id, text) => {
       const el = document.getElementById(id);
       if (el) el.textContent = text;
@@ -603,7 +630,12 @@ const I18N = {
       const el = document.getElementById(id);
       if (el) el.innerHTML = html;
     };
+    const setPlaceholder = (id, placeholder) => {
+      const el = document.getElementById(id);
+      if (el) el.placeholder = placeholder;
+    };
 
+    // Écran Titre & Lobby
     setText("lobby-main-subtitle", dict.gameSubtitle);
     setText("lobby-sec1-title", dict.secIdentity);
     setText("lbl-leader-avatar", dict.avatarLabel);
@@ -614,22 +646,34 @@ const I18N = {
     setText("lbl-nation-name", dict.nationNameLabel);
     setText("lbl-banner-picker", dict.bannerLabel);
     setText("lbl-nation-motto", dict.nationMottoLabel);
+    setPlaceholder("setup-player-name", lang === "fr" ? "Votre Nom ou Pseudo" : "Your Name or Alias");
+    setPlaceholder("setup-nation-name", lang === "fr" ? "Nom de votre Empire" : "Your Empire Name");
 
     setText("lobby-sec2-title", dict.secRules);
     setText("lbl-game-mode", dict.gameModeLabel);
     setText("lbl-bot-count", dict.botCountLabel);
     setText("lbl-ai-diff", dict.aiDiffLabel);
+    setText("lbl-marauders", dict.maraudersLabel || dict.optMarauders);
     setText("txt-opt-marauders", dict.optMarauders);
     setText("btn-start-game", dict.btnLaunchGame);
 
+    setText("lobby-sec3-title", lang === "fr" ? "3. COMMANDEMENT" : "3. COMMAND");
+    setText("txt-command-desc", lang === "fr"
+      ? "Explorez la carte, exploitez les forêts pour le bois, les plaines pour le pain et les collines pour la pierre."
+      : "Explore the map, harvest forests for wood, plains for bread and hills for stone.");
+
     setText("txt-p2p-title", dict.secP2P);
+    setPlaceholder("input-room-code", lang === "fr" ? "Code de salon (ex: jerry-123)" : "Room code (e.g. jerry-123)");
     setText("btn-join-room", dict.btnJoinRoom);
     setText("btn-create-room", dict.btnCreateRoom);
 
     // Récap commandes
-    setHtml("recap-item-nav", `<strong>${lang === 'fr' ? 'Navigation Carte' : 'Map Controls'}</strong> : ${dict.recapNav.split(': ')[1]}`);
-    setHtml("recap-item-units", `<strong>${lang === 'fr' ? 'Bataillons RTS' : 'RTS Battalions'}</strong> : ${dict.recapUnits.split(': ')[1]}`);
-    setHtml("recap-item-center", `<strong>${lang === 'fr' ? 'Recentrer Caméra' : 'Center Camera'}</strong> : ${dict.recapCenter.split(': ')[1]}`);
+    const navPart = (dict.recapNav || "").includes(": ") ? dict.recapNav.split(": ")[1] : dict.recapNav;
+    const unitsPart = (dict.recapUnits || "").includes(": ") ? dict.recapUnits.split(": ")[1] : dict.recapUnits;
+    const centerPart = (dict.recapCenter || "").includes(": ") ? dict.recapCenter.split(": ")[1] : dict.recapCenter;
+    setHtml("recap-item-nav", `<strong>${lang === 'fr' ? 'Navigation Carte' : 'Map Controls'}</strong> : ${navPart}`);
+    setHtml("recap-item-units", `<strong>${lang === 'fr' ? 'Bataillons RTS' : 'RTS Battalions'}</strong> : ${unitsPart}`);
+    setHtml("recap-item-center", `<strong>${lang === 'fr' ? 'Recentrer Caméra' : 'Center Camera'}</strong> : ${centerPart}`);
 
     // Modal de Pause
     setText("modal-pause-title", dict.pauseModalTitle);
@@ -638,11 +682,19 @@ const I18N = {
     setText("modal-btn-center", dict.pauseBtnCenter);
     setText("modal-btn-quit-lobby", dict.pauseBtnQuit);
 
+    const btnEdge = document.getElementById("modal-btn-toggle-edge-scroll");
+    if (btnEdge) {
+      const isScrollActive = !btnEdge.textContent.includes("DÉSACTIVÉ") && !btnEdge.textContent.includes("OFF");
+      btnEdge.textContent = isScrollActive ? dict.pauseBtnEdgeScrollOn : dict.pauseBtnEdgeScrollOff;
+    }
+
     // Salon Multijoueur
     setText("mp-lobby-header-title", dict.mpLobbyTitle);
     setText("mp-code-label-text", dict.mpCodeLabel);
     setText("btn-copy-room-code", dict.btnCopyCode);
+    setText("mp-copy-feedback", dict.mpCopyFeedback);
     setText("mp-slots-title-text", dict.mpSlotsTitle);
+    setText("btn-mp-start-game", dict.mpBtnStart);
     setText("btn-mp-leave-room", dict.mpBtnLeave);
 
     // Volet Bâtiments
@@ -651,6 +703,7 @@ const I18N = {
 
     // Ordres rapides & Halte
     setText("btn-order-halt", dict.btnHalt);
+    setText("btn-expedition-colo", dict.btnExpColonize);
     setText("btn-expedition-col", dict.btnExpColonize);
     setText("btn-expedition-def", dict.btnExpDefend);
     setText("btn-expedition-assault", dict.btnExpAssault);
@@ -658,6 +711,36 @@ const I18N = {
     // Bandeau de fondation
     setText("founding-banner-title", dict.foundingTitle);
     setText("btn-confirm-founding", dict.foundingBtn);
+
+    // Boutons de réglages du Lobby (Mode, Bots, Difficulté, Maraudeurs)
+    document.querySelectorAll(".setup-btn-toggle").forEach((btn) => {
+      const setting = btn.dataset.setting;
+      const val = btn.dataset.value;
+      if (setting === "gameMode") {
+        btn.textContent = val === "standard"
+          ? (lang === "fr" ? "CONQUÊTE (T0-T10)" : "CONQUEST (T0-T10)")
+          : (lang === "fr" ? "BAC À SABLE" : "SANDBOX");
+      } else if (setting === "botCount") {
+        if (val === "0") btn.textContent = lang === "fr" ? "0 (SEUL)" : "0 (ALONE)";
+        else btn.textContent = `${val} ${val === "1" ? "BOT" : "BOTS"}`;
+      } else if (setting === "aiDifficulty") {
+        if (val === "peaceful") btn.textContent = lang === "fr" ? "PAISIBLE" : "PEACEFUL";
+        else if (val === "normal") btn.textContent = lang === "fr" ? "ÉQUILIBRÉ" : "BALANCED";
+        else if (val === "hard") btn.textContent = lang === "fr" ? "IMPLACABLE" : "RELENTLESS";
+      } else if (setting === "marauders") {
+        btn.textContent = val === "true"
+          ? (lang === "fr" ? "ACTIVÉS (HOSTILES)" : "ENABLED (HOSTILE)")
+          : (lang === "fr" ? "DÉSACTIVÉS" : "DISABLED");
+      }
+    });
+
+    const help = document.getElementById("mode-help-text");
+    if (help) {
+      const isSandbox = document.querySelector('.setup-btn-toggle[data-setting="gameMode"][data-value="sandbox"]')?.classList.contains("active");
+      help.textContent = isSandbox
+        ? (lang === "fr" ? "Ressources infinies (99 999), constructions libres, aucune famine." : "Unlimited resources (99,999), free building, no starvation.")
+        : (lang === "fr" ? "11 Stades, Banquet au crépuscule et gestion alimentaire." : "11 Stages, Sunset banquet and food starvation system.");
+    }
   }
 };
 
@@ -3896,17 +3979,7 @@ class UIManager {
   }
 
   setupLanguageControls() {
-    I18N.init();
     I18N.applyToDOM();
-
-    document.querySelectorAll(".btn-toggle-lang").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        I18N.toggleLang();
-        SOUND.playClick();
-        this.updateHUD();
-        this.updateSectorInfoDisplay();
-      });
-    });
   }
 
   // Configuration des contrôles de minimisation / réduction des interfaces
